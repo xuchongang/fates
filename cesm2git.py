@@ -347,6 +347,10 @@ def git_update_subtree(temp_repo_dir):
         externals = externals_file.readlines()
 
     for e in externals:
+        if 'gen_domain' in e:
+            # clm insists in pulling in part of cime into it's own
+            # dir. don't try to put that into a subtree.
+            continue
         ext = e.split()
         if len(ext) < 2:
             continue
@@ -359,6 +363,7 @@ def git_update_subtree(temp_repo_dir):
                 'git',
                 'subtree',
                 'pull',
+                '--squash',
                 '--prefix',
                 ext_dir,
                 ext_url,
