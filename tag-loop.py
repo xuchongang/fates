@@ -90,7 +90,7 @@ def write_config_file(config, filename):
     """Read the configuration file and process
 
     """
-    print("Reading configuration file : {0}".format(filename))
+    print("Writing configuration file : {0}".format(filename))
 
     cfg_file = os.path.abspath(filename)
     if not os.path.isfile(cfg_file):
@@ -146,8 +146,8 @@ def main(options):
             'clm4_5_6_r158',
             ]
 
+    config_filename = options.config[0]
     for t in tags:
-        config_filename = options.config[0]
         config = read_config_file(config_filename)
 
         tag = "clm2/trunk_tags/{0}".format(t)
