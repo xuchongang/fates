@@ -336,16 +336,18 @@ def switch_git_branch(branch):
     subprocess.check_output(cmd, shell=False, stderr=subprocess.STDOUT)
 
 
-def git_update_subtree(temp_repo_dir):
-    """update any git subtree to the correct version.
+def find_git_externals(temp_repo_dir):
+    """search the svn externals file for any git externals that will be
+    updated with subtrees.
 
     """
-    print("Updating git subtrees....")
+    print("finding git based externals....")
     externals_filename = "{0}/SVN_EXTERNAL_DIRECTORIES".format(temp_repo_dir)
     externals = []
     with open(externals_filename, 'r') as externals_file:
         externals = externals_file.readlines()
 
+    git_externals = []
     for e in externals:
         if 'gen_domain' in e:
             # clm insists in pulling in part of cime into it's own
@@ -359,28 +361,67 @@ def git_update_subtree(temp_repo_dir):
         ext_commit = url.split('/')[-1]
         ext_url = '/'.join(url.split('/')[0:5])
         if ext_url.find('git') > 0:
-            cmd = [
-                'git',
-                'subtree',
-                'pull',
-                '--squash',
-                '--prefix',
-                ext_dir,
-                ext_url,
-                ext_commit,
-            ]
-            print("    {0}".format(' '.join(cmd)))
+            git_ext = {}
+            git_ext['ext_dir'] = ext_dir
+            git_ext['ext_url'] = ext_url
+            git_ext['ext_commit'] = ext_commit
+            git_externals.append(git_ext)
+
+    return git_externals
+
+def git_update_subtree(git_externals):
+    """update any git subtree to the correct version.
+
+    """
+    print("Updating git subtrees....")
+
+    for e in git_externals:
+        cmd = [
+            'git',
+            'subtree',
+            'pull',
+            '--squash',
+            '--prefix',
+            e['ext_dir'],
+            e['ext_url'],
+            e['ext_commit'],
+        ]
+        print("    {0}".format(' '.join(cmd)))
+        try:
             subprocess.check_output(cmd, shell=False, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as error:
+                rm_files = False
+                print("subtree error :\n{0}".format(error.output))
 
 
-def git_add_new_cesm(new_tag):
+def git_add_new_cesm(new_tag, git_externals):
     """Add the new cesm files to git
     """
+    print("Removing git_externals changes from delta.")
+    for ext in git_externals:
+        # reset any changed files
+        cmd = [
+            'git',
+            'checkout',
+            '--',
+            ext['ext_dir'],
+        ]
+        subprocess.check_output(cmd, shell=False, stderr=subprocess.STDOUT)
+        # remove any added files
+        cmd = [
+            'git',
+            'clean',
+            '-d',
+            '-f',
+            ext['ext_dir'],
+        ]
+        subprocess.check_output(cmd, shell=False, stderr=subprocess.STDOUT)
+
     print("Committing new cesm to git")
     cmd = [
         "git",
         "add",
-        "-A",
+        "--all",
     ]
     subprocess.check_output(cmd, shell=False, stderr=subprocess.STDOUT)
 
@@ -451,8 +492,9 @@ def main(options):
         config['cesm']['repo'],
         config['externals'])
 
-    git_add_new_cesm(new_tag)
-    git_update_subtree(temp_repo_dir)
+    git_externals = find_git_externals(temp_repo_dir)
+    git_add_new_cesm(new_tag, git_externals)
+    git_update_subtree(git_externals)
 
     if (options.feelin_lucky):
         push_to_origin_and_cleanup(config["git"]["branch"], cwd, temp_repo_dir)
