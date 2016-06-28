@@ -14,3 +14,15 @@ Branches
   * clm-trunk : clm trunk tags from CESM svn
   * cesm2git : tools for pulling svn branch tags into git
 
+## Returning changes to clm-svn
+-------------------------------
+
+Return changes to the CLM subversion repository by:
+
+* determine the CLM trunk tag your version of the code is based on.
+* determine the changeset id of the trunk version, and create a tag: clm-trunk-rXYZ
+* determine the changeset id of the git version you want to return to subversion, and create a tag: ed-rABC
+* create a patch file of the differences that should be moved to svn: `git diff clm-trunk-rXYZ ed-rABC > rXYZ-rABC.patch`
+* create a new branch in subversion based on the SAME version of the trunk you used above.
+* checkout a sandbox of your subversion branch.
+* use the patch program to apply your patch to the subversion branch.
