@@ -20,6 +20,10 @@ Branches
 Return changes to the CLM subversion repository by:
 
 * determine the CLM trunk tag your version of the code is based on.
+* Note that the script that pulls svn tags into git creates a separate
+  commit and merge for squashed git externals, e.g. cime. This means
+  that the commit id for a particular clm trunk tag may be one commit
+  beyond the `pull clmX_Y_Z_rNNN` commit.
 * determine the changeset id of the trunk version, and create a tag: clm-trunk-rXYZ
 * determine the changeset id of the git version you want to return to subversion, and create a tag: ed-rABC
 * create a patch file of the differences that should be moved to svn: `git diff clm-trunk-rXYZ ed-rABC > rXYZ-rABC.patch`
