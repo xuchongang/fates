@@ -178,10 +178,14 @@ def remove_current_working_copy():
     """
 
     rm_files = [
+        "ChangeSum",
         "ChangeLog",
-        "ChangeLog_template",
+        ".ChangeLog_template",
+        "UpDateChangeLog.pl",
         "Copyright",
         "README",
+        "README_cime",
+        "README_EXTERNALS",
         "SVN_EXTERNAL_DIRECTORIES",
         "ExpectedTestFails.xml",
     ]
