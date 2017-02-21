@@ -373,6 +373,7 @@ def find_git_externals(temp_repo_dir):
 
     return git_externals
 
+
 def git_update_subtree(git_externals):
     """update any git subtree to the correct version.
 
@@ -392,10 +393,45 @@ def git_update_subtree(git_externals):
         ]
         print("    {0}".format(' '.join(cmd)))
         try:
-            subprocess.check_output(cmd, shell=False, stderr=subprocess.STDOUT)
+            subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as error:
-                rm_files = False
-                print("subtree error :\n{0}".format(error.output))
+                git_remove_add_subtree(cmd, e['ext_dir'])
+
+
+def git_remove_add_subtree(subtree_cmd, ext_dir):
+    """When a subtree can't be updated because of a git error, it seems
+    like the only path forward is remove it and readd it. so try
+    that...
+
+    """
+    cmd = ['git',
+           'rm',
+           '-r',
+           ext_dir,
+           ]
+    print("    {0}".format(' '.join(cmd)))
+    subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
+
+    cmd = ['git',
+           'commit',
+           '-m',
+           'manually remove "{0}" subtree that can not be updated'.format(ext_dir),
+           ]
+    print("    {0}".format(' '.join(cmd)))
+    subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
+
+    # NOTE(bja, 201609) directory won't be empty because of the hidden
+    # .svn directory. need to use shutil.rmtree instead of os.rmdir.
+    print("    removing remants of {0} directory.".format(ext_dir))
+    shutil.rmtree(ext_dir)
+
+    subtree_cmd[2] = 'add'
+    print("    {0}".format(' '.join(subtree_cmd)))
+    try:
+        subprocess.check_call(subtree_cmd, shell=False, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as error:
+        print("subtree error :\n{0}".format(error))
+        raise RuntimeError(error)
 
 
 def git_add_new_cesm(new_tag, git_externals):
