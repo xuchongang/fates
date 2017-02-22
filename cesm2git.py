@@ -175,6 +175,34 @@ def new_tag_from_config(config):
 
 def remove_current_working_copy():
     """Removes the current working copy of cesm so that svn checkout will work.
+
+    NOTE(bja, 2016, 2017): if the list of files in the root directory
+    changes from the hard coded list below, then svn co will have
+    problems with an error like:
+
+        svn co https://svn-ccsm-models.cgd.ucar.edu/clm2/trunk_tags/clm4_5_12_r197 .
+        Tree conflict on 'parse_cime.cs.status'
+           > local file unversioned, incoming file add upon update
+
+    The hard coded lists of files and directories can be replaced with
+    something like:
+
+        preserve_list = [".gitignore", ".git", ".github", ]
+        dir_listing = os.listdir(os.getcwd())
+        for item in dir_listing:
+            if item not in preserve_list:
+                if os.path.isfile(item):
+                    os.remove(item)
+                elif os.path.isdir(item):
+                    shutil.rmtree(item)
+
+    The above is dangerous and comes with its own set of problems. For
+    example if something is added to the repo from the git side and
+    not updated by svn, it won't be updated and removal won't be
+    flagged! But this is only suppose to be used on branches that
+    exactly track the svn repo w/o modification. So in principle it
+    shouldn't be an issue....
+
     """
 
     rm_files = [
@@ -188,6 +216,7 @@ def remove_current_working_copy():
         "README_EXTERNALS",
         "SVN_EXTERNAL_DIRECTORIES",
         "ExpectedTestFails.xml",
+        "parse_cime.cs.status",
     ]
     for f in rm_files:
         if os.path.exists(f):
