@@ -349,6 +349,8 @@ contains
 
     real(r8) :: frac  ! relativised stored carbohydrate
 
+    if ( .not. prescribed_growth_mortality_recruitment) then
+
     ! 'Background' mortality (can vary as a function of density as in ED1.0 and ED2.0, but doesn't here for tractability) 
     ! bmort = EDecophyscon%b_mort(cohort_in%pft) !0.014_r8 
     ! RGK:/CX HOLDING OFF ON SENS-ANALYSIS UNTIL MACHINE CONFIGS SQUARED AWAY
@@ -376,6 +378,16 @@ contains
     endif
 
     !mortality_rates = bmort + hmort + cmort
+
+    else
+       if ( cohort_in%canopy_level .eq. 1) then
+          bmort = this%prescribed_mortality_canopy(cohort_in%pft)
+       else
+          bmort = this%prescribed_mortality_understory(cohort_in%pft)
+       endif
+       cmort = 0._r8
+       hmort = 0._r8
+    endif
 
  end subroutine mortality_rates
 

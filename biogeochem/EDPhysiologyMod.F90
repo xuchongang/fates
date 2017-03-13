@@ -722,6 +722,7 @@ contains
     !
     ! !USES:
     use EDGrowthFunctionsMod , only : Bleaf, dDbhdBd, dhdbd, hite, mortality_rates,dDbhdBl
+    use EDTypes, only : prescribed_growth_mortality_recruitment
 
     !
     ! !ARGUMENTS    
@@ -779,6 +780,14 @@ contains
     currentCohort%npp_acc_hold  = currentCohort%npp_acc  * days_per_year 
     currentCohort%gpp_acc_hold  = currentCohort%gpp_acc  * days_per_year
     currentCohort%resp_acc_hold = currentCohort%resp_acc * days_per_year
+
+    if (prescribed_growth_mortality_recruitment) then
+       if (currentCohort%canopy_level .eq. 1) then
+          npp_acc_hold = EDPftvarcon_inst%prescribed_npp_canopy(currentCohort%pft) * currentCohort*c_area
+       else
+          npp_acc_hold = EDPftvarcon_inst%prescribed_npp_understory(currentCohort%pft) * currentCohort*c_area
+       endif
+    endif
 
     currentSite%flux_in = currentSite%flux_in + currentCohort%npp_acc * currentCohort%n
 
@@ -1006,8 +1015,13 @@ contains
             + EDecophyscon%sapwood_ratio(ft)*temp_cohort%hite)
        temp_cohort%bstore      = EDecophyscon%cushion(ft)*(temp_cohort%balive/ (1.0_r8 + EDPftvarcon_inst%froot_leaf(ft) &
             + EDecophyscon%sapwood_ratio(ft)*temp_cohort%hite))
+       if (.not. prescribed_growth_mortality_recruitment) ! normal case
        temp_cohort%n           = currentPatch%area * currentPatch%seed_germination(ft)*freq_day &
             / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
+       else
+          ! prescribed recruitment rates. number per sq. meter per year
+          temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * freq_day
+       endif
  
        if (t == 1)then
           write(fates_log(),*) 'filling in cohorts where there are none left; this will break carbon balance', &

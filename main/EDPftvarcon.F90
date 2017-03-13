@@ -72,6 +72,11 @@ module EDPftvarcon
      real(r8), allocatable :: taul(:, :)
      real(r8), allocatable :: taus(:, :)
      real(r8), allocatable :: rootprof_beta(:, :)
+     real(r8), allocatable :: prescribed_npp_canopy(:)               ! this is only for the special prescribed_growth_mortality_recruitment mode
+     real(r8), allocatable :: prescribed_npp_understory(:)           ! this is only for the special prescribed_growth_mortality_recruitment mode
+     real(r8), allocatable :: prescribed_mortality_canopy(:)         ! this is only for the special prescribed_growth_mortality_recruitment mode
+     real(r8), allocatable :: prescribed_mortality_understory(:)     ! this is only for the special prescribed_growth_mortality_recruitment mode
+     real(r8), allocatable :: prescribed_recruitment(:)              ! this is only for the special prescribed_growth_mortality_recruitment mode
    contains
      procedure, public :: Init => EDpftconInit
      procedure, public :: Register
@@ -339,6 +344,27 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
+    if  ( prescribed_growth_mortality_recruitment) then
+       name = 'fates_prescribed_npp_canopy'
+       call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+            dimension_names=dim_names, lower_bounds=dim_lower_bound)
+       
+       name = 'fates_prescribed_npp_canopy'
+       call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+            dimension_names=dim_names, lower_bounds=dim_lower_bound)
+       
+       name = 'fates_prescribed_mortality_canopy'
+       call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+            dimension_names=dim_names, lower_bounds=dim_lower_bound)
+       
+       name = 'fates_prescribed_mortality_understory'
+       call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+            dimension_names=dim_names, lower_bounds=dim_lower_bound)
+       
+       name = 'fates_prescribed_recruitment'
+       call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+            dimension_names=dim_names, lower_bounds=dim_lower_bound)
+    endif
 
   end subroutine Register_PFT
 
@@ -537,6 +563,30 @@ contains
     name = 'fates_grperc'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%grperc)
+
+    if  ( prescribed_growth_mortality_recruitment) then
+       
+       name = 'fates_prescribed_npp_canopy'
+       call fates_params%RetreiveParameterAllocate(name=name, &
+            data=this%prescribed_npp_canopy)
+       
+       name = 'fates_prescribed_npp_understory'
+       call fates_params%RetreiveParameterAllocate(name=name, &
+            data=this%prescribed_npp_understory)
+       
+       name = 'fates_prescribed_mortality_canopy'
+       call fates_params%RetreiveParameterAllocate(name=name, &
+            data=this%prescribed_mortality_canopy)
+       
+       name = 'fates_prescribed_mortality_understory'
+       call fates_params%RetreiveParameterAllocate(name=name, &
+            data=this%prescribed_mortality_understory)
+       
+       name = 'fates_prescribed_recruitment'
+       call fates_params%RetreiveParameterAllocate(name=name, &
+            data=this%prescribed_recruitment)
+       
+    endif
 
   end subroutine Receive_PFT
 
