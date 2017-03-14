@@ -10,6 +10,7 @@ module EDPftvarcon
   use shr_kind_mod, only : r8 => shr_kind_r8
 
   use FatesGlobals, only : fates_log
+  !use EDParamsMod, only : prescribed_growth_mortality_recruitment
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -344,7 +345,7 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    if  ( prescribed_growth_mortality_recruitment) then
+    ! if  ( prescribed_growth_mortality_recruitment ) then
        name = 'fates_prescribed_npp_canopy'
        call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
             dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -364,7 +365,7 @@ contains
        name = 'fates_prescribed_recruitment'
        call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
             dimension_names=dim_names, lower_bounds=dim_lower_bound)
-    endif
+    ! endif
 
   end subroutine Register_PFT
 
@@ -564,7 +565,7 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%grperc)
 
-    if  ( prescribed_growth_mortality_recruitment) then
+    ! if  ( prescribed_growth_mortality_recruitment ) then
        
        name = 'fates_prescribed_npp_canopy'
        call fates_params%RetreiveParameterAllocate(name=name, &
@@ -586,7 +587,7 @@ contains
        call fates_params%RetreiveParameterAllocate(name=name, &
             data=this%prescribed_recruitment)
        
-    endif
+    ! endif
 
   end subroutine Receive_PFT
 

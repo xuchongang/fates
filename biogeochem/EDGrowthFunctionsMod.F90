@@ -341,6 +341,7 @@ contains
     ! ============================================================================
 
     use EDParamsMod,  only : ED_val_stress_mort
+    use EDParamsMod,  only : prescribed_growth_mortality_recruitment
 
     type (ed_cohort_type), intent(in) :: cohort_in
     real(r8),intent(out) :: bmort ! background mortality : Fraction per year
@@ -380,10 +381,10 @@ contains
     !mortality_rates = bmort + hmort + cmort
 
     else
-       if ( cohort_in%canopy_level .eq. 1) then
-          bmort = this%prescribed_mortality_canopy(cohort_in%pft)
+       if ( cohort_in%canopy_layer .eq. 1) then
+          bmort = EDPftvarcon_inst%prescribed_mortality_canopy(cohort_in%pft)
        else
-          bmort = this%prescribed_mortality_understory(cohort_in%pft)
+          bmort = EDPftvarcon_inst%prescribed_mortality_understory(cohort_in%pft)
        endif
        cmort = 0._r8
        hmort = 0._r8

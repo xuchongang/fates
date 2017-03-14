@@ -166,9 +166,6 @@ module EDTypesMod
   !!!!!!!!!! THIS SHOULD NOT BE SET TO TRUE !!!!!!!!!!!!!!!!!
   logical,parameter :: use_fates_plant_hydro = .false.
 
-  ! this switch decouples physiology from veg dynamics in the sense of fixing a presecribed NPP/crown area ratio, canopy&understory mortality rates, and recruitmetn flux
-  logical, parameter :: prescribed_growth_mortality_recruitment = .true.
-
   !************************************
   !** COHORT type structure          **
   !************************************

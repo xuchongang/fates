@@ -38,6 +38,10 @@ module EDParamsMod
    character(len=param_string_length),parameter :: ED_name_understorey_death = "fates_understorey_death"
    character(len=param_string_length),parameter :: ED_name_profile_tol = "fates_profile_tol"
    character(len=param_string_length),parameter :: ED_name_ag_biomass= "fates_ag_biomass"   
+
+  ! this is a switch that decouples physiology from veg dynamics in the sense of fixing a presecribed NPP/crown area ratio
+  ! canopy&understory mortality rates, and recruitmetn flux                                                                                                                
+   logical, parameter, public :: prescribed_growth_mortality_recruitment = .true.
    
    public :: FatesParamsInit
    public :: FatesRegisterParams
