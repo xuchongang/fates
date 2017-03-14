@@ -783,9 +783,9 @@ contains
 
     if (prescribed_growth_mortality_recruitment) then
        if (currentCohort%canopy_layer .eq. 1) then
-          currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_canopy(currentCohort%pft) * currentCohort%c_area
+          currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_canopy(currentCohort%pft) * currentCohort%c_area / currentCohort%n
        else
-          currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_understory(currentCohort%pft) * currentCohort%c_area
+          currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_understory(currentCohort%pft) * currentCohort%c_area / currentCohort%n
        endif
     endif
 
