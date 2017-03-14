@@ -783,14 +783,8 @@ contains
 
     if (prescribed_growth_mortality_recruitment) then
        if (currentCohort%canopy_layer .eq. 1) then
-          write(fates_log(),*) 'cdk000 nppucan, pft, carea', &
-               EDPftvarcon_inst%prescribed_npp_canopy(currentCohort%pft), currentCohort%pft, currentCohort%c_area
           currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_canopy(currentCohort%pft) * currentCohort%c_area
        else
-          write(fates_log(),*) 'cdk001 nppund, pft, carea'
-          write(fates_log(),*) 'cdk002', currentCohort%pft
-          write(fates_log(),*) 'cdk003', currentCohort%c_area
-          write(fates_log(),*) 'cdk004', EDPftvarcon_inst%prescribed_npp_understory(currentCohort%pft)
           currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_understory(currentCohort%pft) * currentCohort%c_area
        endif
     endif

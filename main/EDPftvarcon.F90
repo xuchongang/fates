@@ -350,7 +350,7 @@ contains
        call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
             dimension_names=dim_names, lower_bounds=dim_lower_bound)
        
-       name = 'fates_prescribed_npp_canopy'
+       name = 'fates_prescribed_npp_understory'
        call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
             dimension_names=dim_names, lower_bounds=dim_lower_bound)
        
