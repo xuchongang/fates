@@ -1068,7 +1068,7 @@ contains
             / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
        else
           ! prescribed recruitment rates. number per sq. meter per year
-          temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * freq_day
+          temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * hlm_freq_day
        endif
  
        if (t == 1)then
