@@ -209,6 +209,7 @@ def remove_current_working_copy():
         "ChangeSum",
         "ChangeLog",
         ".ChangeLog_template",
+        ".CLMTrunkChecklist",
         "UpDateChangeLog.pl",
         "Copyright",
         "README",
@@ -408,7 +409,7 @@ def git_update_subtree(git_externals):
 
     """
     print("Updating git subtrees....")
-
+    print(git_externals)
     for e in git_externals:
         cmd = [
             'git',
@@ -439,20 +440,29 @@ def git_remove_add_subtree(subtree_cmd, ext_dir):
            ext_dir,
            ]
     print("    {0}".format(' '.join(cmd)))
-    subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
-
-    cmd = ['git',
-           'commit',
-           '-m',
-           'manually remove "{0}" subtree that can not be updated'.format(ext_dir),
-           ]
-    print("    {0}".format(' '.join(cmd)))
-    subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
+    commit_removal = False
+    try:
+        subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
+        commit_removal = True
+    except subprocess.CalledProcessError as e:
+        # error 128 seems to be the return code for non-existant
+        # file. It's ok if it doesn't exist.
+        if e.returncode != 128:
+            raise e
+            
+    if commit_removal:
+        cmd = ['git',
+               'commit',
+               '-m',
+               'manually remove "{0}" subtree that can not be updated'.format(ext_dir),
+        ]
+        print("    {0}".format(' '.join(cmd)))
+        subprocess.check_call(cmd, shell=False, stderr=subprocess.STDOUT)
 
     # NOTE(bja, 201609) directory won't be empty because of the hidden
     # .svn directory. need to use shutil.rmtree instead of os.rmdir.
     print("    removing remants of {0} directory.".format(ext_dir))
-    shutil.rmtree(ext_dir)
+    shutil.rmtree(ext_dir, ignore_errors=True)
 
     subtree_cmd[2] = 'add'
     print("    {0}".format(' '.join(subtree_cmd)))
