@@ -170,7 +170,7 @@ contains
                       currentCohort%excl_weight = 1.0_r8/(currentCohort%dbh**ED_val_comp_excln)  
                       else
                          ! deterministic ranking case. only demote cohorts in smallest size classes
-                         if ( rankordered_area_sofar + currentCohort%c_area .gt. currentPatch%area ) then
+                         if ( (rankordered_area_sofar + currentCohort%c_area) .gt. currentPatch%area ) then
                             currentCohort%excl_weight = min(currentCohort%c_area, &
                                  rankordered_area_sofar + currentCohort%c_area - currentPatch%area)
                          else
@@ -188,6 +188,7 @@ contains
                 currentCohort => currentPatch%tallest    !start from the tallest cohort
                  
                 ! Correct the demoted cohorts for  
+                if (ED_val_comp_excln .ge. 0) then
                 do while (associated(currentCohort))
                    if(currentCohort%canopy_layer  ==  i) then
                       weight = currentCohort%excl_weight/sumdiff(i)     
@@ -196,6 +197,7 @@ contains
                    endif
                    currentCohort => currentCohort%shorter      
                 enddo
+                endif
 
                 currentCohort => currentPatch%tallest
                 do while (associated(currentCohort))      
@@ -226,7 +228,7 @@ contains
                          ! seperate cohorts. 
                          ! - 0.000000000001_r8 !needs to be a very small number to avoid 
                          ! causing non-linearity issues with c_area.  is this really required? 
-                         currentCohort%dbh = currentCohort%dbh 
+                         currentCohort%dbh = currentCohort%dbh
                          copyc%dbh = copyc%dbh !+ 0.000000000001_r8
                          
                          ! keep track of number and biomass of demoted cohort
@@ -494,6 +496,7 @@ contains
                 sum_weights(i) = 0.0_r8
                 currentCohort => currentPatch%tallest    !start from the tallest cohort
 
+                if (ED_val_comp_excln .ge. 0) then
                 do while (associated(currentCohort))
                    if(currentCohort%canopy_layer  ==  i+1) then !still looking at the layer beneath. 
                       weight = currentCohort%prom_weight/sumdiff(i)
@@ -506,6 +509,7 @@ contains
                    endif
                    currentCohort => currentCohort%shorter      
                 enddo
+                endif
 
                 currentCohort => currentPatch%tallest
                 do while (associated(currentCohort))      
