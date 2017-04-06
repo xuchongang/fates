@@ -392,7 +392,13 @@ def find_git_externals(temp_repo_dir):
             continue
         ext_dir = ext[0]
         url = ext[1]
-        ext_commit = url.split('/')[-1]
+        # FIXME(bja, 2017-04) just move git check up here!
+        if 'svn' in url:
+            continue
+        # doesn't work if extracting a subdir of a tag, needs to be -2.
+        # Count from the beginning of the array to void the special case...
+        # ext_commit = url.split('/')[-1]
+        ext_commit = url.split('/')[6]
         ext_url = '/'.join(url.split('/')[0:5])
         if ext_url.find('git') > 0:
             git_ext = {}
