@@ -41,7 +41,7 @@ module EDCanopyStructureMod
 contains
 
   ! ============================================================================
-  subroutine canopy_structure( currentSite )
+  subroutine canopy_structure( currentSite , bc_in )
     !
     ! !DESCRIPTION:
     ! create cohort instance
@@ -84,9 +84,12 @@ contains
     use EDParamsMod, only : ED_val_comp_excln, ED_val_ag_biomass
     use SFParamsMod, only : SF_val_cwd_frac
     use EDtypesMod , only : ncwd, min_patch_area
+    use FatesInterfaceMod, only : bc_in_type
     !
     ! !ARGUMENTS    
     type(ed_site_type) , intent(inout), target   :: currentSite
+    type(bc_in_type), intent(in)                 :: bc_in
+
     !
     ! !LOCAL VARIABLES:
     type(ed_patch_type) , pointer :: currentPatch
@@ -405,7 +408,7 @@ contains
 
        enddo !is there still excess area in any layer?      
 
-       call fuse_cohorts(currentPatch)
+       call fuse_cohorts(currentPatch, bc_in)
        call terminate_cohorts(currentSite, currentPatch)
 
        ! ----------- Check cohort area ------------------------------!
@@ -647,7 +650,7 @@ contains
           endif
        enddo !is there still not enough canopy area in any layer?         
 
-       call fuse_cohorts(currentPatch)
+       call fuse_cohorts(currentPatch, bc_in)
        call terminate_cohorts(currentSite, currentPatch)
 
        if(promswitch == 1)then
@@ -779,7 +782,7 @@ contains
 
     use FatesInterfaceMod    , only : bc_in_type
     use EDPatchDynamicsMod   , only : set_patchno
-    use EDPatchDYnamicsMod   , only : set_root_fraction
+    use EDPatchDynamicsMod   , only : set_root_fraction
     use EDTypesMod           , only : sizetype_class_index
     use EDGrowthFunctionsMod , only : tree_lai, c_area
     use EDEcophysConType     , only : EDecophyscon
@@ -819,7 +822,7 @@ contains
 
        do while(associated(currentPatch))
           
-          call set_root_fraction(currentPatch,bc_in(s)%depth_gl)
+          call set_root_fraction(currentPatch,bc_in(s)%zi_sisl)
 
           !zero cohort-summed variables. 
           currentPatch%total_canopy_area = 0.0_r8
@@ -1314,6 +1317,10 @@ contains
      use EDTypesMod        , only : ed_patch_type, ed_cohort_type, &
                                     ed_site_type, AREA
      use FatesInterfaceMod , only : bc_out_type
+     use PatchType         , only : patch
+     use ColumnType        , only : col
+     use EDPftvarcon       , only : EDPftvarcon_inst
+
 
      !
      ! !ARGUMENTS    
@@ -1323,7 +1330,7 @@ contains
      type(bc_out_type),  intent(inout)         :: bc_out(nsites)
 
      ! Locals
-     integer :: s, ifp, c
+     integer :: s, ifp, c, p
      type (ed_patch_type)  , pointer :: currentPatch
      real(r8) :: bare_frac_area
      real(r8) :: total_patch_area
@@ -1352,7 +1359,18 @@ contains
            
            bc_out(s)%hbot_pa(ifp) = max(0._r8, min(0.2_r8, bc_out(s)%htop_pa(ifp)- 1.0_r8))
 
+           ! Temporary: Recreate the roughness, leaf width and displacment height of the
+           ! previous code, before calculating more reasonable values.
+           p = col%patchi(c) + ifp
            
+           bc_out(s)%z0m_pa(ifp)    = EDPftvarcon_inst%z0mr(patch%itype(p)) * bc_out(s)%htop_pa(ifp)
+           bc_out(s)%displa_pa(ifp) = EDPftvarcon_inst%displar(patch%itype(p)) * bc_out(s)%htop_pa(ifp)
+           bc_out(s)%dleaf_pa(ifp)  = EDPftvarcon_inst%dleaf(patch%itype(p))
+           
+!           bc_out(s)%z0m_pa(ifp)    = pftcon%z0mr(1) * bc_out(s)%htop_pa(ifp)
+!           bc_out(s)%displa_pa(ifp) = pftcon%displar(1) * bc_out(s)%htop_pa(ifp)
+!           bc_out(s)%dleaf_pa(ifp)  = pftcon%dleaf(1)
+
            ! We are assuming here that grass is all located underneath tree canopies. 
            ! The alternative is to assume it is all spatial distinct from tree canopies.
            ! In which case, the bare area would have to be reduced by the grass area...
