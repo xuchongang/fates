@@ -445,6 +445,8 @@ contains
     ! Fluxes in are NPP. Fluxes out are decay of CWD and litter into SOM pools.  
     ! ed_allsites_inst%flux_out and ed_allsites_inst%flux_in are set where they occur 
     ! in the code. 
+    use EDTypesMod        , only :  AREA
+
     !
     ! !ARGUMENTS:
     type(ed_site_type) , intent(inout) :: currentSite
@@ -473,7 +475,7 @@ contains
     biomass_stock   = 0.0_r8
     litter_stock    = 0.0_r8
 
-    seed_stock   =  sum(currentSite%seed_bank)
+    seed_stock   =  sum(currentSite%seed_bank)*AREA
 
     currentPatch => currentSite%oldest_patch 
     do while(associated(currentPatch))
