@@ -3175,46 +3175,42 @@ contains
 	  
 	  
     ! ------->   Add outputs for motality rates: Liang Wei Aug 2017	    
-    call this%set_history_var(vname='M1_RATE_SCPF', units = 'N/ha/yr',          &
-          long='background mortality by pft/size', use_default='inactive', &
+    call this%set_history_var(vname='M1_RATE_SCPF', units = 'fraction/yr',          &
+          long='background mortality rate by pft/size', use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m1_rate_si_scpf )
     
-    call this%set_history_var(vname='M2_RATE_SCPF', units = 'N/ha/yr',          &
-          long='hydraulic mortality by pft/size',use_default='inactive', &
+    call this%set_history_var(vname='M2_RATE_SCPF', units = 'fraction/yr',          &
+          long='hydraulic mortality rate by pft/size',use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m2_rate_si_scpf )
 
-    call this%set_history_var(vname='M3_RATE_SCPF', units = 'N/ha/yr',          &
-          long='carbon starvation mortality by pft/size', use_default='inactive', &
+    call this%set_history_var(vname='M3_RATE_SCPF', units = 'fraction/yr',          &
+          long='carbon starvation rate mortality by pft/size', use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m3_rate_si_scpf )
 
-    call this%set_history_var(vname='M4_RATE_SCPF', units = 'N/ha/yr',          &
-          long='impact mortality by pft/size',use_default='inactive', &
+    call this%set_history_var(vname='M4_RATE_SCPF', units = 'fraction/yr',          &
+          long='impact mortality rate by pft/size',use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m4_rate_si_scpf )
 
-    call this%set_history_var(vname='M5_RATE_SCPF', units = 'N/ha/yr',          &
-          long='fire mortality by pft/size',use_default='inactive', &
+    call this%set_history_var(vname='M5_RATE_SCPF', units = 'fraction/yr',          &
+          long='fire mortality rate by pft/size',use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m5_rate_si_scpf )
 
-    call this%set_history_var(vname='M6_RATE_SCPF', units = 'N/ha/yr',          &
-          long='termination mortality by pft/size',use_default='inactive', &
+    call this%set_history_var(vname='M6_RATE_SCPF', units = 'fraction/yr',          &
+          long='termination mortality rate by pft/size',use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m6_rate_si_scpf )
 	  
-    !call this%set_history_var(vname='M13C_RATE_SCPF', units = 'N/ha/yr',          &
+    !call this%set_history_var(vname='M13C_RATE_SCPF', units = 'fraction/yr',          &
           !long='mortality indicated by d13C by pft/size', use_default='inactive', &
           !avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           !upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m13c_rate_si_scpf )  !<--------------
 	  
-	  
-	  
-	  
-	  
-	  
+	  	  
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &
