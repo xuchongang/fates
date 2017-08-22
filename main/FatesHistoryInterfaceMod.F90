@@ -158,6 +158,16 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_m4_si_scpf
   integer, private :: ih_m5_si_scpf
   integer, private :: ih_m6_si_scpf
+  !integer, private :: ih_m13c_si_scpf
+    
+  !---> added for mortality rate (Fraction per year)_ Liang Wei
+  integer, private :: ih_m1_rate_si_scpf
+  integer, private :: ih_m2_rate_si_scpf
+  integer, private :: ih_m3_rate_si_scpf
+  integer, private :: ih_m4_rate_si_scpf
+  integer, private :: ih_m5_rate_si_scpf
+  integer, private :: ih_m6_rate_si_scpf
+  !integer, private :: ih_m13c_rate_si_scpf !<-----
 
   integer, private :: ih_ar_si_scpf
   integer, private :: ih_ar_grow_si_scpf
@@ -1210,6 +1220,15 @@ contains
                hio_m4_si_scpf          => this%hvars(ih_m4_si_scpf)%r82d, &
                hio_m5_si_scpf          => this%hvars(ih_m5_si_scpf)%r82d, &
                hio_m6_si_scpf          => this%hvars(ih_m6_si_scpf)%r82d, &
+       !------> Liang Wei Aug 2017; add two kinds of variables: 1) include mortality rate defined by stable 13C isotope  2)output raw mortality rate instead of N trees
+	       hio_m13C_si_scpf        => this%hvars(ih_m13C_si_scpf)%r82d, & !Liang Wei  mortality rate defined by stable 13C isotope
+	       hio_m1_rate_si_scpf          => this%hvars(ih_m1_rate_si_scpf)%r82d, &
+               hio_m2_rate_si_scpf          => this%hvars(ih_m2_rate_si_scpf)%r82d, &
+               hio_m3_rate_si_scpf          => this%hvars(ih_m3_rate_si_scpf)%r82d, &
+               hio_m4_rate_si_scpf          => this%hvars(ih_m4_rate_si_scpf)%r82d, &
+               hio_m5_rate_si_scpf          => this%hvars(ih_m5_rate_si_scpf)%r82d, &
+               hio_m6_rate_si_scpf          => this%hvars(ih_m6_rate_si_scpf)%r82d, &
+	       !hio_m13c_rate_si_scpf          => this%hvars(ih_m13c_rate_si_scpf)%r82d, &  ! <--------	       
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_nplant_canopy_si_scls         => this%hvars(ih_nplant_canopy_si_scls)%r82d, &
                hio_nplant_understory_si_scls     => this%hvars(ih_nplant_understory_si_scls)%r82d, &
@@ -1452,7 +1471,18 @@ contains
                        hio_m3_si_scpf(io_si,scpf) = hio_m3_si_scpf(io_si,scpf) + ccohort%cmort*ccohort%n
                        hio_m4_si_scpf(io_si,scpf) = hio_m4_si_scpf(io_si,scpf) + ccohort%imort*ccohort%n
                        hio_m5_si_scpf(io_si,scpf) = hio_m5_si_scpf(io_si,scpf) + ccohort%fmort*ccohort%n
-                       
+		       !hio_m13c_si_scpf(io_si,scpf) = hio_m13c_si_scpf(io_si,scpf) + ccohort%d13cmort*ccohort%n !Liang Wei d13C mort
+		       
+		       !------>added for mortality rate instead of n/trees; Liang Wei Aug 2017                       
+                       hio_m1_rate_si_scpf(io_si,scpf) = hio_m1_rate_si_scpf(io_si,scpf) + ccohort%bmort
+                       hio_m2_rate_si_scpf(io_si,scpf) = hio_m2_rate_si_scpf(io_si,scpf) + ccohort%hmort
+                       hio_m3_rate_si_scpf(io_si,scpf) = hio_m3_rate_si_scpf(io_si,scpf) + ccohort%cmort
+                       hio_m4_rate_si_scpf(io_si,scpf) = hio_m4_rate_si_scpf(io_si,scpf) + ccohort%imort
+                       hio_m5_rate_si_scpf(io_si,scpf) = hio_m5_rate_si_scpf(io_si,scpf) + ccohort%fmort
+		       !hio_m13c_rate_si_scpf(io_si,scpf) = hio_m13c_rate_si_scpf(io_si,scpf) + ccohort%d13cmort !Liang Wei d13C mort	<------------	       
+		       
+		       
+		      
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
                             0.25_r8*3.14159_r8*((dbh/100.0_r8)**2.0_r8)*ccohort%n
@@ -1753,6 +1783,7 @@ contains
                     hio_m3_si_scpf(io_si,i_scpf) + &
                     hio_m4_si_scpf(io_si,i_scpf) + &
                     hio_m5_si_scpf(io_si,i_scpf) + &
+		    !hio_m13c_si_scpf(io_si,i_scpf) + &  !Liang Wei 
                     hio_m6_si_scpf(io_si,i_scpf) 
             end do
          end do
@@ -2538,7 +2569,8 @@ contains
          long='Rate of total mortality by PFT', use_default='active',       &
          avgflag='A', vtype=site_pft_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
          ivar=ivar, initialize=initialize_variables, index = ih_mortality_si_pft )
-
+	 
+    
     ! patch age class variables
     call this%set_history_var(vname='PATCH_AREA_BY_AGE', units='m2/m2',             &
          long='patch area by age bin', use_default='active',                     &
@@ -3135,6 +3167,54 @@ contains
           long='termination mortality by pft/size',use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m6_si_scpf )
+	  
+    !call this%set_history_var(vname='M13C_SCPF', units = 'N/ha/yr',          &
+          !long='mortality indicated by d13C by pft/size', use_default='inactive', &
+          !avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          !upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m13c_si_scpf )  
+	  
+	  
+    ! ------->   Add outputs for motality rates: Liang Wei Aug 2017	    
+    call this%set_history_var(vname='M1_RATE_SCPF', units = 'N/ha/yr',          &
+          long='background mortality by pft/size', use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m1_rate_si_scpf )
+    
+    call this%set_history_var(vname='M2_RATE_SCPF', units = 'N/ha/yr',          &
+          long='hydraulic mortality by pft/size',use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m2_rate_si_scpf )
+
+    call this%set_history_var(vname='M3_RATE_SCPF', units = 'N/ha/yr',          &
+          long='carbon starvation mortality by pft/size', use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m3_rate_si_scpf )
+
+    call this%set_history_var(vname='M4_RATE_SCPF', units = 'N/ha/yr',          &
+          long='impact mortality by pft/size',use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m4_rate_si_scpf )
+
+    call this%set_history_var(vname='M5_RATE_SCPF', units = 'N/ha/yr',          &
+          long='fire mortality by pft/size',use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m5_rate_si_scpf )
+
+    call this%set_history_var(vname='M6_RATE_SCPF', units = 'N/ha/yr',          &
+          long='termination mortality by pft/size',use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m6_rate_si_scpf )
+	  
+    !call this%set_history_var(vname='M13C_RATE_SCPF', units = 'N/ha/yr',          &
+          !long='mortality indicated by d13C by pft/size', use_default='inactive', &
+          !avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          !upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m13c_rate_si_scpf )  !<--------------
+	  
+	  
+	  
+	  
+	  
+	  
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &
