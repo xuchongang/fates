@@ -1221,7 +1221,7 @@ contains
                hio_m5_si_scpf          => this%hvars(ih_m5_si_scpf)%r82d, &
                hio_m6_si_scpf          => this%hvars(ih_m6_si_scpf)%r82d, &
        !------> Liang Wei Aug 2017; add two kinds of variables: 1) include mortality rate defined by stable 13C isotope  2)output raw mortality rate instead of N trees
-	       hio_m13C_si_scpf        => this%hvars(ih_m13C_si_scpf)%r82d, & !Liang Wei  mortality rate defined by stable 13C isotope
+	       !hio_m13C_si_scpf        => this%hvars(ih_m13C_si_scpf)%r82d, & !Liang Wei  mortality rate defined by stable 13C isotope
 	       hio_m1_rate_si_scpf          => this%hvars(ih_m1_rate_si_scpf)%r82d, &
                hio_m2_rate_si_scpf          => this%hvars(ih_m2_rate_si_scpf)%r82d, &
                hio_m3_rate_si_scpf          => this%hvars(ih_m3_rate_si_scpf)%r82d, &
