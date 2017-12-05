@@ -48,7 +48,8 @@ module EDCohortDynamicsMod
   public :: count_cohorts
   public :: allocate_live_biomass
 
-  logical, parameter :: DEBUG  = .false. ! local debug flag
+  ! logical, parameter :: DEBUG  = .false. ! local debug flag
+  logical, parameter :: DEBUG  = .true. ! local debug flag ! Hang ZHOU, temporarily turn it on for debugging
 
   character(len=*), parameter, private :: sourcefile = &
        __FILE__
@@ -401,6 +402,10 @@ contains
     currentCohort%npp_bseed = nan
     currentCohort%npp_store = nan
 
+    ! carbon 13 discrimination in new synthesized fluxes, Hang ZHOU
+    currentCohort%c13disc_clm        = nan ! c13 discrimination in new synthesized carbon flux: part-per-mil at indiv/timestep
+    currentCohort%c13disc_acc        = nan ! c13 discrimination in new synthesized carbon flux:
+    ! (part-per-mil) at indiv/daily at the end of a day
 
     !RESPIRATION
     currentCohort%rdark              = nan
@@ -497,6 +502,8 @@ contains
     currentCohort%lmort_logging      = 0._r8
     currentCohort%lmort_infra        = 0._r8
     currentCohort%lmort_collateral   = 0._r8
+    currentCohort%c13disc_clm        = 0._r8 ! Hang ZHOU
+    currentCohort%c13disc_acc        = 0._r8 ! Hang ZHOU
     !    currentCohort%npp_leaf  = 0._r8
     !    currentCohort%npp_froot = 0._r8
     !    currentCohort%npp_bsw   = 0._r8
@@ -803,6 +810,16 @@ contains
                                 currentCohort%canopy_trim = (currentCohort%n*currentCohort%canopy_trim &
                                       + nextc%n*nextc%canopy_trim)/newn
 
+                                ! Hang ZHOU, c13disc_acc calculation
+                                if ((currentCohort%n * currentCohort%gpp_acc + nextc%n * nextc%gpp_acc) .eq. 0.0_r8) then
+                                   currentCohort%c13disc_acc = 0.0_r8
+                                else
+                                   currentCohort%c13disc_acc = (currentCohort%n * currentCohort%gpp_acc * currentCohort%c13disc_acc + &
+                                        nextc%n * nextc%gpp_acc * nextc%c13disc_acc) / &
+                                        (currentCohort%n * currentCohort%gpp_acc + nextc%n * nextc%gpp_acc)
+                                endif
+
+
                                 call sizetype_class_index(currentCohort%dbh,currentCohort%pft, &
                                       currentCohort%size_class,currentCohort%size_by_pft_class)
 
@@ -865,6 +882,7 @@ contains
                                    currentCohort%bmort = (currentCohort%n*currentCohort%bmort + nextc%n*nextc%bmort)/newn
                                    currentCohort%imort = (currentCohort%n*currentCohort%imort + nextc%n*nextc%imort)/newn
                                    currentCohort%fmort = (currentCohort%n*currentCohort%fmort + nextc%n*nextc%fmort)/newn
+                                   currentCohort%d13cmort = (currentCohort%n*currentCohort%d13cmort + nextc%n*nextc%d13cmort)/newn ! Hang ZHOU
 
                                    ! logging mortality, Yi Xu
                                    currentCohort%lmort_logging = (currentCohort%n*currentCohort%lmort_logging + &
@@ -873,7 +891,7 @@ contains
                                          nextc%n*nextc%lmort_collateral)/newn
                                    currentCohort%lmort_infra = (currentCohort%n*currentCohort%lmort_infra + &
                                          nextc%n*nextc%lmort_infra)/newn
-                                   
+
                                    ! npp diagnostics
                                    currentCohort%npp_leaf  = (currentCohort%n*currentCohort%npp_leaf  + nextc%n*nextc%npp_leaf)/newn
                                    currentCohort%npp_froot = (currentCohort%n*currentCohort%npp_froot + nextc%n*nextc%npp_froot)/newn
@@ -1164,7 +1182,7 @@ contains
     n => copyc
 
     n%indexnumber     = fates_unset_int
-    
+
     ! VEGETATION STRUCTURE
     n%pft             = o%pft
     n%n               = o%n                         
@@ -1218,6 +1236,10 @@ contains
     n%npp_bseed      = o%npp_bseed
     n%npp_store      = o%npp_store
 
+    ! Hang ZHOU, c13disc
+    n%c13disc_clm = o%c13disc_clm
+    n%c13disc_acc = o%c13disc_acc
+
     !RESPIRATION
     n%rdark           = o%rdark
     n%resp_m          = o%resp_m
@@ -1225,7 +1247,7 @@ contains
     n%livestem_mr     = o%livestem_mr
     n%livecroot_mr    = o%livecroot_mr
     n%froot_mr        = o%froot_mr
- 
+
     ! ALLOCATION
     n%md              = o%md
     n%leaf_md         = o%leaf_md
@@ -1248,6 +1270,7 @@ contains
     n%imort = o%imort
     n%fmort = o%fmort
     n%hmort = o%hmort
+    n%d13cmort = o%d13cmort ! Hang ZHOU
 
     ! logging mortalities, Yi Xu
     n%lmort_logging=o%lmort_logging
