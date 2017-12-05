@@ -95,17 +95,25 @@ module EDTypesMod
   real(r8), parameter :: min_n_safemath = 1.0E-15_r8 ! in some cases, we want to immediately remove super small
                                                      ! number densities of cohorts to prevent FPEs
 
-  character*4 yearchar                    
+  character*4 yearchar
 
   ! special mode to cause PFTs to create seed mass of all currently-existing PFTs
   logical, parameter :: homogenize_seed_pfts  = .false.
 
-  integer, parameter :: nlevmclass_ed = 5      ! nlev "mortality" classes in ED
-                                               ! Number of ways to die
-                                               ! (background,hydraulic,carbon,impact,fire)
+  ! integer, parameter :: nlevmclass_ed = 5      ! nlev "mortality" classes in ED
+  !                                              ! Number of ways to die
+  !                                              ! (background,hydraulic,carbon,impact,fire)
 
-  character(len = 10), parameter,dimension(nlevmclass_ed) :: char_list = &
-       (/"background","hydraulic ","carbon    ","impact    ","fire      "/)
+  ! character(len = 10), parameter,dimension(nlevmclass_ed) :: char_list = &
+  !      (/"background","hydraulic ","carbon    ","impact    ","fire      "/)
+
+  integer, parameter :: nlevmclass_ed = 6      ! nlev "mortality" classes in ED, !6
+  ! Number of ways to die, old
+  ! (background,hydraulic,carbon,impact,fire)
+  ! Hang ZHOU change from 5 to 6
+  ! (background, hydraulic, carbon, impact, fire, d13c)
+
+  character(len = 10), parameter,dimension(nlevmclass_ed) :: char_list = (/"background", "hydraulic", "carbon", "impact", "fire", "d13c"/)
 
 
   !************************************
@@ -187,6 +195,11 @@ module EDTypesMod
      real(r8) ::  resp_acc
      real(r8) ::  resp_acc_hold
 
+     ! Hang ZHOU
+     ! carbon d13c discrimination
+     real(r8) ::  c13disc_clm                            ! carbon 13 discrimination in new synthesized carbon: part-per-mil, at each indiv/timestep
+     real(r8) ::  c13disc_acc                            ! carbon 13 discrimination in new synthesized carbon: part-per-mil, at each indiv/day, at the end of a day
+
      ! Net Primary Production Partitions
 
      real(r8) ::  npp_leaf                               ! NPP into leaves (includes replacement of turnover):  KgC/indiv/year
@@ -228,6 +241,7 @@ module EDTypesMod
      real(r8) ::  hmort                                  ! hydraulic failure mortality rate n/year
      real(r8) ::  imort                                  ! mortality from impacts by others n/year
      real(r8) ::  fmort                                  ! fire mortality                   n/year
+     real(r8) ::  d13cmort                               ! d13c related drought induced mortality rate n/year, Hang ZHOU
 
       ! Logging Mortality Rate 
 	 ! Yi Xu
