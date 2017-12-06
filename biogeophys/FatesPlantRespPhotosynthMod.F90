@@ -1,9 +1,9 @@
 module FATESPlantRespPhotosynthMod
-   
+
    !-------------------------------------------------------------------------------------
    ! !DESCRIPTION:
    ! Calculates the plant respiration and photosynthetic fluxes for the FATES model
-   ! This code is similar to and was originally based off of the 'photosynthesis' 
+   ! This code is similar to and was originally based off of the 'photosynthesis'
    ! subroutine in the CLM model.
    !
    ! Parameter for activation and deactivation energies were taken from:
@@ -17,7 +17,7 @@ module FATESPlantRespPhotosynthMod
    ! Photosynthesis and stomatal conductance parameters, from:
    ! Bonan et al (2011) JGR, 116, doi:10.1029/2010JG001593
    ! ------------------------------------------------------------------------------------
-   
+
    ! !USES:
 
    use FatesGlobals, only      : endrun => fates_endrun
@@ -29,28 +29,28 @@ module FATESPlantRespPhotosynthMod
    use EDTypesMod, only        : maxpft
    use EDTypesMod, only        : nlevleaf
    use EDTypesMod, only        : nclmax
-   
+
    ! CIME Globals
    use shr_log_mod , only      : errMsg => shr_log_errMsg
 
    implicit none
    private
-   
+
    public :: FatesPlantRespPhotosynthDrive ! Called by the HLM-Fates interface
-   
+
    character(len=*), parameter, private :: sourcefile = &
          __FILE__
    !-------------------------------------------------------------------------------------
-   
+
    ! maximum stomatal resistance [s/m] (used across several procedures)
-   real(r8),parameter :: rsmax0 =  2.e4_r8                    
-   
+   real(r8),parameter :: rsmax0 =  2.e4_r8
+
    logical   ::  DEBUG = .false.
 
 contains
-  
+
   !--------------------------------------------------------------------------------------
-  
+
   subroutine FatesPlantRespPhotosynthDrive (nsites, sites,bc_in,bc_out,dtime)
 
     ! -----------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ contains
 
     ! !USES:
 
-    use EDPftvarcon         , only : EDPftvarcon_inst 
+    use EDPftvarcon         , only : EDPftvarcon_inst
 
     use FatesSynchronizedParamsMod , only : FatesSynchronizedParamsInst
     use EDTypesMod        , only : ed_patch_type
@@ -118,28 +118,33 @@ contains
     real(r8) :: lmr_z(nlevleaf,maxpft,nclmax)
 
     ! stomatal resistance s/m
-    real(r8) :: rs_z(nlevleaf,maxpft,nclmax)    
+    real(r8) :: rs_z(nlevleaf,maxpft,nclmax)
 
-    ! net leaf photosynthesis averaged over sun and shade leaves. (umol CO2/m**2/s) 
-    real(r8) :: anet_av_z(nlevleaf,maxpft,nclmax)  
-    
+    ! net leaf photosynthesis averaged over sun and shade leaves. (umol CO2/m**2/s)
+    real(r8) :: anet_av_z(nlevleaf,maxpft,nclmax)
+
     ! Mask used to determine which leaf-layer biophysical rates have been
     ! used already
     logical :: rate_mask_z(nlevleaf,maxpft,nclmax)
 
-    real(r8) :: vcmax_z            ! leaf layer maximum rate of carboxylation 
+    real(r8) :: vcmax_z            ! leaf layer maximum rate of carboxylation
                                    ! (umol co2/m**2/s)
-    real(r8) :: jmax_z             ! leaf layer maximum electron transport rate 
+    real(r8) :: jmax_z             ! leaf layer maximum electron transport rate
                                    ! (umol electrons/m**2/s)
-    real(r8) :: tpu_z              ! leaf layer triose phosphate utilization rate 
+    real(r8) :: tpu_z              ! leaf layer triose phosphate utilization rate
                                    ! (umol CO2/m**2/s)
-    real(r8) :: kp_z               ! leaf layer initial slope of CO2 response 
+    real(r8) :: kp_z               ! leaf layer initial slope of CO2 response
                                    ! curve (C4 plants)
-   
+
+    ! Hang ZHOU
+    real(r8) :: c13disc_z(nclmax,mxpft,nlevcan_ed) ! carbon 13 in new synthesized flux at leaf level
+    real(r8) :: sum_weight                         ! sum of weight for unpacking d13c flux (c13disc_z) from
+                                                   ! (canopy_layer, pft, leaf_layer) matrix to cohort (c13disc_clm)
+
     real(r8) :: mm_kco2            ! Michaelis-Menten constant for CO2 (Pa)
     real(r8) :: mm_ko2             ! Michaelis-Menten constant for O2 (Pa)
     real(r8) :: co2_cpoint         ! CO2 compensation point (Pa)
-    real(r8) :: btran_eff          ! effective transpiration wetness factor (0 to 1) 
+    real(r8) :: btran_eff          ! effective transpiration wetness factor (0 to 1)
     real(r8) :: bbb                ! Ball-Berry minimum leaf conductance (umol H2O/m**2/s)
     real(r8) :: kn(maxpft)          ! leaf nitrogen decay coefficient
     real(r8) :: cf                 ! s m**2/umol -> s/m
@@ -148,24 +153,24 @@ contains
     real(r8) :: nscaler            ! leaf nitrogen scaling coefficient
     real(r8) :: leaf_frac          ! ratio of to leaf biomass to total alive biomass
     real(r8) :: laican             ! canopy sum of lai_z
-    real(r8) :: vai                ! leaf and steam area in ths layer. 
-    real(r8) :: tcsoi              ! Temperature response function for root respiration. 
+    real(r8) :: vai                ! leaf and steam area in ths layer.
+    real(r8) :: tcsoi              ! Temperature response function for root respiration.
     real(r8) :: tcwood             ! Temperature response function for wood
     real(r8) :: rscanopy           ! Canopy resistance [s/m]
     real(r8) :: elai               ! exposed LAI (patch scale)
-    real(r8) :: live_stem_n        ! Live stem (above-ground sapwood) 
+    real(r8) :: live_stem_n        ! Live stem (above-ground sapwood)
                                    ! nitrogen content (kgN/plant)
-    real(r8) :: live_croot_n       ! Live coarse root (below-ground sapwood) 
+    real(r8) :: live_croot_n       ! Live coarse root (below-ground sapwood)
                                    ! nitrogen content (kgN/plant)
     real(r8) :: froot_n            ! Fine root nitrogen content (kgN/plant)
     real(r8) :: gccanopy_pa        ! Patch level canopy stomatal conductance  [mmol m-2 s-1]
-    
+
     ! -----------------------------------------------------------------------------------
     ! Keeping these two definitions in case they need to be added later
     !
     ! -----------------------------------------------------------------------------------
     !real(r8) :: psncanopy_pa  ! patch sunlit leaf photosynthesis (umol CO2 /m**2/ s)
-    !real(r8) :: lmrcanopy_pa  ! patch sunlit leaf maintenance respiration rate (umol CO2/m**2/s) 
+    !real(r8) :: lmrcanopy_pa  ! patch sunlit leaf maintenance respiration rate (umol CO2/m**2/s)
 
     integer  :: cl,s,iv,j,ps,ft,ifp ! indices
     integer  :: nv                  ! number of leaf layers
@@ -191,14 +196,14 @@ contains
     ! Ball-Berry minimum leaf conductance, unstressed (umol H2O/m**2/s)
     ! For C3 and C4 plants
     ! -----------------------------------------------------------------------------------
-    real(r8), dimension(2) :: bbbopt 
+    real(r8), dimension(2) :: bbbopt
 
 
     associate(  &
          c3psn     => EDPftvarcon_inst%c3psn  , &
-         slatop    => EDPftvarcon_inst%slatop , & ! specific leaf area at top of canopy, 
+         slatop    => EDPftvarcon_inst%slatop , & ! specific leaf area at top of canopy,
                                                   ! projected area basis [m^2/gC]
-         woody     => EDPftvarcon_inst%woody  , & ! Is vegetation woody or not? 
+         woody     => EDPftvarcon_inst%woody  , & ! Is vegetation woody or not?
          leafcn    => EDPftvarcon_inst%leafcn , & ! leaf C:N (gC/gN)
          frootcn   => EDPftvarcon_inst%frootcn, & ! froot C:N (gc/gN)   ! slope of BB relationship
          q10       => FatesSynchronizedParamsInst%Q10 )
@@ -211,25 +216,25 @@ contains
          ! Multi-layer parameters scaled by leaf nitrogen profile.
          ! Loop through each canopy layer to calculate nitrogen profile using
          ! cumulative lai at the midpoint of the layer
-         
+
          ifp = 0
          currentpatch => sites(s)%oldest_patch
-         do while (associated(currentpatch))  
+         do while (associated(currentpatch))
 
             ifp   = ifp+1
             NCL_p = currentPatch%NCL_p
-            
+
             ! Part I. Zero output boundary conditions
             ! ---------------------------------------------------------------------------
             bc_out(s)%rssun_pa(ifp)     = 0._r8
             bc_out(s)%rssha_pa(ifp)     = 0._r8
 
             gccanopy_pa = 0._r8
-            
+
             !psncanopy_pa = 0._r8
             !lmrcanopy_pa = 0._r8
 
-            ! Part II. Filter out patches 
+            ! Part II. Filter out patches
             ! Patch level filter flag for photosynthesis calculations
             ! has a short memory, flags:
             ! 1 = patch has not been called
@@ -674,16 +679,16 @@ contains
                                      anet_av_out)          ! out
 
     ! ------------------------------------------------------------------------------------
-    ! This subroutine calculates photosynthesis and stomatal conductance within each leaf 
+    ! This subroutine calculates photosynthesis and stomatal conductance within each leaf
     ! sublayer.
     ! A note on naming conventions: As this subroutine is called for every
     ! leaf-sublayer, many of the arguments are specific to that "leaf sub layer"
     ! (LSL), those variables are given a dimension tag "_lsl"
     ! Other arguments or variables may be indicative of scales broader than the LSL.
     ! ------------------------------------------------------------------------------------
-    
+
     use EDPftvarcon       , only : EDPftvarcon_inst
-    
+
     ! Arguments
     ! ------------------------------------------------------------------------------------
     real(r8), intent(in) :: f_sun_lsl         ! 
@@ -699,7 +704,7 @@ contains
     real(r8), intent(in) :: co2_rcurve_islope ! initial slope of CO2 response curve (C4 plants)
     real(r8), intent(in) :: veg_tempk         ! vegetation temperature
     real(r8), intent(in) :: veg_esat          ! saturation vapor pressure at veg_tempk (Pa)
-    
+
     ! Important Note on the following gas pressures.  This photosynthesis scheme will iteratively
     ! solve for the co2 partial pressure at the leaf surface (ie in the stomata). The reference
     ! point for these input values are NOT within that boundary layer that separates the stomata from
