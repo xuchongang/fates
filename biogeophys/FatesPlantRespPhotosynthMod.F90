@@ -138,8 +138,6 @@ contains
 
     ! Hang ZHOU
     real(r8) :: c13disc_z(nclmax,mxpft,nlevcan_ed) ! carbon 13 in new synthesized flux at leaf level
-    real(r8) :: sum_weight                         ! sum of weight for unpacking d13c flux (c13disc_z) from
-                                                   ! (canopy_layer, pft, leaf_layer) matrix to cohort (c13disc_clm)
 
     real(r8) :: mm_kco2            ! Michaelis-Menten constant for CO2 (Pa)
     real(r8) :: mm_ko2             ! Michaelis-Menten constant for O2 (Pa)
@@ -454,9 +452,11 @@ contains
                         currentCohort%resp_m     = 0.0_r8
                         currentCohort%ts_net_uptake = 0.0_r8
 
+                        currentCohort%c13disc_clm = 0.0_r8 ! Hang ZHOU
+
                         ! ---------------------------------------------------------------
                         ! Part VII: Transfer leaf flux rates (like maintenance respiration,
-                        ! carbon assimilation and conductance) that are defined by the 
+                        ! carbon assimilation and conductance) that are defined by the
                         ! leaf layer (which is area independent, ie /m2) onto each cohort
                         ! (where the rates become per cohort, ie /individual). Most likely
                         ! a sum over layers.
@@ -468,6 +468,7 @@ contains
                                                         rs_z(1:nv,ft,cl),                      & !in
                                                         anet_av_z(1:nv,ft,cl),                 & !in
                                                         currentPatch%elai_profile(cl,ft,1:nv), & !in
+                                                        c13disc_z(cl, ft, 1:nv),               & !in Hang ZHOU
                                                         currentCohort%c_area,                  & !in
                                                         currentCohort%n,                       & !in
                                                         currentCohort%treelai,                 & !in
@@ -475,40 +476,39 @@ contains
                                                         bc_in(s)%rb_pa(ifp),                   & !in
                                                         currentCohort%gscan,                   & !out
                                                         currentCohort%gpp_tstep,               & !out
-                                                        currentCohort%rdark)                     !out
+                                                        currentCohort%rdark                    & !out
+                                                        currentCohort%c13disc_clm)               !out
 
                         ! Net Uptake does not need to be scaled, just transfer directly
                         currentCohort%ts_net_uptake(1:nv) = anet_av_z(1:nv,ft,cl) * umolC_to_kgC
 
                      else
-                        
-                        ! In this case, the cohort had no leaves, 
+
+                        ! In this case, the cohort had no leaves,
                         ! so no productivity,conductance, transpiration uptake
                         ! or dark respiration
-                        
-                        currentCohort%gpp_tstep = 0.0_r8 
-                        currentCohort%rdark = 0.0_r8 
-                        currentCohort%gscan = 0.0_r8 
+
+                        currentCohort%gpp_tstep = 0.0_r8
+                        currentCohort%rdark = 0.0_r8
+                        currentCohort%gscan = 0.0_r8
                         currentCohort%ts_net_uptake(:) = 0.0_r8
-                        
+
                      end if  ! if(currentPatch%present(cl,ft) == 1)then
-                     
+
 
                      ! ------------------------------------------------------------------
                      ! Part VIII: Calculate maintenance respiration in the sapwood and
                      ! fine root pools.
                      ! ------------------------------------------------------------------
-                     
+
                      leaf_frac = 1.0_r8/(currentCohort%canopy_trim + &
                           EDPftvarcon_inst%allom_latosa_int(currentCohort%pft) * &
                           currentCohort%hite + EDPftvarcon_inst%allom_l2fr(currentCohort%pft))
-                     
-                     
+
                      currentCohort%bsw = EDPftvarcon_inst%allom_latosa_int(currentCohort%pft) * &
                           currentCohort%hite * &
                           (currentCohort%balive + currentCohort%laimemory)*leaf_frac
-                     
-                        
+
                      ! Calculate the amount of nitrogen in the above and below ground 
                      ! stem and root pools, used for maint resp
                      ! We are using the fine-root C:N ratio as an approximation for
@@ -1030,12 +1030,13 @@ contains
 
   ! =====================================================================================
 
-  subroutine ScaleLeafLayerFluxToCohort(nv,    & ! in   currentCohort%nv
+  subroutine ScaleLeafLayerFluxToCohort(nv,          & ! in   currentCohort%nv
                                         psn_llz,     & ! in   %psn_z(1:currentCohort%nv,ft,cl)
                                         lmr_llz,     & ! in   lmr_z(1:currentCohort%nv,ft,cl)
                                         rs_llz,      & ! in   rs_z(1:currentCohort%nv,ft,cl)
                                         anet_av_llz, & ! in   anet_av_z(1:currentCohort%nv,ft,cl)
                                         elai_llz,    & ! in   %elai_profile(cl,ft,1:currentCohort%nv)
+                                        c13disc_llz  & ! in   c13disc_z(cl, ft, 1:currentCohort%nv)
                                         c_area,      & ! in   currentCohort%c_area
                                         nplant,      & ! in   currentCohort%n
                                         treelai,     & ! in   currentCohort%treelai
@@ -1043,7 +1044,8 @@ contains
                                         rb,          & ! in   bc_in(s)%rb_pa(ifp)
                                         gscan,       & ! out  currentCohort%gscan
                                         gpp,         & ! out  currentCohort%gpp_tstep
-                                        rdark)         ! out  currentCohort%rdark
+                                        rdark        & ! out  currentCohort%rdark
+                                        c13disc_clm)   ! out  currentCohort%c13disc_clm
 
     ! ------------------------------------------------------------------------------------
     ! This subroutine effectively integrates leaf carbon fluxes over the
@@ -1055,60 +1057,76 @@ contains
 
     use FatesConstantsMod, only : umolC_to_kgC
     use EDTypesMod, only : dinc_ed
-    
+
     ! Arguments
     integer, intent(in)  :: nv               ! number of active leaf layers
-    real(r8), intent(in) :: psn_llz(nv)      ! umolC/m2leaf/s 
-    real(r8), intent(in) :: lmr_llz(nv)      ! umolC/m2leaf/s 
+    real(r8), intent(in) :: psn_llz(nv)      ! umolC/m2leaf/s
+    real(r8), intent(in) :: lmr_llz(nv)      ! umolC/m2leaf/s
     real(r8), intent(in) :: rs_llz(nv)       ! s/m
-    real(r8), intent(in) :: anet_av_llz(nv)  ! umolC/m2leaf/s 
+    real(r8), intent(in) :: anet_av_llz(nv)  ! umolC/m2leaf/s
     real(r8), intent(in) :: elai_llz(nv)     ! exposed LAI per layer
+    real(r8), intent(in) :: c13disc_llz(nv)  ! Hang ZHOU c13 discrimination llz
     real(r8), intent(in) :: c_area           ! crown area m2/m2
     real(r8), intent(in) :: nplant           ! indiv/m2
     real(r8), intent(in) :: treelai          ! m2/m2
     real(r8), intent(in) :: treesai          ! m2/m2
     real(r8), intent(in) :: rb               ! boundary layer resistance (s/m)
-    
-    real(r8), intent(out) :: gscan      ! Canopy conductance of the cohort m/s
-    real(r8), intent(out) :: gpp        ! GPP (kgC/indiv/s)
-    real(r8), intent(out) :: rdark      ! Dark Leaf Respiration (kgC/indiv/s)
-    
+
+    real(r8), intent(out) :: gscan           ! Canopy conductance of the cohort m/s
+    real(r8), intent(out) :: gpp             ! GPP (kgC/indiv/s)
+    real(r8), intent(out) :: rdark           ! Dark Leaf Respiration (kgC/indiv/s)
+
+    real(r8), intent(out) :: c13disc_clm     ! Hang ZHOU, unpacked Cohort level c13 discrimination
+
+    real(r8) :: sum_weight                   ! Hang ZHOU, sum of weight for unpacking d13c flux (c13disc_z) from
+
+    ! (canopy_layer, pft, leaf_layer) matrix to cohort (c13disc_clm)
     ! GPP IN THIS SUBROUTINE IS A RATE. THE CALLING ARGUMENT IS GPP_TSTEP. AFTER THIS
     ! CALL THE RATE WILL BE MULTIPLIED BY THE INTERVAL TO GIVE THE INTEGRATED QUANT.
-    
+
     ! Locals
     real(r8) :: tree_area
     real(r8) :: laifrac
-    
-    ! Convert from umolC/m2leaf/s to umolC/indiv/s ( x canopy area x 1m2 leaf area). 
+
+    ! Convert from umolC/m2leaf/s to umolC/indiv/s ( x canopy area x 1m2 leaf area).
     tree_area = c_area/nplant
-    
+
     ! The routine is only called if there are leaves.  If there are leaves,
     ! there is at least 1 layer
-    
+
     laifrac = (treelai+treesai)-dble(nv-1)*dinc_ed
-    
+
     ! Canopy Conductance
-    gscan = 1.0_r8/(rs_llz(nv)+rb)*laifrac*tree_area   
-    
+    gscan = 1.0_r8/(rs_llz(nv)+rb)*laifrac*tree_area
+
     ! GPP
     gpp = psn_llz(nv) * elai_llz(nv) * laifrac * tree_area
-    
+
     ! Dark respiration
-    rdark = lmr_llz(nv) * elai_llz(nv) * laifrac * tree_area 
-    
+    rdark = lmr_llz(nv) * elai_llz(nv) * laifrac * tree_area
+
     ! If there is more than one layer, add the sum over the others
     if ( nv>1 ) then
        gpp   = gpp + sum(psn_llz(1:nv-1) * elai_llz(1:nv-1)) * tree_area
-       rdark = rdark + sum(lmr_llz(1:nv-1) * elai_llz(1:nv-1)) * tree_area 
-       gscan = gscan + sum((1.0_r8/(rs_llz(1:nv-1) + rb ))) * tree_area 
+       rdark = rdark + sum(lmr_llz(1:nv-1) * elai_llz(1:nv-1)) * tree_area
+       gscan = gscan + sum((1.0_r8/(rs_llz(1:nv-1) + rb ))) * tree_area
+
+       ! Hang ZHOU, 2016-09-11
+       ! cohort%c13disc_clm as weighted mean of d13c flux at all related leave layers
+       sum_weight = sum(psn_llz(1:nv-1) * elai_llz(1:nv-1))
+       if (sum_weight .eq. 0.0_r8) then
+          c13disc_clm = 0.0
+       else
+          c13disc_clm = sum(c13disc_llz(1:nv-1) * psn_llz(1:nv-1) * elai_llz(1:nv-1)) / sum_weight
+       end if
+
     end if
-    
+
     ! Convert dark respiration and GPP from umol/plant/s to kgC/plant/s
-    
+
     rdark     = rdark * umolC_to_kgC
     gpp       = gpp * umolC_to_kgC
-    
+
     if ( DEBUG ) then
        write(fates_log(),*) 'EDPhoto 816 ', gpp
        write(fates_log(),*) 'EDPhoto 817 ', psn_llz(1:nv)
@@ -1119,7 +1137,7 @@ contains
        write(fates_log(),*) 'EDPhoto 872 ', tree_area
        write(fates_log(),*) 'EDPhoto 873 ', nv
     endif
-    
+
     return
   end subroutine ScaleLeafLayerFluxToCohort
 
