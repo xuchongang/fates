@@ -103,7 +103,7 @@ contains
     ! in one loop and then sent to the cohorts in another loop.  If hydraulics are
     ! on, we calculate a unique solution for each level-cohort-layer combination.
     ! If we are not using hydraulics, we calculate a unique solution for each
-    ! level-pft-layer combination.  Thus the following three arrays are statically 
+    ! level-pft-layer combination.  Thus the following three arrays are statically
     ! allocated for the maximum space of the two cases (numCohortsPerPatch)
     ! The "_z" suffix indicates these variables are discretized at the "leaf_layer"
     ! scale.
@@ -244,8 +244,8 @@ contains
             if(bc_in(s)%filter_photo_pa(ifp)==2)then
 
 
-               ! Part III. Calculate the number of sublayers for each pft and layer.  
-               ! And then identify which layer/pft combinations have things in them.  
+               ! Part III. Calculate the number of sublayers for each pft and layer.
+               ! And then identify which layer/pft combinations have things in them.
                ! Output:
                ! currentPatch%ncan(:,:)
                ! currentPatch%present(:,:)
@@ -267,7 +267,7 @@ contains
                                            bc_in(s)%eair_pa(ifp),    & ! in
                                            bc_in(s)%esat_tv_pa(ifp), & ! in
                                            bc_in(s)%rb_pa(ifp),      & ! in
-                                           mm_kco2,                  & ! out              
+                                           mm_kco2,                  & ! out
                                            mm_ko2,                   & ! out
                                            co2_cpoint,               & ! out
                                            cf,                       & ! out
@@ -281,17 +281,17 @@ contains
                do ft = 1,numpft
 
                   ! Bonan et al (2011) JGR, 116, doi:10.1029/2010JG001593 used
-                  ! kn = 0.11. Here, derive kn from vcmax25 as in Lloyd et al 
+                  ! kn = 0.11. Here, derive kn from vcmax25 as in Lloyd et al
                   ! (2010) Biogeosciences, 7, 1833-1859
                   ! Remove daylength factor from vcmax25 so that kn is based on maximum vcmax25
-                  
+
                   if (bc_in(s)%dayl_factor_pa(ifp)  ==  0._r8) then
                      kn(ft) =  0._r8
                   else
                      kn(ft) = exp(0.00963_r8 * EDPftvarcon_inst%vcmax25top(ft) - 2.43_r8)
                   end if
-                  
-               end do !ft 
+
+               end do !ft
 
                call set_root_fraction(currentPatch,bc_in(s)%zi_sisl)
 
@@ -320,37 +320,37 @@ contains
 
                   currentCohort => currentPatch%tallest
                   do while (associated(currentCohort)) ! Cohort loop
-                     
+
                      ! Identify the canopy layer (cl), functional type (ft)
                      ! and the leaf layer (IV) for this cohort
                      ft = currentCohort%pft
                      cl = currentCohort%canopy_layer
-                     
+
 
                      ! are there any leaves of this pft in this layer?
-                     if(currentPatch%present(cl,ft) == 1)then 
-                        
+                     if(currentPatch%present(cl,ft) == 1)then
+
                         if(cl==NCL_p)then !are we in the top canopy layer or a shaded layer?
                            laican = 0._r8
                         else
-                           laican = sum(currentPatch%canopy_layer_lai(cl+1:NCL_p)) 
+                           laican = sum(currentPatch%canopy_layer_lai(cl+1:NCL_p))
                         end if
-                        
+
                         ! Loop over leaf-layers
                         do iv = 1,currentCohort%nv
-                           
+
                            ! ------------------------------------------------------------
                            ! If we are doing plant hydro-dynamics (or any run-type
                            ! where cohorts may generate different photosynthetic rates
-                           ! of other cohorts in the same canopy-pft-layer combo), 
-                           ! we re-calculate the leaf biophysical rates for the 
-                           ! cohort-layer combo of interest.  
+                           ! of other cohorts in the same canopy-pft-layer combo),
+                           ! we re-calculate the leaf biophysical rates for the
+                           ! cohort-layer combo of interest.
                            ! but in the vanilla case, we only re-calculate if it has
                            ! not been done yet.
                            ! ------------------------------------------------------------
-                           
+
                            if ( .not.rate_mask_z(iv,ft,cl) .or. (hlm_use_planthydro.eq.itrue) ) then
-                              
+
                               if (hlm_use_planthydro.eq.itrue) then
 !                                 write(fates_log(),*) 'hlm_use_planthydro'
 !                                 write(fates_log(),*) 'has been set to true.  You have inadvertently'
@@ -360,21 +360,21 @@ contains
 !                                 call endrun(msg=errMsg(sourcefile, __LINE__))
 
                                  bbb   = max (bbbopt(nint(c3psn(ft)))*currentCohort%co_hydr%btran(1), 1._r8)
-                                 btran_eff = currentCohort%co_hydr%btran(1) 
+                                 btran_eff = currentCohort%co_hydr%btran(1)
                               else
                                  bbb   = max (bbbopt(nint(c3psn(ft)))*currentPatch%btran_ft(ft), 1._r8)
                                  btran_eff = currentPatch%btran_ft(ft)
                               end if
-                              
+
                               ! Vegetation area index
-                              vai = (currentPatch%elai_profile(cl,ft,iv)+currentPatch%esai_profile(cl,ft,iv)) 
+                              vai = (currentPatch%elai_profile(cl,ft,iv)+currentPatch%esai_profile(cl,ft,iv))
                               if (iv == 1) then
                                  laican = laican + 0.5_r8 * vai
                               else
                                  laican = laican + 0.5_r8 * (currentPatch%elai_profile(cl,ft,iv-1)+ &
                                        currentPatch%esai_profile(cl,ft,iv-1))+vai
                               end if
-                              
+
                               ! Scale for leaf nitrogen profile
                               nscaler = exp(-kn(ft) * laican)
 
@@ -384,10 +384,10 @@ contains
                                                                     ft,                       &  ! in
                                                                     bc_in(s)%t_veg_pa(ifp),   &  ! in
                                                                     lmr_z(iv,ft,cl))             ! out
-                              
-                              ! Part VII: Calculate (1) maximum rate of carboxylation (vcmax), 
-                              ! (2) maximum electron transport rate, (3) triose phosphate 
-                              ! utilization rate and (4) the initial slope of CO2 response curve 
+
+                              ! Part VII: Calculate (1) maximum rate of carboxylation (vcmax),
+                              ! (2) maximum electron transport rate, (3) triose phosphate
+                              ! utilization rate and (4) the initial slope of CO2 response curve
                               ! (C4 plants). Earlier we calculated their base rates as dictated
                               ! by their plant functional type and some simple scaling rules for
                               ! nitrogen limitation baesd on canopy position (not prognostic).
@@ -408,8 +408,8 @@ contains
                                                              jmax_z,                             &  ! out
                                                              tpu_z,                              &  ! out
                                                              kp_z )                                 ! out
-                              
-                              ! Part IX: This call calculates the actual photosynthesis for the 
+
+                              ! Part IX: This call calculates the actual photosynthesis for the
                               ! leaf layer, as well as the stomatal resistance and the net assimilated carbon.
 
                               call LeafLayerPhotosynthesis(currentPatch%f_sun(cl,ft,iv),    &  ! in
@@ -439,7 +439,8 @@ contains
                                                         lmr_z(iv,ft,cl),                    &  ! in
                                                         currentPatch%psn_z(cl,ft,iv),       &  ! out
                                                         rs_z(iv,ft,cl),                     &  ! out
-                                                        anet_av_z(iv,ft,cl))                   ! out
+                                                        anet_av_z(iv,ft,cl)                 &  ! out
+                                                        c13disc_z(cl,ft,iv))                   ! out  ! Hang ZHOU
 
                               rate_mask_z(iv,ft,cl) = .true.
                            end if
@@ -475,7 +476,7 @@ contains
                                                         currentCohort%gscan,                   & !out
                                                         currentCohort%gpp_tstep,               & !out
                                                         currentCohort%rdark)                     !out
-                        
+
                         ! Net Uptake does not need to be scaled, just transfer directly
                         currentCohort%ts_net_uptake(1:nv) = anet_av_z(1:nv,ft,cl) * umolC_to_kgC
 
@@ -648,7 +649,7 @@ contains
  end subroutine FatesPlantRespPhotosynthDrive
   
   ! =======================================================================================
-  
+
   subroutine LeafLayerPhotosynthesis(f_sun_lsl,         &  ! in
                                      parsun_lsl,        &  ! in
                                      parsha_lsl,        &  ! in
@@ -676,7 +677,8 @@ contains
                                      lmr,               &  ! in
                                      psn_out,           &  ! out
                                      rstoma_out,        &  ! out
-                                     anet_av_out)          ! out
+                                     anet_av_out        &  ! out
+                                     c13disc_z)          ! out
 
     ! ------------------------------------------------------------------------------------
     ! This subroutine calculates photosynthesis and stomatal conductance within each leaf
@@ -691,12 +693,12 @@ contains
 
     ! Arguments
     ! ------------------------------------------------------------------------------------
-    real(r8), intent(in) :: f_sun_lsl         ! 
+    real(r8), intent(in) :: f_sun_lsl         !
     real(r8), intent(in) :: parsun_lsl        ! Absorbed PAR in sunlist leaves
     real(r8), intent(in) :: parsha_lsl        ! Absorved PAR in shaded leaves
     real(r8), intent(in) :: laisun_lsl        ! LAI in sunlit leaves
     real(r8), intent(in) :: laisha_lsl        ! LAI in shaded leaves
-    real(r8), intent(in) :: canopy_area_lsl   ! 
+    real(r8), intent(in) :: canopy_area_lsl   !
     integer,  intent(in) :: ft                ! (plant) Functional Type Index
     real(r8), intent(in) :: vcmax             ! maximum rate of carboxylation (umol co2/m**2/s)
     real(r8), intent(in) :: jmax              ! maximum electron transport rate (umol electrons/m**2/s)
@@ -714,11 +716,11 @@ contains
     ! but most likely it is the closest value one can get to the edge of the leaf's boundary
     ! layer.  We use the convention "can_" because a reference point of within the canopy
     ! ia a best reasonable scenario of where we can get that information from.
- 
+
    real(r8), intent(in) :: can_press       ! Air pressure NEAR the surface of the leaf (Pa)
-   real(r8), intent(in) :: can_co2_ppress  ! Partial pressure of CO2 NEAR the leaf surface (Pa) 
-   real(r8), intent(in) :: can_o2_ppress   ! Partial pressure of O2 NEAR the leaf surface (Pa) 
-   real(r8), intent(in) :: btran           ! transpiration wetness factor (0 to 1) 
+   real(r8), intent(in) :: can_co2_ppress  ! Partial pressure of CO2 NEAR the leaf surface (Pa)
+   real(r8), intent(in) :: can_o2_ppress   ! Partial pressure of O2 NEAR the leaf surface (Pa)
+   real(r8), intent(in) :: btran           ! transpiration wetness factor (0 to 1)
    real(r8), intent(in) :: bbb             ! Ball-Berry minimum leaf conductance (umol H2O/m**2/s)
    real(r8), intent(in) :: cf              ! s m**2/umol -> s/m
    real(r8), intent(in) :: gb_mol          ! leaf boundary layer conductance (umol H2O/m**2/s)
@@ -727,11 +729,12 @@ contains
    real(r8), intent(in) :: mm_ko2          ! Michaelis-Menten constant for O2 (Pa)
    real(r8), intent(in) :: co2_cpoint      ! CO2 compensation point (Pa)
    real(r8), intent(in) :: lmr             ! Leaf Maintenance Respiration  (umol CO2/m**2/s)
-   
+
    real(r8), intent(out) :: psn_out        ! carbon assimilated in this leaf layer umolC/m2/s
    real(r8), intent(out) :: rstoma_out     ! stomatal resistance (1/gs_lsl) (s/m)
-   real(r8), intent(out) :: anet_av_out    ! net leaf photosynthesis (umol CO2/m**2/s) 
-                                           ! averaged over sun and shade leaves.  
+   real(r8), intent(out) :: anet_av_out    ! net leaf photosynthesis (umol CO2/m**2/s)
+                                           ! averaged over sun and shade leaves.
+   real(r8), intent(out) :: c13disc_z      ! Hang ZHOU
 
    ! Locals
    ! ------------------------------------------------------------------------
@@ -754,7 +757,7 @@ contains
    real(r8) :: gs_mol_err        ! gs_mol for error check
    real(r8) :: ac                ! Rubisco-limited gross photosynthesis (umol CO2/m**2/s)
    real(r8) :: aj                ! RuBP-limited gross photosynthesis (umol CO2/m**2/s)
-   real(r8) :: ap                ! product-limited (C3) or CO2-limited  
+   real(r8) :: ap                ! product-limited (C3) or CO2-limited
                                  ! (C4) gross photosynthesis (umol CO2/m**2/s)
    real(r8) :: ai                ! intermediate co-limited photosynthesis (umol CO2/m**2/s)
    real(r8) :: leaf_co2_ppress   ! CO2 partial pressure at leaf surface (Pa)
@@ -762,11 +765,11 @@ contains
    ! Parameters
    ! ------------------------------------------------------------------------
    ! Fraction of light absorbed by non-photosynthetic pigments
-   real(r8),parameter :: fnps = 0.15_r8       
+   real(r8),parameter :: fnps = 0.15_r8
 
    ! empirical curvature parameter for electron transport rate
-   real(r8),parameter :: theta_psii = 0.7_r8   
-   
+   real(r8),parameter :: theta_psii = 0.7_r8
+
    ! First guess on ratio between intracellular co2 and the atmosphere
    ! an iterator converges on actual
    real(r8),parameter :: init_a2l_co2_c3 = 0.7_r8
@@ -782,7 +785,7 @@ contains
    real(r8),parameter :: theta_ip = 0.95_r8
 
    associate( bb_slope  => EDPftvarcon_inst%BB_slope ) ! slope of BB relationship
-     
+
      if (nint(EDPftvarcon_inst%c3psn(ft)) == 1) then! photosynthetic pathway: 0. = c4, 1. = c3
         pp_type = 1
         init_co2_intra_c = init_a2l_co2_c3 * can_co2_ppress
@@ -793,53 +796,55 @@ contains
 
      ! Part III: Photosynthesis and Conductance
      ! ----------------------------------------------------------------------------------
-     
+
      if ( parsun_lsl <= 0._r8 ) then  ! night time
 
         anet_av_out = 0._r8
         psn_out     = 0._r8
         rstoma_out  = min(rsmax0, 1._r8/bbb * cf)
-        
+
+        c13disc_z = 1.0_r8 ! Hang ZHOU, carbon 13 discrimination in night time carbon flux, from CLM, not sure why
+
      else ! day time (a little bit more complicated ...)
-        
+
 !        if ( DEBUG ) write(fates_log(),*) 'EDphot 594 ',laisun_lsl
 !        if ( DEBUG ) write(fates_log(),*) 'EDphot 595 ',laisha_lsl
 
         !is there leaf area? - (NV can be larger than 0 with only stem area if deciduous)
-        if ( laisun_lsl + laisha_lsl > 0._r8 ) then 
+        if ( laisun_lsl + laisha_lsl > 0._r8 ) then
 
 !           if ( DEBUG ) write(fates_log(),*) '600 in laisun, laisha loop '
-           
-           !Loop aroun shaded and unshaded leaves          
-           psn_out     = 0._r8    ! psn is accumulated across sun and shaded leaves. 
-           rstoma_out  = 0._r8    ! 1/rs is accumulated across sun and shaded leaves. 
+
+           !Loop aroun shaded and unshaded leaves
+           psn_out     = 0._r8    ! psn is accumulated across sun and shaded leaves.
+           rstoma_out  = 0._r8    ! 1/rs is accumulated across sun and shaded leaves.
            anet_av_out = 0._r8
            gstoma  = 0._r8
-           
-           do  sunsha = 1,2      
-              ! Electron transport rate for C3 plants. 
+
+           do  sunsha = 1,2
+              ! Electron transport rate for C3 plants.
               ! Convert par from W/m2 to umol photons/m**2/s using the factor 4.6
-              ! Convert from units of par absorbed per unit ground area to par 
-              ! absorbed per unit leaf area. 
-              
+              ! Convert from units of par absorbed per unit ground area to par
+              ! absorbed per unit leaf area.
+
               if(sunsha == 1)then !sunlit
                  if(( laisun_lsl * canopy_area_lsl) > 0.0000000001_r8)then
 
-                    qabs = parsun_lsl / (laisun_lsl * canopy_area_lsl )   
-                    qabs = qabs * 0.5_r8 * (1._r8 - fnps) *  4.6_r8 
-                    
+                    qabs = parsun_lsl / (laisun_lsl * canopy_area_lsl )
+                    qabs = qabs * 0.5_r8 * (1._r8 - fnps) *  4.6_r8
+
                  else
                     qabs = 0.0_r8
                  end if
               else
 
-                 qabs = parsha_lsl / (laisha_lsl * canopy_area_lsl)  
-                 qabs = qabs * 0.5_r8 * (1._r8 - fnps) *  4.6_r8 
+                 qabs = parsha_lsl / (laisha_lsl * canopy_area_lsl)
+                 qabs = qabs * 0.5_r8 * (1._r8 - fnps) *  4.6_r8
 
               end if
 
-              !convert the absorbed par into absorbed par per m2 of leaf, 
-              ! so it is consistant with the vcmax and lmr numbers. 
+              !convert the absorbed par into absorbed par per m2 of leaf,
+              ! so it is consistant with the vcmax and lmr numbers.
               aquad = theta_psii
               bquad = -(qabs + jmax)
               cquad = qabs * jmax
@@ -851,15 +856,15 @@ contains
 
               niter = 0
               loop_continue = .true.
-              do while(loop_continue)                 
+              do while(loop_continue)
                  ! Increment iteration counter. Stop if too many iterations
                  niter = niter + 1
-                 
+
                  ! Save old co2_intra_c
                  co2_intra_c_old = co2_intra_c
-                 
-                 ! Photosynthesis limitation rate calculations 
-                 if (pp_type == 1)then    
+
+                 ! Photosynthesis limitation rate calculations
+                 if (pp_type == 1)then
 
                     ! C3: Rubisco-limited photosynthesis
                     ac = vcmax * max(co2_intra_c-co2_cpoint, 0._r8) / &
@@ -868,19 +873,19 @@ contains
                     ! C3: RuBP-limited photosynthesis
                     aj = je * max(co2_intra_c-co2_cpoint, 0._r8) / &
                           (4._r8*co2_intra_c+8._r8*co2_cpoint)
-                 
-                    ! C3: Product-limited photosynthesis 
+
+                    ! C3: Product-limited photosynthesis
                     ap = 3._r8 * tpu
-                 
+
                  else
-                    
+
                     ! C4: Rubisco-limited photosynthesis
                     ac = vcmax
 
                     ! C4: RuBP-limited photosynthesis
                     if(sunsha == 1)then !sunlit
                        !guard against /0's in the night.
-                       if((laisun_lsl * canopy_area_lsl) > 0.0000000001_r8) then   
+                       if((laisun_lsl * canopy_area_lsl) > 0.0000000001_r8) then
                           aj = quant_eff(pp_type) * parsun_lsl * 4.6_r8
                           !convert from per cohort to per m2 of leaf)
                           aj = aj / (laisun_lsl * canopy_area_lsl)
@@ -893,8 +898,8 @@ contains
                     end if
 
                     ! C4: PEP carboxylase-limited (CO2-limited)
-                    ap = co2_rcurve_islope * max(co2_intra_c, 0._r8) / can_press  
-                    
+                    ap = co2_rcurve_islope * max(co2_intra_c, 0._r8) / can_press
+
                  end if
 
                  ! Gross photosynthesis smoothing calculations. First co-limit ac and aj. Then co-limit ap
@@ -918,8 +923,8 @@ contains
 
                  ! Quadratic gs_mol calculation with an known. Valid for an >= 0.
                  ! With an <= 0, then gs_mol = bbb
-                 
-                 leaf_co2_ppress = can_co2_ppress- 1.4_r8/gb_mol * anet * can_press 
+
+                 leaf_co2_ppress = can_co2_ppress- 1.4_r8/gb_mol * anet * can_press
                  leaf_co2_ppress = max(leaf_co2_ppress,1.e-06_r8)
                  aquad = leaf_co2_ppress
                  bquad = leaf_co2_ppress*(gb_mol - bbb) - bb_slope(ft) * anet * can_press
@@ -928,93 +933,101 @@ contains
 
                  call quadratic_f (aquad, bquad, cquad, r1, r2)
                  gs_mol = max(r1,r2)
-                 
+
                  ! Derive new estimate for co2_intra_c
                  co2_intra_c = can_co2_ppress - anet * can_press * &
                        (1.4_r8*gs_mol+1.6_r8*gb_mol) / (gb_mol*gs_mol)
 
-                 ! Check for co2_intra_c convergence. Delta co2_intra_c/pair = mol/mol. 
-                 ! Multiply by 10**6 to convert to umol/mol (ppm). Exit iteration if 
-                 ! convergence criteria of +/- 1 x 10**-6 ppm is met OR if at least ten 
+                 ! Check for co2_intra_c convergence. Delta co2_intra_c/pair = mol/mol.
+                 ! Multiply by 10**6 to convert to umol/mol (ppm). Exit iteration if
+                 ! convergence criteria of +/- 1 x 10**-6 ppm is met OR if at least ten
                  ! iterations (niter=10) are completed
-                 
+
                  if ((abs(co2_intra_c-co2_intra_c_old)/can_press*1.e06_r8 <=  2.e-06_r8) &
                        .or. niter == 5) then
                     loop_continue = .false.
                  end if
               end do !iteration loop
-              
+
               ! End of co2_intra_c iteration.  Check for an < 0, in which case gs_mol = bbb
               if (anet < 0._r8) then
                  gs_mol = bbb
               end if
-              
-              ! Final estimates for leaf_co2_ppress and co2_intra_c 
+
+              ! Final estimates for leaf_co2_ppress and co2_intra_c
               ! (needed for early exit of co2_intra_c iteration when an < 0)
               leaf_co2_ppress = can_co2_ppress - 1.4_r8/gb_mol * anet * can_press
               leaf_co2_ppress = max(leaf_co2_ppress,1.e-06_r8)
               co2_intra_c = can_co2_ppress - anet * can_press * &
                             (1.4_r8*gs_mol+1.6_r8*gb_mol) / (gb_mol*gs_mol)
-              
+
               ! Convert gs_mol (umol H2O/m**2/s) to gs (m/s) and then to rs (s/m)
               gs = gs_mol / cf
-              
+
+              ! Hang ZHOU
+              ! estimate carbon 13 discrimination in leaf level carbon flux, based on
+              ! doi:10.1111/pce.12346, using the simplified model:
+              ! $\Delta ^{13} C = \alpha_s + (b - \alpha_s) \cdot \frac{C_i}{C_a}$
+              ! just hard code b and \alpha_s for now, might move to parameter set in future
+              ! b = 27.0 alpha_s = 4.4
+              ! TODO, not considering C4 right now, need to address this
+              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * co2_intra_c / ceair
+
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 737 ', psn_out
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 738 ', agross
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 739 ', f_sun_lsl
 
-              ! Accumulate total photosynthesis umol/m2 ground/s-1. 
+              ! Accumulate total photosynthesis umol/m2 ground/s-1.
               ! weight per unit sun and sha leaves.
-              if(sunsha == 1)then !sunlit       
+              if(sunsha == 1)then !sunlit
                  psn_out     = psn_out + agross * f_sun_lsl
                  anet_av_out = anet_av_out + anet * f_sun_lsl
                  gstoma  = gstoma + 1._r8/(min(1._r8/gs, rsmax0)) * f_sun_lsl
               else
-                 psn_out = psn_out + agross * (1.0_r8-f_sun_lsl)                 
-                 anet_av_out = anet_av_out + anet * (1.0_r8-f_sun_lsl) 
+                 psn_out = psn_out + agross * (1.0_r8-f_sun_lsl)
+                 anet_av_out = anet_av_out + anet * (1.0_r8-f_sun_lsl)
                  gstoma  = gstoma + &
-                       1._r8/(min(1._r8/gs, rsmax0)) * (1.0_r8-f_sun_lsl) 
+                       1._r8/(min(1._r8/gs, rsmax0)) * (1.0_r8-f_sun_lsl)
               end if
 
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 758 ', psn_out
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 759 ', agross
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 760 ', f_sun_lsl
-              
+
               ! Make sure iterative solution is correct
               if (gs_mol < 0._r8) then
                  write (fates_log(),*)'Negative stomatal conductance:'
                  write (fates_log(),*)'gs_mol= ',gs_mol
                  call endrun(msg=errMsg(sourcefile, __LINE__))
               end if
-              
+
               ! Compare with Ball-Berry model: gs_mol = m * an * hs/leaf_co2_ppress p + b
               hs = (gb_mol*ceair + gs_mol* veg_esat ) / ((gb_mol+gs_mol)*veg_esat )
               gs_mol_err = bb_slope(ft)*max(anet, 0._r8)*hs/leaf_co2_ppress*can_press + bbb
-              
+
               if (abs(gs_mol-gs_mol_err) > 1.e-01_r8) then
                  write (fates_log(),*) 'CF: Ball-Berry error check - stomatal conductance error:'
                  write (fates_log(),*) gs_mol, gs_mol_err
               end if
-              
+
            enddo !sunsha loop
-           
-           !average leaf-level stomatal resistance rate over sun and shade leaves... 
+
+           !average leaf-level stomatal resistance rate over sun and shade leaves...
            rstoma_out = 1._r8/gstoma
-           
+
         else
-           !No leaf area. This layer is present only because of stems. 
+           !No leaf area. This layer is present only because of stems.
            ! (leaves are off, or have reduced to 0)
            psn_out = 0._r8
            rstoma_out = min(rsmax0, 1._r8/bbb * cf)
-           
-        end if !is there leaf area? 
-        
-        
-     end if    ! night or day 
+           c13disc_z = 0.0_r8 ! Hang ZHOU
+
+        end if !is there leaf area?
+     end if    ! night or day
    end associate
    return
   end subroutine LeafLayerPhotosynthesis
- 
+
   ! =====================================================================================
 
   subroutine ScaleLeafLayerFluxToCohort(nv,    & ! in   currentCohort%nv
@@ -1031,7 +1044,7 @@ contains
                                         gscan,       & ! out  currentCohort%gscan
                                         gpp,         & ! out  currentCohort%gpp_tstep
                                         rdark)         ! out  currentCohort%rdark
-   
+
     ! ------------------------------------------------------------------------------------
     ! This subroutine effectively integrates leaf carbon fluxes over the
     ! leaf layers to give cohort totals.
@@ -1039,7 +1052,7 @@ contains
     ! is stratefied in the leaf-layer (ll)  dimension, and is a portion of the calling
     ! array which has the "_z" tag, thus "llz".
     ! ------------------------------------------------------------------------------------
-    
+
     use FatesConstantsMod, only : umolC_to_kgC
     use EDTypesMod, only : dinc_ed
     
