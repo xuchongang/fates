@@ -68,10 +68,10 @@ contains
           if( bc_in(s)%filter_photo_pa(ifp) == 3 ) then
              ccohort => cpatch%shortest
              do while(associated(ccohort))
-                
-                ! Accumulate fluxes from hourly to daily values. 
+
+                ! Accumulate fluxes from hourly to daily values.
                 ! _tstep fluxes are KgC/indiv/timestep _acc are KgC/indiv/day
-                
+
                 if ( DEBUG ) then
 
                    write(fates_log(),*) 'EDAccumFlux 64 ',ccohort%npp_tstep
@@ -80,10 +80,18 @@ contains
 
                 endif
 
-                ccohort%npp_acc  = ccohort%npp_acc  + ccohort%npp_tstep 
-                ccohort%gpp_acc  = ccohort%gpp_acc  + ccohort%gpp_tstep 
+                ! Hang ZHOU
+                if((currentCohort%gpp_acc + currentCohort%gpp_clm) .eq. 0.0_r8) then
+                   currentCohort%c13disc_acc = 0.0_r8
+                else
+                   currentCohort%c13disc_acc  = ((currentCohort%c13disc_acc * currentCohort%gpp_acc) + (currentCohort%c13disc_clm * currentCohort%gpp_clm)) / &
+                        (currentCohort%gpp_acc + currentCohort%gpp_clm)
+                endif
+
+                ccohort%npp_acc  = ccohort%npp_acc  + ccohort%npp_tstep
+                ccohort%gpp_acc  = ccohort%gpp_acc  + ccohort%gpp_tstep
                 ccohort%resp_acc = ccohort%resp_acc + ccohort%resp_tstep
-                
+
                 !----- THE FOLLOWING IS ONLY IMPLEMENTED TEMPORARILY FOR B4B reproducibility
                 !----- ALSO, THERE IS NO REASON TO USE THE ISNEW FLAG HERE
                 if ((cpatch%area .gt. 0._r8) .and. (cpatch%total_canopy_area .gt. 0._r8)) then
@@ -101,7 +109,7 @@ contains
                    end if
                    ccohort%year_net_uptake(iv) = ccohort%year_net_uptake(iv) + ccohort%ts_net_uptake(iv)
                 enddo
-                
+
                 ccohort => ccohort%taller
              enddo ! while(associated(ccohort))
           end if
