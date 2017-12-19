@@ -404,10 +404,10 @@ contains
 
 ! ============================================================================
 
-  subroutine mortality_rates( cohort_in,cmort,hmort,bmort )
+  subroutine mortality_rates( cohort_in,cmort,hmort,bmort, d13cmort )
 
     ! ============================================================================
-    !  Calculate mortality rates as a function of carbon storage       
+    !  Calculate mortality rates as a function of carbon storage
     ! ============================================================================
 
     use EDParamsMod,  only : ED_val_stress_mort
@@ -417,6 +417,7 @@ contains
     real(r8),intent(out) :: bmort ! background mortality : Fraction per year
     real(r8),intent(out) :: cmort  ! carbon starvation mortality
     real(r8),intent(out) :: hmort  ! hydraulic failure mortality
+    real(r8),intent(out) :: d13cmort  ! d13c related drought induced mortality, Hang ZHOU
 
     real(r8) :: frac  ! relativised stored carbohydrate
 
@@ -425,18 +426,36 @@ contains
 
     if (hlm_use_ed_prescribed_phys .eq. ifalse) then
 
-    ! 'Background' mortality (can vary as a function of density as in ED1.0 and ED2.0, but doesn't here for tractability) 
-    bmort = EDPftvarcon_inst%bmort(cohort_in%pft) 
+    ! Hang ZHOU
+    real(r8), parameter :: d13c_critical = -22.0_r8 ! -20
+    real(r8), parameter :: d13c_mortrate = 0.6_r8
+    integer ::&
+        yr,    &! year
+        mon,   &! month
+        day,   &! day of month
+        tod     ! time of day (seconds past 0Z)
+    real(r8) :: d13c_background = 0.0_r8
 
-    ! Proxy for hydraulic failure induced mortality. 
+    ! Hang ZHOU, calculate background d13c
+    call get_curr_date(yr, mon, day, tod)
+    if (yr < 1740) then
+      d13c_background = -6.429_r8
+    else
+      d13c_background = -6.429_r8 - 0.0060_r8 * exp(0.0217_r8 * (yr - 1740))
+    endif
+
+    ! 'Background' mortality (can vary as a function of density as in ED1.0 and ED2.0, but doesn't here for tractability)
+    bmort = EDPftvarcon_inst%bmort(cohort_in%pft)
+
+    ! Proxy for hydraulic failure induced mortality.
     hf_sm_threshold = EDPftvarcon_inst%hf_sm_threshold(cohort_in%pft)
 
-    if(cohort_in%patchptr%btran_ft(cohort_in%pft) <= hf_sm_threshold)then 
+    if(cohort_in%patchptr%btran_ft(cohort_in%pft) <= hf_sm_threshold)then
        hmort = ED_val_stress_mort
      else
        hmort = 0.0_r8
-     endif 
-    
+     endif
+
     ! Carbon Starvation induced mortality.
     if ( cohort_in%dbh  >  0._r8 ) then
        if(Bleaf(cohort_in) > 0._r8 .and. cohort_in%bstore <= Bleaf(cohort_in))then
@@ -445,11 +464,23 @@ contains
         else
           cmort = 0.0_r8
        endif
-
     else
        write(fates_log(),*) 'dbh problem in mortality_rates', &
             cohort_in%dbh,cohort_in%pft,cohort_in%n,cohort_in%canopy_layer
     endif
+
+    ! D13C related drought induced mortality
+    ! some quick output of the daily weighted mean d13c flux for debugging
+
+    if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical)then
+       d13cmort = d13c_mortrate
+    else
+       d13cmort = 0.0_r8
+    endif
+    if (DEBUG_growth) write(iulog, *) 'MORTALITY I, c13disc_acc', cohort_in%c13disc_acc
+    if (DEBUG_growth) write(iulog, *) 'MORTALITY II, d13cmort', d13cmort
+    if (DEBUG_growth) write(iulog, *) 'MORTALITY III, d13c_background', d13c_background
+    if (DEBUG_growth) write(iulog, *) 'MORTALITY IV, year', yr
 
     !mortality_rates = bmort + hmort + cmort
 

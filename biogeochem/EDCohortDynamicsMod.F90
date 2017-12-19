@@ -405,7 +405,7 @@ contains
     ! carbon 13 discrimination in new synthesized fluxes, Hang ZHOU
     currentCohort%c13disc_clm        = nan ! c13 discrimination in new synthesized carbon flux: part-per-mil at indiv/timestep
     currentCohort%c13disc_acc        = nan ! c13 discrimination in new synthesized carbon flux:
-    ! (part-per-mil) at indiv/daily at the end of a day
+                                           ! (part-per-mil) at indiv/daily at the end of a day
 
     !RESPIRATION
     currentCohort%rdark              = nan
