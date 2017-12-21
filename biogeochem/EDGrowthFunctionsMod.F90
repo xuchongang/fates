@@ -39,7 +39,7 @@ contains
 
     ! ============================================================================
     !  Creates diameter in cm as a function of height in m
-    !  Height(m) diameter(cm) relationships. O'Brien et al  - for 56 patch at BCI                                    
+    !  Height(m) diameter(cm) relationships. O'Brien et al  - for 56 patch at BCI
     ! ============================================================================
 
     type(ed_cohort_type), intent(in) :: cohort_in
@@ -62,8 +62,8 @@ contains
   real(r8) function Hite( cohort_in )
 
     ! ============================================================================
-    !  Creates height in m as a function of diameter in cm. 
-    !  Height(m) diameter(cm) relationships. O'Brien et al  - for 56 pft at BCI                                    
+    !  Creates height in m as a function of diameter in cm.
+    !  Height(m) diameter(cm) relationships. O'Brien et al  - for 56 pft at BCI
     ! ============================================================================
 
     type(ed_cohort_type), intent(inout) :: cohort_in
@@ -80,15 +80,15 @@ contains
        cohort_in%dbh = 0.1_r8
     endif
 
-    ! if the hite is larger than the maximum allowable height (set by dbhmax) then 
-    ! set the height to the maximum value. 
+    ! if the hite is larger than the maximum allowable height (set by dbhmax) then
+    ! set the height to the maximum value.
     ! this could do with at least re-factoring and probably re-thinking. RF
     if(cohort_in%dbh <= EDPftvarcon_inst%allom_dbh_maxheight(cohort_in%pft)) then
        h = (10.0_r8**(log10(cohort_in%dbh) * m + c))
-    else 
+    else
        h = (10.0_r8**(log10(EDPftvarcon_inst%allom_dbh_maxheight(cohort_in%pft))*m + c))
     endif
-    Hite = h 
+    Hite = h
 
     return
 
@@ -99,35 +99,35 @@ contains
   real(r8) function Bleaf( cohort_in )
 
     ! ============================================================================
-    !  Creates leaf biomass (kGC) as a function of tree diameter.  
+    !  Creates leaf biomass (kGC) as a function of tree diameter.
     ! ============================================================================
 
-    type(ed_cohort_type), intent(in) :: cohort_in       
-    
-    real(r8) :: dbh2bl_a 
+    type(ed_cohort_type), intent(in) :: cohort_in
+
+    real(r8) :: dbh2bl_a
     real(r8) :: dbh2bl_b
     real(r8) :: dbh2bl_c
 
     dbh2bl_a  =  EDPftvarcon_inst%allom_d2bl1(cohort_in%pft)
     dbh2bl_b  =  EDPftvarcon_inst%allom_d2bl2(cohort_in%pft)
     dbh2bl_c  =  EDPftvarcon_inst%allom_d2bl3(cohort_in%pft)
-    
+
     if(cohort_in%dbh < 0._r8.or.cohort_in%pft == 0.or.cohort_in%dbh > 1000.0_r8)then
        write(fates_log(),*) 'problems in bleaf',cohort_in%dbh,cohort_in%pft
     endif
 
     if(cohort_in%dbh <= EDPftvarcon_inst%allom_dbh_maxheight(cohort_in%pft))then
-       bleaf = dbh2bl_a * (cohort_in%dbh**dbh2bl_b) * EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bl_c 
-    else  
+       bleaf = dbh2bl_a * (cohort_in%dbh**dbh2bl_b) * EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bl_c
+    else
        bleaf = dbh2bl_a * (EDPftvarcon_inst%allom_dbh_maxheight(cohort_in%pft)**dbh2bl_b) * &
             EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bl_c
-    endif  
+    endif
 
     !write(fates_log(),*) 'bleaf',bleaf, slascaler,cohort_in%pft
-    
-    !Adjust for canopies that have become so deep that their bottom layer is not producing any carbon... 
-    !nb this will change the allometry and the effects of this remain untested. RF. April 2014  
-    
+
+    !Adjust for canopies that have become so deep that their bottom layer is not producing any carbon...
+    !nb this will change the allometry and the effects of this remain untested. RF. April 2014
+
      bleaf = bleaf * cohort_in%canopy_trim
 
     return
@@ -138,10 +138,10 @@ contains
   real(r8) function tree_lai( cohort_in )
 
     ! ============================================================================
-    !  LAI of individual trees is a function of the total leaf area and the total canopy area.   
+    !  LAI of individual trees is a function of the total leaf area and the total canopy area.
     ! ============================================================================
 
-    type(ed_cohort_type), intent(inout) :: cohort_in       
+    type(ed_cohort_type), intent(inout) :: cohort_in
 
     real(r8) :: leafc_per_unitarea ! KgC of leaf per m2 area of ground.
     real(r8) :: slat               ! the sla of the top leaf layer. m2/kgC
@@ -150,12 +150,12 @@ contains
        write(fates_log(),*) 'problem in treelai',cohort_in%bl,cohort_in%pft
     endif
 
-    if( cohort_in%status_coh  ==  2 ) then ! are the leaves on? 
+    if( cohort_in%status_coh  ==  2 ) then ! are the leaves on?
        slat = 1000.0_r8 * EDPftvarcon_inst%slatop(cohort_in%pft) ! m2/g to m2/kg
        cohort_in%c_area = c_area(cohort_in) ! call the tree area
        leafc_per_unitarea = cohort_in%bl/(cohort_in%c_area/cohort_in%n) !KgC/m2
        if(leafc_per_unitarea > 0.0_r8)then
-          tree_lai = leafc_per_unitarea * slat  !kg/m2 * m2/kg = unitless LAI 
+          tree_lai = leafc_per_unitarea * slat  !kg/m2 * m2/kg = unitless LAI
        else
           tree_lai = 0.0_r8
        endif
@@ -165,8 +165,8 @@ contains
     cohort_in%treelai = tree_lai
 
     ! here, if the LAI exceeeds the maximum size of the possible array, then we have no way of accomodating it
-    ! at the moments nlevleaf default is 40, which is very large, so exceeding this would clearly illustrate a 
-    ! huge error 
+    ! at the moments nlevleaf default is 40, which is very large, so exceeding this would clearly illustrate a
+    ! huge error
     if(cohort_in%treelai > nlevleaf*dinc_ed)then
        write(fates_log(),*) 'too much lai' , cohort_in%treelai , cohort_in%pft , nlevleaf * dinc_ed
     endif
@@ -174,35 +174,35 @@ contains
     return
 
   end function tree_lai
-  
+
   ! ============================================================================
 
   real(r8) function tree_sai( cohort_in )
 
     ! ============================================================================
-    !  SAI of individual trees is a function of the total dead biomass per unit canopy area.   
+    !  SAI of individual trees is a function of the total dead biomass per unit canopy area.
     ! ============================================================================
 
-    type(ed_cohort_type), intent(inout) :: cohort_in       
+    type(ed_cohort_type), intent(inout) :: cohort_in
 
     real(r8) :: bdead_per_unitarea ! KgC of leaf per m2 area of ground.
-    real(r8) :: sai_scaler     
+    real(r8) :: sai_scaler
 
-    sai_scaler = EDPftvarcon_inst%allom_sai_scaler(cohort_in%pft) 
+    sai_scaler = EDPftvarcon_inst%allom_sai_scaler(cohort_in%pft)
 
     if( cohort_in%bdead  <  0._r8 .or. cohort_in%pft  ==  0 ) then
        write(fates_log(),*) 'problem in treesai',cohort_in%bdead,cohort_in%pft
     endif
 
-    cohort_in%c_area = c_area(cohort_in) ! call the tree area 
+    cohort_in%c_area = c_area(cohort_in) ! call the tree area
     bdead_per_unitarea = cohort_in%bdead/(cohort_in%c_area/cohort_in%n) !KgC/m2
-    tree_sai = bdead_per_unitarea * sai_scaler !kg/m2 * m2/kg = unitless LAI 
-   
+    tree_sai = bdead_per_unitarea * sai_scaler !kg/m2 * m2/kg = unitless LAI
+
     cohort_in%treesai = tree_sai
 
     ! here, if the LAI exceeeds the maximum size of the possible array, then we have no way of accomodating it
-    ! at the moments nlevleaf default is 40, which is very large, so exceeding this would clearly illustrate a 
-    ! huge error 
+    ! at the moments nlevleaf default is 40, which is very large, so exceeding this would clearly illustrate a
+    ! huge error
     if(cohort_in%treesai > nlevleaf*dinc_ed)then
        write(fates_log(),*) 'too much sai' , cohort_in%treesai , cohort_in%pft , nlevleaf * dinc_ed
     endif
@@ -210,7 +210,7 @@ contains
     return
 
   end function tree_sai
-  
+
 
 ! ============================================================================
 
@@ -218,14 +218,14 @@ contains
 
     ! ============================================================================
     ! Calculate area of ground covered by entire cohort. (m2)
-    ! Function of DBH (cm) canopy spread (m/cm) and number of individuals. 
+    ! Function of DBH (cm) canopy spread (m/cm) and number of individuals.
     ! ============================================================================
 
     use EDTypesMod               , only : nclmax
 
-    type(ed_cohort_type), intent(in) :: cohort_in       
+    type(ed_cohort_type), intent(in) :: cohort_in
 
-    real(r8) :: dbh ! Tree diameter at breat height. cm. 
+    real(r8) :: dbh ! Tree diameter at breat height. cm.
     real(r8) :: crown_area_to_dbh_exponent
     real(r8) :: spreadterm
 
@@ -233,7 +233,7 @@ contains
     ! but allowed to vary via the allom_blca_expnt_diff term (which has default value of zero)
     crown_area_to_dbh_exponent = EDPftvarcon_inst%allom_d2bl2(cohort_in%pft) + &
           EDPftvarcon_inst%allom_blca_expnt_diff(cohort_in%pft)
-    
+
     if (DEBUG_growth) then
        write(fates_log(),*) 'z_area 1',cohort_in%dbh,cohort_in%pft
        write(fates_log(),*) 'z_area 2',EDPftvarcon_inst%allom_dbh_maxheight
@@ -242,9 +242,9 @@ contains
        write(fates_log(),*) 'z_area 5',cohort_in%siteptr%spread
        write(fates_log(),*) 'z_area 6',cohort_in%canopy_layer
     end if
-    
+
     dbh = min(cohort_in%dbh,EDPftvarcon_inst%allom_dbh_maxheight(cohort_in%pft))
-    
+
     ! ----------------------------------------------------------------------------------
     ! The function c_area is called during the process of canopy position demotion
     ! and promotion. As such, some cohorts are temporarily elevated to canopy positions
@@ -254,7 +254,7 @@ contains
     ! So we allow layer index exceedence here and force it down to max.
     ! (rgk/cdk 05/2017)
     ! ----------------------------------------------------------------------------------
-    
+
     ! apply site-level spread elasticity to the cohort crown allometry term
     spreadterm = cohort_in%siteptr%spread * EDPftvarcon_inst%allom_d2ca_coefficient_max(cohort_in%pft) + &
          (1._r8 - cohort_in%siteptr%spread) * EDPftvarcon_inst%allom_d2ca_coefficient_min(cohort_in%pft)
@@ -269,8 +269,8 @@ contains
 
     ! ============================================================================
     ! Calculate stem biomass from height(m) dbh(cm) and wood density(g/cm3)
-    ! default params using allometry of J.G. Saldarriaga et al 1988 - Rio Negro                                  
-    ! Journal of Ecology vol 76 p938-958  
+    ! default params using allometry of J.G. Saldarriaga et al 1988 - Rio Negro
+    ! Journal of Ecology vol 76 p938-958
     !
     ! NOTE (RGK 07-2017) Various other biomass allometries calculate above ground
     ! biomass, and it appear Saldariagga may be an outlier that calculates total
@@ -278,20 +278,20 @@ contains
     !
     ! ============================================================================
 
-    type(ed_cohort_type), intent(in) :: cohort_in       
+    type(ed_cohort_type), intent(in) :: cohort_in
 
    real(r8) :: dbh2bd_a
    real(r8) :: dbh2bd_b
    real(r8) :: dbh2bd_c
    real(r8) :: dbh2bd_d
-   
+
    dbh2bd_a =  EDPftvarcon_inst%allom_agb1(cohort_in%pft)
    dbh2bd_b =  EDPftvarcon_inst%allom_agb2(cohort_in%pft)
-   dbh2bd_c =  EDPftvarcon_inst%allom_agb3(cohort_in%pft)  
+   dbh2bd_c =  EDPftvarcon_inst%allom_agb3(cohort_in%pft)
    dbh2bd_d =  EDPftvarcon_inst%allom_agb4(cohort_in%pft)
 
    bdead = dbh2bd_a*(cohort_in%hite**dbh2bd_b)*(cohort_in%dbh**dbh2bd_c)* &
-        (EDPftvarcon_inst%wood_density(cohort_in%pft)** dbh2bd_d)  
+        (EDPftvarcon_inst%wood_density(cohort_in%pft)** dbh2bd_d)
 
   end function Bdead
 
@@ -300,27 +300,27 @@ contains
   real(r8) function dHdBd( cohort_in )
 
     ! ============================================================================
-    ! convert changes in structural biomass to changes in height                                        
-    ! consistent with Bstem and h-dbh allometries                               
+    ! convert changes in structural biomass to changes in height
+    ! consistent with Bstem and h-dbh allometries
     ! ============================================================================
 
     type(ed_cohort_type), intent(in)  :: cohort_in
 
-    real(r8) :: dbddh ! rate of change of dead biomass (KgC) per unit change of height (m) 
+    real(r8) :: dbddh ! rate of change of dead biomass (KgC) per unit change of height (m)
     real(r8) :: dbh2bd_a
     real(r8) :: dbh2bd_b
     real(r8) :: dbh2bd_c
     real(r8) :: dbh2bd_d
-    
+
     dbh2bd_a =  EDPftvarcon_inst%allom_agb1(cohort_in%pft)
     dbh2bd_b =  EDPftvarcon_inst%allom_agb2(cohort_in%pft)
-    dbh2bd_c =  EDPftvarcon_inst%allom_agb3(cohort_in%pft)  
+    dbh2bd_c =  EDPftvarcon_inst%allom_agb3(cohort_in%pft)
     dbh2bd_d =  EDPftvarcon_inst%allom_agb4(cohort_in%pft)
-    
+
     dbddh =  dbh2bd_a*dbh2bd_b*(cohort_in%hite**(dbh2bd_b-1.0_r8))*(cohort_in%dbh**dbh2bd_c)* &
          (EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bd_d)
-    dHdBd = 1.0_r8/dbddh !m/KgC 
-    
+    dHdBd = 1.0_r8/dbddh !m/KgC
+
     return
 
   end function dHdBd
@@ -329,14 +329,14 @@ contains
   real(r8) function dDbhdBd( cohort_in )
 
     ! ============================================================================
-    ! convert changes in structural biomass to changes in diameter                                        
-    ! consistent with Bstem and h-dbh allometries                               
+    ! convert changes in structural biomass to changes in diameter
+    ! consistent with Bstem and h-dbh allometries
     ! ============================================================================
 
-    type(ed_cohort_type), intent(in) :: cohort_in 
+    type(ed_cohort_type), intent(in) :: cohort_in
 
-    real(r8) :: dBD_dDBH !Rate of change of dead biomass (KgC) with change in DBH (cm) 
-    real(r8) :: dH_dDBH  !Rate of change of height (m) with change in DBH (cm) 
+    real(r8) :: dBD_dDBH !Rate of change of dead biomass (KgC) with change in DBH (cm)
+    real(r8) :: dH_dDBH  !Rate of change of height (m) with change in DBH (cm)
     real(r8) :: m
     real(r8) :: c
     real(r8) :: h
@@ -347,20 +347,20 @@ contains
 
     m = EDPftvarcon_inst%allom_d2h1(cohort_in%pft)
     c = EDPftvarcon_inst%allom_d2h2(cohort_in%pft)
-    
+
     dbh2bd_a =  EDPftvarcon_inst%allom_agb1(cohort_in%pft)
     dbh2bd_b =  EDPftvarcon_inst%allom_agb2(cohort_in%pft)
-    dbh2bd_c =  EDPftvarcon_inst%allom_agb3(cohort_in%pft)  
+    dbh2bd_c =  EDPftvarcon_inst%allom_agb3(cohort_in%pft)
     dbh2bd_d =  EDPftvarcon_inst%allom_agb4(cohort_in%pft)
-    
+
     dBD_dDBH =  dbh2bd_c*dbh2bd_a*(cohort_in%hite**dbh2bd_b)*(cohort_in%dbh**(dbh2bd_c-1.0_r8))* &
-         (EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bd_d)  
+         (EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bd_d)
 
     if(cohort_in%dbh < EDPftvarcon_inst%allom_dbh_maxheight(cohort_in%pft))then
-       dH_dDBH = (10.0_r8**c)*m*(cohort_in%dbh**(m-1.0_r8))          
+       dH_dDBH = (10.0_r8**c)*m*(cohort_in%dbh**(m-1.0_r8))
 
        dBD_dDBH =  dBD_dDBH + dbh2bd_b*dbh2bd_a*(cohort_in%hite**(dbh2bd_b - 1.0_r8))* &
-            (cohort_in%dbh**dbh2bd_c)*(EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bd_d)*dH_dDBH 
+            (cohort_in%dbh**dbh2bd_c)*(EDPftvarcon_inst%wood_density(cohort_in%pft)**dbh2bd_d)*dH_dDBH
     endif
 
     dDbhdBd = 1.0_r8/dBD_dDBH
@@ -374,7 +374,7 @@ contains
   real(r8) function dDbhdBl( cohort_in )
 
     ! ============================================================================
-    ! convert changes in leaf biomass (KgC) to changes in DBH (cm)                                
+    ! convert changes in leaf biomass (KgC) to changes in DBH (cm)
     ! ============================================================================
 
     type(ed_cohort_type), intent(in) :: cohort_in
@@ -383,7 +383,7 @@ contains
     real(r8) :: dbh2bl_a
     real(r8) :: dbh2bl_b
     real(r8) :: dbh2bl_c
-    
+
     dbh2bl_a =  EDPftvarcon_inst%allom_d2bl1(cohort_in%pft)
     dbh2bl_b =  EDPftvarcon_inst%allom_d2bl2(cohort_in%pft)
     dbh2bl_c =  EDPftvarcon_inst%allom_d2bl3(cohort_in%pft)
@@ -421,20 +421,19 @@ contains
 
     real(r8) :: frac  ! relativised stored carbohydrate
 
-    real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold 
-
-
-    if (hlm_use_ed_prescribed_phys .eq. ifalse) then
+    real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold
 
     ! Hang ZHOU
     real(r8), parameter :: d13c_critical = -22.0_r8 ! -20
     real(r8), parameter :: d13c_mortrate = 0.6_r8
     integer ::&
-        yr,    &! year
-        mon,   &! month
-        day,   &! day of month
-        tod     ! time of day (seconds past 0Z)
+         yr,    &! year
+         mon,   &! month
+         day,   &! day of month
+         tod     ! time of day (seconds past 0Z)
     real(r8) :: d13c_background = 0.0_r8
+
+    if (hlm_use_ed_prescribed_phys .eq. ifalse) then
 
     ! Hang ZHOU, calculate background d13c
     call get_curr_date(yr, mon, day, tod)
@@ -477,10 +476,10 @@ contains
     else
        d13cmort = 0.0_r8
     endif
-    if (DEBUG_growth) write(iulog, *) 'MORTALITY I, c13disc_acc', cohort_in%c13disc_acc
-    if (DEBUG_growth) write(iulog, *) 'MORTALITY II, d13cmort', d13cmort
-    if (DEBUG_growth) write(iulog, *) 'MORTALITY III, d13c_background', d13c_background
-    if (DEBUG_growth) write(iulog, *) 'MORTALITY IV, year', yr
+    if (DEBUG_growth) write(fates_log(), *) 'MORTALITY I, c13disc_acc', cohort_in%c13disc_acc
+    if (DEBUG_growth) write(fates_log(), *) 'MORTALITY II, d13cmort', d13cmort
+    if (DEBUG_growth) write(fates_log(), *) 'MORTALITY III, d13c_background', d13c_background
+    if (DEBUG_growth) write(fates_log(), *) 'MORTALITY IV, year', yr
 
     !mortality_rates = bmort + hmort + cmort
 
