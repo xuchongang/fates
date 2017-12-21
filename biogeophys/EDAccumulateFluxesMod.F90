@@ -55,6 +55,15 @@ contains
     integer :: s  ! ed site
     integer :: ifp ! index fates patch
     real(r8):: n_perm2
+    
+    !Liang Wei 12/21/2017 for d13C estimation
+    type(ed_cohort_type), pointer    :: currentcohort
+    real(r8) :: gpp_tstep   !formerly gpp_clm (kgC/indiv/timestep)
+    real(r8) :: gpp_acc
+    real(r8) :: c13disc_acc
+    real(r8) :: c13disc_clm
+    
+    
     !----------------------------------------------------------------------
     
     do s = 1, nsites
@@ -80,12 +89,16 @@ contains
 
                 endif
 
-                ! Hang ZHOU
-                if((currentCohort%gpp_acc + currentCohort%gpp_clm) .eq. 0.0_r8) then
+                ! Hang ZHOU,  Liang Wei
+                !if((currentCohort%gpp_acc + currentCohort%gpp_clm) .eq. 0.0_r8) then
+		if((currentCohort%gpp_acc + currentCohort%gpp_tstep) .eq. 0.0_r8) then
                    currentCohort%c13disc_acc = 0.0_r8
                 else
-                   currentCohort%c13disc_acc  = ((currentCohort%c13disc_acc * currentCohort%gpp_acc) + (currentCohort%c13disc_clm * currentCohort%gpp_clm)) / &
-                        (currentCohort%gpp_acc + currentCohort%gpp_clm)
+                   !currentCohort%c13disc_acc  = ((currentCohort%c13disc_acc * currentCohort%gpp_acc) + (currentCohort%c13disc_clm * currentCohort%gpp_clm)) / &
+                        !(currentCohort%gpp_acc + currentCohort%gpp_clm)
+			
+		   currentCohort%c13disc_acc  = ((currentCohort%c13disc_acc * currentCohort%gpp_acc) + (currentCohort%c13disc_clm * currentCohort%gpp_tstep)) / &
+                        (currentCohort%gpp_acc + currentCohort%gpp_tstep)
                 endif
 
                 ccohort%npp_acc  = ccohort%npp_acc  + ccohort%npp_tstep

@@ -136,8 +136,8 @@ contains
     real(r8) :: kp_z               ! leaf layer initial slope of CO2 response
                                    ! curve (C4 plants)
 
-    ! Hang ZHOU
-    real(r8) :: c13disc_z(nclmax,mxpft,nlevcan_ed) ! carbon 13 in new synthesized flux at leaf level
+    ! Hang ZHOU, Liang Wei
+    real(r8) :: c13disc_z(nclmax,maxpft,nlevleaf) ! carbon 13 in new synthesized flux at leaf level , not "nlevcan_ed"
 
     real(r8) :: mm_kco2            ! Michaelis-Menten constant for CO2 (Pa)
     real(r8) :: mm_ko2             ! Michaelis-Menten constant for O2 (Pa)
@@ -437,7 +437,7 @@ contains
                                                         lmr_z(iv,ft,cl),                    &  ! in
                                                         currentPatch%psn_z(cl,ft,iv),       &  ! out
                                                         rs_z(iv,ft,cl),                     &  ! out
-                                                        anet_av_z(iv,ft,cl)                 &  ! out
+                                                        anet_av_z(iv,ft,cl),                &  ! out
                                                         c13disc_z(cl,ft,iv))                   ! out  ! Hang ZHOU
 
                               rate_mask_z(iv,ft,cl) = .true.
@@ -476,7 +476,7 @@ contains
                                                         bc_in(s)%rb_pa(ifp),                   & !in
                                                         currentCohort%gscan,                   & !out
                                                         currentCohort%gpp_tstep,               & !out
-                                                        currentCohort%rdark                    & !out
+                                                        currentCohort%rdark,                   & !out
                                                         currentCohort%c13disc_clm)               !out
 
                         ! Net Uptake does not need to be scaled, just transfer directly
@@ -677,7 +677,7 @@ contains
                                      lmr,               &  ! in
                                      psn_out,           &  ! out
                                      rstoma_out,        &  ! out
-                                     anet_av_out        &  ! out
+                                     anet_av_out,        &  ! out
                                      c13disc_z)          ! out
 
     ! ------------------------------------------------------------------------------------
@@ -1036,7 +1036,7 @@ contains
                                         rs_llz,      & ! in   rs_z(1:currentCohort%nv,ft,cl)
                                         anet_av_llz, & ! in   anet_av_z(1:currentCohort%nv,ft,cl)
                                         elai_llz,    & ! in   %elai_profile(cl,ft,1:currentCohort%nv)
-                                        c13disc_llz  & ! in   c13disc_z(cl, ft, 1:currentCohort%nv)
+                                        c13disc_llz,  & ! in   c13disc_z(cl, ft, 1:currentCohort%nv)
                                         c_area,      & ! in   currentCohort%c_area
                                         nplant,      & ! in   currentCohort%n
                                         treelai,     & ! in   currentCohort%treelai
@@ -1044,7 +1044,7 @@ contains
                                         rb,          & ! in   bc_in(s)%rb_pa(ifp)
                                         gscan,       & ! out  currentCohort%gscan
                                         gpp,         & ! out  currentCohort%gpp_tstep
-                                        rdark        & ! out  currentCohort%rdark
+                                        rdark,        & ! out  currentCohort%rdark
                                         c13disc_clm)   ! out  currentCohort%c13disc_clm
 
     ! ------------------------------------------------------------------------------------

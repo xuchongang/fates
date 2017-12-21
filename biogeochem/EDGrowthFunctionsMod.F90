@@ -11,6 +11,7 @@ module EDGrowthFunctionsMod
   use EDPftvarcon        , only : EDPftvarcon_inst
   use EDTypesMod       , only : ed_cohort_type, nlevleaf, dinc_ed
   use FatesConstantsMod        , only : itrue,ifalse
+  use clm_time_manager   ,  only : get_curr_date  !Liang Wei
 
   implicit none
   private
@@ -424,7 +425,7 @@ contains
     real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold
 
     ! Hang ZHOU
-    real(r8), parameter :: d13c_critical = -22.0_r8 ! -20
+    real(r8), parameter :: d13c_critical = -21.0_r8 ! -20
     real(r8), parameter :: d13c_mortrate = 0.6_r8
     integer ::&
          yr,    &! year
@@ -435,10 +436,12 @@ contains
 
     if (hlm_use_ed_prescribed_phys .eq. ifalse) then
 
-    ! Hang ZHOU, calculate background d13c
+    ! Hang ZHOU, Liang wei, calculate background d13c, this may need further edits as people may start modeling from year 1
     call get_curr_date(yr, mon, day, tod)
     if (yr < 1740) then
       d13c_background = -6.429_r8
+    else if (yr > 2019) then
+      d13c_background = -9.000_r8
     else
       d13c_background = -6.429_r8 - 0.0060_r8 * exp(0.0217_r8 * (yr - 1740))
     endif

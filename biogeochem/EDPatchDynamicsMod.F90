@@ -437,7 +437,7 @@ contains
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
                       nc%dmort            = currentCohort%dmort
-                      nc%d13cmort = currentCohort%d13cmore ! Hang ZHOU
+                      nc%d13cmort = currentCohort%d13cmort ! Hang ZHOU, Liang Wei
                       nc%lmort_logging    = currentCohort%lmort_logging
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
