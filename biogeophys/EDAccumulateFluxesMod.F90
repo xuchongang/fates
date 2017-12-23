@@ -2,14 +2,14 @@ module EDAccumulateFluxesMod
 
   !------------------------------------------------------------------------------
   ! !DESCRIPTION:
-  ! This routine accumulates NPP, GPP and respiration of each cohort over the course of each 24 hour period. 
+  ! This routine accumulates NPP, GPP and respiration of each cohort over the course of each 24 hour period.
   ! The fluxes are stored per cohort, and the npp_tstep (etc) fluxes are calcualted in EDPhotosynthesis
   ! This routine cannot be in EDPhotosynthesis because EDPhotosynthesis is a loop and therefore would
-  ! erroneously add these things up multiple times. 
-  ! Rosie Fisher. March 2014. 
+  ! erroneously add these things up multiple times.
+  ! Rosie Fisher. March 2014.
   !
   ! !USES:
-  use FatesGlobals, only      : fates_endrun 
+  use FatesGlobals, only      : fates_endrun
   use FatesGlobals, only      : fates_log
   use shr_log_mod , only      : errMsg => shr_log_errMsg
   use FatesConstantsMod , only : r8 => fates_r8
@@ -22,7 +22,7 @@ module EDAccumulateFluxesMod
 
   character(len=*), parameter, private :: sourcefile = &
         __FILE__
-  
+
 contains
 
   !------------------------------------------------------------------------------
@@ -34,13 +34,13 @@ contains
     ! see above
     !
     ! !USES:
-  
+
     use EDTypesMod        , only : ed_patch_type, ed_cohort_type, &
                                    ed_site_type, AREA
     use FatesInterfaceMod , only : bc_in_type,bc_out_type
 
     !
-    ! !ARGUMENTS    
+    ! !ARGUMENTS
     integer,            intent(in)            :: nsites
     type(ed_site_type), intent(inout), target :: sites(nsites)
     type(bc_in_type),   intent(in)            :: bc_in(nsites)
@@ -55,23 +55,23 @@ contains
     integer :: s  ! ed site
     integer :: ifp ! index fates patch
     real(r8):: n_perm2
-    
+
     !Liang Wei 12/21/2017 for d13C estimation
-    type(ed_cohort_type), pointer    :: currentcohort
-    real(r8) :: gpp_tstep   !formerly gpp_clm (kgC/indiv/timestep)
-    real(r8) :: gpp_acc
-    real(r8) :: c13disc_acc
-    real(r8) :: c13disc_clm
-    
-    
+    ! type(ed_cohort_type), pointer    :: currentcohort
+    ! real(r8) :: gpp_tstep   !formerly gpp_clm (kgC/indiv/timestep)
+    ! real(r8) :: gpp_acc
+    ! real(r8) :: c13disc_acc
+    ! real(r8) :: c13disc_clm
+
+
     !----------------------------------------------------------------------
-    
+
     do s = 1, nsites
-       
+
        ifp = 0
        sites(s)%npp = 0.0_r8
        cpatch => sites(s)%oldest_patch
-       do while (associated(cpatch))                 
+       do while (associated(cpatch))
           ifp = ifp+1
 
           if( bc_in(s)%filter_photo_pa(ifp) == 3 ) then
@@ -90,15 +90,14 @@ contains
                 endif
 
                 ! Hang ZHOU,  Liang Wei
-                !if((currentCohort%gpp_acc + currentCohort%gpp_clm) .eq. 0.0_r8) then
-		if((currentCohort%gpp_acc + currentCohort%gpp_tstep) .eq. 0.0_r8) then
-                   currentCohort%c13disc_acc = 0.0_r8
+                !if((ccohort%gpp_acc + ccohort%gpp_clm) .eq. 0.0_r8) then
+                if((ccohort%gpp_acc + ccohort%gpp_tstep) .eq. 0.0_r8) then
+                  ccohort%c13disc_acc = 0.0_r8
                 else
-                   !currentCohort%c13disc_acc  = ((currentCohort%c13disc_acc * currentCohort%gpp_acc) + (currentCohort%c13disc_clm * currentCohort%gpp_clm)) / &
-                        !(currentCohort%gpp_acc + currentCohort%gpp_clm)
-			
-		   currentCohort%c13disc_acc  = ((currentCohort%c13disc_acc * currentCohort%gpp_acc) + (currentCohort%c13disc_clm * currentCohort%gpp_tstep)) / &
-                        (currentCohort%gpp_acc + currentCohort%gpp_tstep)
+                   !ccohort%c13disc_acc  = ((ccohort%c13disc_acc * ccohort%gpp_acc) + (ccohort%c13disc_clm * ccohort%gpp_clm)) / &
+                        !(ccohort%gpp_acc + ccohort%gpp_clm)
+                    ccohort%c13disc_acc  = ((ccohort%c13disc_acc * ccohort%gpp_acc) + (ccohort%c13disc_clm * ccohort%gpp_tstep)) / &
+                                      (ccohort%gpp_acc + ccohort%gpp_tstep)
                 endif
 
                 ccohort%npp_acc  = ccohort%npp_acc  + ccohort%npp_tstep
@@ -117,7 +116,7 @@ contains
                 endif
 
                 do iv=1,ccohort%nv
-                   if(ccohort%year_net_uptake(iv) == 999._r8)then ! note that there were leaves in this layer this year. 
+                   if(ccohort%year_net_uptake(iv) == 999._r8)then ! note that there were leaves in this layer this year.
                       ccohort%year_net_uptake(iv) = 0._r8
                    end if
                    ccohort%year_net_uptake(iv) = ccohort%year_net_uptake(iv) + ccohort%ts_net_uptake(iv)
@@ -130,7 +129,7 @@ contains
        end do  ! while(associated(cpatch))
     end do
     return
-    
+
  end subroutine AccumulateFluxes_ED
 
 end module EDAccumulateFluxesMod
