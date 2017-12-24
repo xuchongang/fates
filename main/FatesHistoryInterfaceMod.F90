@@ -163,8 +163,18 @@ module FatesHistoryInterfaceMod
   !LOGGING , make sure to add ih_m7_si_scpf and hio_m7_si_scpf
   integer, private :: ih_m7_si_scpf
 
-  !d13c related mortality, make sure to add ih_md13c_si_scpf and hio_md13c_si_scpf
+  ! Hang ZHOU
+  ! d13c related mortality count, make sure to add ih_md13c_si_scpf and hio_md13c_si_scpf
   integer, private :: ih_md13c_si_scpf
+
+  ! c13 discrimination
+  integer, private :: ih_c13disc_si_scpf
+
+  ! d13c related mortality rate
+  integer, private :: ih_md13crate_si_scpf
+
+  !! d13c
+  ! integer, private :: ih_d13c_si_scpf
 
   integer, private :: ih_ar_si_scpf
   integer, private :: ih_ar_grow_si_scpf
@@ -1138,6 +1148,8 @@ end subroutine flush_hvars
 
     real(r8), parameter :: tiny = 1.e-5_r8      ! some small number
 
+    real(r8) :: gpp_cached ! variable used to cache gpp value in previous time step, Hang ZHOU
+
     associate( hio_npatches_si         => this%hvars(ih_npatches_si)%r81d, &
                hio_ncohorts_si         => this%hvars(ih_ncohorts_si)%r81d, &
                hio_trimming_pa         => this%hvars(ih_trimming_pa)%r81d, &
@@ -1212,7 +1224,11 @@ end subroutine flush_hvars
                hio_m6_si_scpf          => this%hvars(ih_m6_si_scpf)%r82d, &
 
                hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &
+
                hio_md13c_si_scpf       => this%hvars(ih_md13c_si_scpf)%r82d, &
+               hio_c13disc_si_scpf     => this%hvars(ih_c13disc_si_scpf)%r82d, &
+               hio_md13crate_si_scpf   => this%hvars(ih_md13crate_si_scpf)%r82d, &
+               ! hio_d13c_si_scpf        => this%hvars(ih_d13c_si_scpf)%r82d, &
 
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_nplant_canopy_si_scls         => this%hvars(ih_nplant_canopy_si_scls)%r82d, &
@@ -1415,6 +1431,7 @@ end subroutine flush_hvars
                   associate( scpf => ccohort%size_by_pft_class, &
                              scls => ccohort%size_class )
 
+                    gpp_cached = hio_gpp_si_scpf(io_si,scpf)
                     hio_gpp_si_scpf(io_si,scpf)      = hio_gpp_si_scpf(io_si,scpf)      + &
                                                        n_perm2*ccohort%gpp_acc_hold  ! [kgC/m2/yr]
                     hio_npp_totl_si_scpf(io_si,scpf) = hio_npp_totl_si_scpf(io_si,scpf) + &
@@ -1468,9 +1485,14 @@ end subroutine flush_hvars
                        !Y.X.
                        hio_m7_si_scpf(io_si,scpf) = hio_m7_si_scpf(io_si,scpf) + &
 		       	               (ccohort%lmort_logging+ccohort%lmort_collateral+ccohort%lmort_infra) * ccohort%n
+
                        ! Hang ZHOU
                        hio_md13c_si_scpf(io_si,scpf) = hio_md13c_si_scpf(io_si,scpf) + &
                             (ccohort%d13cmort * ccohort%n)
+
+                       hio_c13disc_si_scpf(io_si,scpf) = ((hio_c13disc_si_scpf(io_si,scpf) * gpp_cached) + (ccohort%c13disc_acc * ccohort%gpp_acc_hold)) / (gpp_cahced + ccohort%gpp_acc_hold)
+                       hio_md13crate_si_scpf(io_si, scpf) = (hio_md13crate_si_scpf(io_si, scpf) * hio_nplant_si_scpf(io_si,scpf) + ccohort%d13cmort * ccorhort%n) / (hio_nplant_si_scpf(io_si,scpf) + ccohort%n)
+                       !hio_d13c_si_scpf(io_si,scpf) = ((hio_d13c_si_scpf(io_si,scpf) * hio_gpp_si_scpf(io_si, scpf)) + (ccohort%d13c * ccohort%gpp_acc)) / (hio_gpp_si_scpf(io_si, scpf) + ccohort%gpp_acc)
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
@@ -1803,10 +1825,8 @@ end subroutine flush_hvars
                     hio_m4_si_scpf(io_si,i_scpf) + &
                     hio_m5_si_scpf(io_si,i_scpf) + &
                     hio_m6_si_scpf(io_si,i_scpf) + &
-                    hio_m7_si_scpf(io_si,i_scpf) + &
-                    hio_md13c_si_scpf(io_si,i_scpf)
-
-
+                    hio_m7_si_scpf(io_si,i_scpf)
+                    ! hio_md13c_si_scpf(io_si,i_scpf)
 
             end do
          end do
@@ -3195,12 +3215,29 @@ end subroutine flush_hvars
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m7_si_scpf )
 
-    !d13c mortality Hang ZHOU
+    !d13c mortality Hang ZHOU ! TODO, liang wei, check units
     call this%set_history_var(vname='Md13c_SCPF', units = 'N/ha/event',               &
          long='d13c-related mortalities by pft/size',use_default='inactive',           &
          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_md13c_si_scpf )
 
+    !c13 discrimination Hang ZHOU
+    call this%set_history_var(vname='C13disc_SCPF', units = 'N/ha/event',               &
+         long='c13 discrimination by pft/size',use_default='inactive',           &
+         avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+         upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_c13disc_si_scpf )
+
+    !d13c mortality rate Hang ZHOU
+    call this%set_history_var(vname='Md13cRate_SCPF', units = 'N/ha/event',               &
+         long='d13c-related mortalities by pft/size',use_default='inactive',           &
+         avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+         upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_md13crate_si_scpf )
+
+    ! !d13c Hang ZHOU
+    ! call this%set_history_var(vname='d13c_SCPF', units = 'N/ha/event',               &
+    !      long='d13c by pft/size',use_default='inactive',           &
+    !      avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+    !      upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_d13c_si_scpf )
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &
