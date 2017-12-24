@@ -243,14 +243,14 @@ module EDTypesMod
      real(r8) ::  fmort                                  ! fire mortality                   n/year
      real(r8) ::  d13cmort                               ! d13c related drought induced mortality rate n/year, Hang ZHOU
 
-      ! Logging Mortality Rate 
-	 ! Yi Xu
+     ! Logging Mortality Rate
+   	 ! Yi Xu
      real(r8) ::  lmort_logging                          ! directly logging rate            %/per logging activity
      real(r8) ::  lmort_collateral                       ! collaterally damaged rate        %/per logging activity
      real(r8) ::  lmort_infra                            ! mechanically damaged rate        %/per logging activity
-	      
 
-     ! NITROGEN POOLS      
+
+     ! NITROGEN POOLS
      ! ----------------------------------------------------------------------------------
      ! Nitrogen pools are not prognostic in the current implementation.
      ! They are diagnosed during photosynthesis using a simple C2N parameter. Local values
