@@ -113,7 +113,8 @@ contains
           ! call mortality_rates(currentCohort,cmort,hmort,bmort)
           ! currentCohort%dmort  = cmort+hmort+bmort
           call mortality_rates(currentCohort, cmort, hmort, bmort, d13cmort) ! Hang ZHOU
-          currentCohort%dmort  = cmort + hmort + bmort + d13cmort ! Hang ZHOU
+          ! currentCohort%dmort  = cmort + hmort + bmort + d13cmort ! Hang ZHOU
+          currentCohort%dmort  = cmort + hmort + bmort
           currentCohort%c_area = c_area(currentCohort)
 
           ! Initialize diagnostic mortality rates
@@ -1007,7 +1008,7 @@ contains
              canopy_mortality_root_litter(p) = canopy_mortality_root_litter(p)+ &
                   canopy_dead*(currentCohort%br+currentCohort%bstore)
 
-         else 
+         else
              if(EDPftvarcon_inst%woody(currentCohort%pft) == 1)then
 
                 understorey_dead = ED_val_understorey_death * currentCohort%n * (patch_site_areadis/currentPatch%area)  !kgC/site/day
@@ -1165,7 +1166,7 @@ contains
   subroutine zero_patch(cp_p)
     !
     ! !DESCRIPTION:
-    !  Sets all the variables in the patch to nan or zero 
+    !  Sets all the variables in the patch to nan or zero
     ! (this needs to be two seperate routines, one for nan & one for zero
     !
     ! !USES:
