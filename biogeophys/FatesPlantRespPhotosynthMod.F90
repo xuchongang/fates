@@ -971,7 +971,7 @@ contains
               ! just hard code b and \alpha_s for now, might move to parameter set in future
               ! b = 27.0 alpha_s = 4.4
               ! TODO, not considering C4 right now, need to address this
-              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * co2_intra_c / ceair
+              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * co2_intra_c / can_co2_ppress     !not ceair, Liang Wei
 
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 737 ', psn_out
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 738 ', agross
