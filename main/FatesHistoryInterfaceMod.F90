@@ -1490,8 +1490,8 @@ end subroutine flush_hvars
                        hio_md13c_si_scpf(io_si,scpf) = hio_md13c_si_scpf(io_si,scpf) + &
                             (ccohort%d13cmort * ccohort%n)
 
-                       hio_c13disc_si_scpf(io_si,scpf) = ((hio_c13disc_si_scpf(io_si,scpf) * gpp_cached) + (ccohort%c13disc_acc * ccohort%gpp_acc_hold)) / (gpp_cahced + ccohort%gpp_acc_hold)
-                       hio_md13crate_si_scpf(io_si, scpf) = (hio_md13crate_si_scpf(io_si, scpf) * hio_nplant_si_scpf(io_si,scpf) + ccohort%d13cmort * ccorhort%n) / (hio_nplant_si_scpf(io_si,scpf) + ccohort%n)
+                       hio_c13disc_si_scpf(io_si,scpf) = ((hio_c13disc_si_scpf(io_si,scpf) * gpp_cached) + (ccohort%c13disc_acc * ccohort%gpp_acc_hold)) / (gpp_cached + ccohort%gpp_acc_hold)
+                       hio_md13crate_si_scpf(io_si, scpf) = (hio_md13crate_si_scpf(io_si, scpf) * hio_nplant_si_scpf(io_si,scpf) + ccohort%d13cmort * ccohort%n) / (hio_nplant_si_scpf(io_si,scpf) + ccohort%n)
                        !hio_d13c_si_scpf(io_si,scpf) = ((hio_d13c_si_scpf(io_si,scpf) * hio_gpp_si_scpf(io_si, scpf)) + (ccohort%d13c * ccohort%gpp_acc)) / (hio_gpp_si_scpf(io_si, scpf) + ccohort%gpp_acc)
 
                        ! basal area  [m2/ha]

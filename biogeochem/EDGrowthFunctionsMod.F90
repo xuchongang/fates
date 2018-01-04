@@ -28,7 +28,7 @@ module EDGrowthFunctionsMod
   public ::  c_area
   public ::  mortality_rates
 
-  logical :: DEBUG_growth = .false.
+  logical :: DEBUG_growth = .true.
 
   ! ============================================================================
   ! 10/30/09: Created by Rosie Fisher
@@ -425,8 +425,8 @@ contains
     real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold
 
     ! Hang ZHOU
-    real(r8), parameter :: d13c_critical = -21.0_r8 ! -20
-    real(r8), parameter :: d13c_mortrate = 0.6_r8
+    real(r8), parameter :: d13c_critical = -20.0_r8 ! -20 Liang Wei, threshold
+    real(r8), parameter :: d13c_mortrate = 0.6_r8  !Liang Wei define rate
     integer ::&
          yr,    &! year
          mon,   &! month
