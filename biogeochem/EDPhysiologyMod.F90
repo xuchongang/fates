@@ -1046,7 +1046,7 @@ contains
   end subroutine Growth_Derivatives
 
   ! ============================================================================
-  subroutine recruitment( currentSite, currentPatch, bc_in )
+  subroutine recruitment( currentSite, bc_in )
     !
     ! !DESCRIPTION:
     ! spawn new cohorts of juveniles of each PFT             
@@ -1057,75 +1057,83 @@ contains
     !
     ! !ARGUMENTS    
     type(ed_site_type), intent(inout), target  :: currentSite
-    type(ed_patch_type), intent(inout), pointer :: currentPatch
+    
     type(bc_in_type), intent(in)                :: bc_in
     !
     ! !LOCAL VARIABLES:
     integer :: ft
+    type(ed_patch_type), pointer :: currentPatch
     type (ed_cohort_type) , pointer :: temp_cohort
     integer :: cohortstatus
     integer :: recruitstatus
     !----------------------------------------------------------------------
 
-    allocate(temp_cohort) ! create temporary cohort
-    call zero_cohort(temp_cohort)
 
-    do ft = 1,numpft
-
-       temp_cohort%canopy_trim = 0.8_r8  !starting with the canopy not fully expanded 
-       temp_cohort%pft         = ft
-       temp_cohort%hite        = EDPftvarcon_inst%hgt_min(ft)
-       temp_cohort%dbh         = Dbh(temp_cohort)
-       temp_cohort%bdead       = Bdead(temp_cohort)
-       temp_cohort%balive      = Bleaf(temp_cohort)*(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
-            + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite)
-       temp_cohort%bstore      = EDPftvarcon_inst%cushion(ft)*(temp_cohort%balive/ (1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
-            + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))
-
-       if (hlm_use_ed_prescribed_phys .eq. ifalse .or. EDPftvarcon_inst%prescribed_recruitment(ft) .lt. 0. ) then
-          temp_cohort%n           = currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day &
-               / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
-       else
-          ! prescribed recruitment rates. number per sq. meter per year
-          temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * hlm_freq_day
-          ! modify the carbon balance accumulators to take into account the different way of defining recruitment
-          ! add prescribed rates as an input C flux, and the recruitment that would have otherwise occured as an output flux
-          ! (since the carbon associated with them effectively vanishes)
-          currentSite%flux_in = currentSite%flux_in + temp_cohort%n * (temp_cohort%bstore + temp_cohort%balive + temp_cohort%bdead)
-          currentSite%flux_out = currentSite%flux_out + currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day
-       endif
-
-       temp_cohort%laimemory = 0.0_r8     
-       if (EDPftvarcon_inst%season_decid(temp_cohort%pft) == 1.and.currentSite%status == 1)then
-          temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
-               EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
-       endif
-       if (EDPftvarcon_inst%stress_decid(temp_cohort%pft) == 1.and.currentSite%dstatus == 1)then
-          temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
-               EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
-       endif
-
-       cohortstatus = currentSite%status
-       if (EDPftvarcon_inst%stress_decid(ft) == 1)then !drought decidous, override status. 
-          cohortstatus = currentSite%dstatus
-       endif
- 
-       if (temp_cohort%n > 0.0_r8 )then
-          if ( DEBUG ) write(fates_log(),*) 'EDPhysiologyMod.F90 call create_cohort '
-	  recruitstatus = 1
-          call create_cohort(currentPatch, temp_cohort%pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
-               temp_cohort%balive, temp_cohort%bdead, temp_cohort%bstore,  &
-               temp_cohort%laimemory, cohortstatus,recruitstatus, temp_cohort%canopy_trim, currentPatch%NCL_p, &
-               bc_in)
-
-          ! keep track of how many individuals were recruited for passing to history
-          currentSite%recruitment_rate(ft) = currentSite%recruitment_rate(ft) + temp_cohort%n
-
-       endif
-    enddo  !pft loop
-
-    deallocate(temp_cohort) ! delete temporary cohort
-
+    currentPatch => currentSite%oldest_patch
+    do while (associated(currentPatch))    
+       
+       allocate(temp_cohort) ! create temporary cohort
+       call zero_cohort(temp_cohort)
+       
+       do ft = 1,numpft
+          
+          temp_cohort%canopy_trim = 0.8_r8  !starting with the canopy not fully expanded 
+          temp_cohort%pft         = ft
+          temp_cohort%hite        = EDPftvarcon_inst%hgt_min(ft)
+          temp_cohort%dbh         = Dbh(temp_cohort)
+          temp_cohort%bdead       = Bdead(temp_cohort)
+          temp_cohort%balive      = Bleaf(temp_cohort)*(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
+               + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite)
+          temp_cohort%bstore      = EDPftvarcon_inst%cushion(ft)*(temp_cohort%balive/ (1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
+               + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))
+          
+          if (hlm_use_ed_prescribed_phys .eq. ifalse .or. EDPftvarcon_inst%prescribed_recruitment(ft) .lt. 0. ) then
+             temp_cohort%n           = currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day &
+                  / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
+          else
+             ! prescribed recruitment rates. number per sq. meter per year
+             temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * hlm_freq_day
+             ! modify the carbon balance accumulators to take into account the different way of defining recruitment
+             ! add prescribed rates as an input C flux, and the recruitment that would have otherwise occured as an output flux
+             ! (since the carbon associated with them effectively vanishes)
+             currentSite%flux_in = currentSite%flux_in + temp_cohort%n * (temp_cohort%bstore + temp_cohort%balive + temp_cohort%bdead)
+             currentSite%flux_out = currentSite%flux_out + currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day
+          endif
+          
+          temp_cohort%laimemory = 0.0_r8     
+          if (EDPftvarcon_inst%season_decid(temp_cohort%pft) == 1.and.currentSite%status == 1)then
+             temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
+                  EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
+          endif
+          if (EDPftvarcon_inst%stress_decid(temp_cohort%pft) == 1.and.currentSite%dstatus == 1)then
+             temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
+                  EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
+          endif
+          
+          cohortstatus = currentSite%status
+          if (EDPftvarcon_inst%stress_decid(ft) == 1)then !drought decidous, override status. 
+             cohortstatus = currentSite%dstatus
+          endif
+          
+          if (temp_cohort%n > 0.0_r8 )then
+             if ( DEBUG ) write(fates_log(),*) 'EDPhysiologyMod.F90 call create_cohort '
+             recruitstatus = 1
+             call create_cohort(currentPatch, temp_cohort%pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
+                  temp_cohort%balive, temp_cohort%bdead, temp_cohort%bstore,  &
+                  temp_cohort%laimemory, cohortstatus,recruitstatus, temp_cohort%canopy_trim, currentPatch%NCL_p, &
+                  bc_in)
+             
+             ! keep track of how many individuals were recruited for passing to history
+             currentSite%recruitment_rate(ft) = currentSite%recruitment_rate(ft) + temp_cohort%n
+             
+          endif
+       enddo  !pft loop
+       
+       deallocate(temp_cohort) ! delete temporary cohort
+       
+       currentPatch => currentPatch%younger
+    enddo
+    
   end subroutine recruitment
 
   ! ============================================================================
