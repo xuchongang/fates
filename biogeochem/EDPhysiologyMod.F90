@@ -13,7 +13,10 @@ module EDPhysiologyMod
   use FatesInterfaceMod, only    : hlm_day_of_year
   use FatesInterfaceMod, only    : numpft
   use FatesInterfaceMod, only    : hlm_use_planthydro
+  use FatesInterfaceMod, only    : hlm_numlevsoil
   use FatesConstantsMod, only    : r8 => fates_r8
+  use FatesInterfaceMod, only    : hlm_use_ed_prescribed_phys
+  
   use EDPftvarcon      , only    : EDPftvarcon_inst
   use FatesInterfaceMod, only    : bc_in_type
   use EDCohortDynamicsMod , only : allocate_live_biomass, zero_cohort
@@ -27,6 +30,7 @@ module EDPhysiologyMod
   use EDTypesMod          , only : senes
   use EDTypesMod          , only : maxpft
   use EDTypesMod          , only : ed_site_type, ed_patch_type, ed_cohort_type
+  use EDTypesMod          , only : AREA
 
   use shr_log_mod           , only : errMsg => shr_log_errMsg
   use FatesGlobals          , only : fates_log
@@ -34,6 +38,7 @@ module EDPhysiologyMod
   use EDParamsMod           , only : fates_mortality_disturbance_fraction
   use FatesConstantsMod        , only : itrue,ifalse
   use FatesPlantHydraulicsMod  , only : AccumulateMortalityWaterStorage
+  
 
   implicit none
   private
@@ -1053,7 +1058,7 @@ contains
     !
     ! !USES:
     use EDGrowthFunctionsMod, only : bdead,dbh, Bleaf
-    use FatesInterfaceMod, only : hlm_use_ed_prescribed_phys
+    
     !
     ! !ARGUMENTS    
     type(ed_site_type), intent(inout), target  :: currentSite
@@ -1066,7 +1071,23 @@ contains
     type (ed_cohort_type) , pointer :: temp_cohort
     integer :: cohortstatus
     integer :: recruitstatus
+    real(r8) :: moisture_recruit_limiter
+    logical, parameter :: do_moisture_limit_recruits = .true.
+    
+
     !----------------------------------------------------------------------
+
+
+    ! If desired, recruitment can be withheld if soil-moisture conditions
+    ! are not met.
+    ! -----------------------------------------------------------------------------------
+
+    if(do_moisture_limit_recruits)then
+       call moisture_limit_recruits(currentSite,bc_in,moisture_recruit_limiter)
+    else
+       moisture_recruit_limiter = 1.0_r8
+    end if
+       
 
 
     currentPatch => currentSite%oldest_patch
@@ -1088,7 +1109,7 @@ contains
                + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))
           
           if (hlm_use_ed_prescribed_phys .eq. ifalse .or. EDPftvarcon_inst%prescribed_recruitment(ft) .lt. 0. ) then
-             temp_cohort%n           = currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day &
+             temp_cohort%n           = moisture_recruit_limiter * currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day &
                   / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
           else
              ! prescribed recruitment rates. number per sq. meter per year
@@ -1136,7 +1157,167 @@ contains
     
   end subroutine recruitment
 
+  ! =====================================================================================
+
+  subroutine moisture_limit_recruits(currentSite,bc_in,moisture_recruit_limiter)
+
+    use FatesHydraulicsMemMod    , only : nlevsoi_hyd
+    use FatesHydraulicsMemMod    , only : ed_cohort_hydr_type
+    use FatesPlantHydraulicsMod  , only : InitHydrCohort
+    use FatesPlantHydraulicsMod  , only : updateSizeDepTreeHydProps
+    use FatesPlantHydraulicsMod  , only : initTreeHydStates
+    use FatesPlantHydraulicsMod  , only : DeallocateHydrCohort
+    use EDGrowthFunctionsMod     , only : bdead,dbh, Bleaf
+    
+    ! -----------------------------------------------------------------------------------
+    ! This subroutine performs a preview of recruitment, estimates the water
+    ! demand those new recruits will place (as a group) on the soil column.  Water demand
+    ! in this context is an assessment of how much water these recruits would have
+    ! bound in their tissues.  When hydraulics is turned on, this is quantified
+    ! based on volume conservation algorithms consistent with the module, when it is off
+    ! the water is estimated based on a fraction of total biomass kgC.
+    ! The water demand is then applied to soil layers based on the normalized root
+    ! density profile for each recruit.
+    !
+    ! Change Log: 
+    ! Initial implementation: Ryan Knox/Chonggang Xu, Feb 2018
+    !
+    ! -----------------------------------------------------------------------------------
+    
+    type(ed_site_type), intent(in), target  :: currentSite
+    type(bc_in_type), intent(in)            :: bc_in
+    real(r8), intent(inout)                 :: moisture_recruit_limiter
+
+    type(ed_cohort_hydr_type), pointer      :: temp_cohort_hydr
+    type(ed_patch_type), pointer            :: currentPatch
+    type (ed_cohort_type) , pointer         :: temp_cohort
+    integer                                 :: ft               ! loop index, pft
+    integer                                 :: ilyr             ! loop index, soil layer
+    real(r8)                                :: h2oveg           ! bound plant water m3/m2
+
+
+    real(r8), parameter :: maximum_available_fraction = 0.1_r8  ! fraction of available
+                                                                ! water, in m3 per layer
+                                                                ! that can be used
+                                                                ! for recruits
+
+    real(r8), parameter :: recruit_tissue_water_density = 0.5   ! For every kg of C
+                                                                ! assume half kg of h2o
+                                                                ! (non-hydraulics parameter)
+
+    integer, parameter  :: max_layers = 30                   ! arbitrary maximum number
+                                                             ! of soil layers, set higher
+                                                             ! than expected
+
+    real(r8), dimension(max_layers) :: h2o_avail_recruit     ! m3 liquid water available
+                                                             ! to recruits per each layer /m2
+    real(r8), dimension(max_layers) :: h2o_demand_recruit    ! m3 liquid water demanded
+                                                             ! by all recruits per each layer /m2
+    real(r8)                        :: sum_roots_layers      ! sum root mass over layers
+    
+    
+    ! Calculate Available water
+    ! --------------------------------------------------------------------------------
+    h2o_avail_recruit(1:hlm_numlevsoil) = maximum_available_fraction * &
+                                          bc_in%dz_sisl(1:hlm_numlevsoil) * &
+                                          (bc_in%h2o_liqvol_gl(1:hlm_numlevsoil) - &
+                                          bc_in%eff_porosity_gl(1:hlm_numlevsoil))
+    
+    ! Calculate Water Demand
+    ! --------------------------------------------------------------------------------
+    h2o_demand_recruit(1:hlm_numlevsoil) = 0.0_r8
+
+    currentPatch => currentSite%oldest_patch
+    do while (associated(currentPatch))    
+          
+       do ft = 1,numpft
+          
+          allocate(temp_cohort) 
+          call zero_cohort(temp_cohort)
+          
+          temp_cohort%canopy_trim = 0.8_r8  !starting with the canopy not fully expanded 
+          temp_cohort%pft         = ft
+          temp_cohort%hite        = EDPftvarcon_inst%hgt_min(ft)
+          temp_cohort%dbh         = Dbh(temp_cohort)
+          temp_cohort%bdead       = Bdead(temp_cohort)
+          temp_cohort%balive      = Bleaf(temp_cohort)*(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
+               + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite)
+          temp_cohort%bstore      = EDPftvarcon_inst%cushion(ft)*(temp_cohort%balive/ (1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
+               + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))
+          
+          if (hlm_use_ed_prescribed_phys .eq. ifalse .or. EDPftvarcon_inst%prescribed_recruitment(ft) .lt. 0. ) then
+             temp_cohort%n  = currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day &
+                  / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
+          else
+             ! prescribed recruitment rates. number per sq. meter per year
+             temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * hlm_freq_day
+          endif
+          
+          temp_cohort%laimemory = 0.0_r8     
+          if (EDPftvarcon_inst%season_decid(temp_cohort%pft) == 1.and.currentSite%status == 1)then
+             temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
+                  EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
+          endif
+          if (EDPftvarcon_inst%stress_decid(temp_cohort%pft) == 1.and.currentSite%dstatus == 1)then
+             temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
+                  EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
+          endif
+          
+          temp_cohort%status_coh = currentSite%status
+          if (EDPftvarcon_inst%stress_decid(ft) == 1)then !drought decidous, override status. 
+             temp_cohort%status_coh = currentSite%dstatus
+          endif
+          
+          if( hlm_use_planthydro.eq.itrue ) then
+             call InitHydrCohort(temp_cohort)
+             call updateSizeDepTreeHydProps(temp_cohort, bc_in) 
+             call initTreeHydStates(temp_cohort, bc_in)
+                
+             temp_cohort_hydr => temp_cohort%co_hydr
+             ! Important note: "h2oveg" in other parts of the hydraulics code
+             ! is in units kg/m2. We do not multiply by density here, these
+             ! units are m3/m2.
+             h2oveg = (sum(temp_cohort_hydr%th_ag(:)*temp_cohort_hydr%v_ag(:)) + &
+                       sum(temp_cohort_hydr%th_bg(:)*temp_cohort_hydr%v_bg(:)) + &
+                       sum(temp_cohort_hydr%th_aroot(:)*temp_cohort_hydr%v_aroot_layer(:))) * &
+                       temp_cohort%n/AREA
+             sum_roots_layers = sum(temp_cohort_hydr%v_aroot_layer(1:nlevsoi_hyd))
+             do ilyr=1,nlevsoi_hyd
+                h2o_demand_recruit(ilyr) = h2o_demand_recruit(ilyr) + h2oveg*temp_cohort_hydr%v_aroot_layer(ilyr)/sum_roots_layers
+             end do
+             call DeallocateHydrCohort(temp_cohort)
+             
+          else
+             h2oveg = (temp_cohort%balive+temp_cohort%bdead) * recruit_tissue_water_density ! [kgC * m3/kgC = m3]
+             sum_roots_layers = sum(currentpatch%rootr_ft(ft,1:hlm_numlevsoil))
+             do ilyr = 1,hlm_numlevsoil
+                h2o_demand_recruit(ilyr) = h2o_demand_recruit(ilyr) + h2oveg * currentpatch%rootr_ft(ft,ilyr)/sum_roots_layers
+             end do
+          end if
+             
+          deallocate(temp_cohort) ! delete temporary cohort
+          
+       end do
+       currentPatch => currentPatch%younger
+    end do
+       
+    ! The minimum value here is the ratio with the most stressed demand/supply
+    
+    moisture_recruit_limiter =  max(1.0_r8, &
+         minval(h2o_avail_recruit(1:hlm_numlevsoil)/max(h2o_demand_recruit(1:hlm_numlevsoil),tiny(1.0_r8))))
+
+    if(moisture_recruit_limiter<0.0_r8) then
+       write(fates_log(),*) 'moisture limiter on new recruits has generated a negative'
+       write(fates_log(),*) 'which doesnt make sense'
+       write(fates_log(),*) moisture_recruit_limiter
+       call endrun(msg=errMsg(sourcefile, __LINE__))
+    end if
+
+    return
+  end subroutine moisture_limit_recruits
+
   ! ============================================================================
+
   subroutine CWD_Input( currentSite, currentPatch)
     !
     ! !DESCRIPTION:

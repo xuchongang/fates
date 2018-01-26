@@ -135,11 +135,11 @@ contains
     endif
 
     if (new_cohort%siteptr%status==2 .and. EDPftvarcon_inst%season_decid(pft) == 1) then
-      new_cohort%laimemory = 0.0_r8
+       new_cohort%laimemory = 0.0_r8
     endif
 
     if (new_cohort%siteptr%dstatus==2 .and. EDPftvarcon_inst%stress_decid(pft) == 1) then
-      new_cohort%laimemory = 0.0_r8
+       new_cohort%laimemory = 0.0_r8
     endif
     
     ! Calculate live biomass allocation
