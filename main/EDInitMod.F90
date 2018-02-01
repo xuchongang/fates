@@ -64,6 +64,7 @@ contains
     allocate(site_in%terminated_nindivs(1:nlevsclass,1:numpft,2))
     allocate(site_in%demotion_rate(1:nlevsclass))
     allocate(site_in%promotion_rate(1:nlevsclass))
+    allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
     !
     end subroutine init_site_vars
 
@@ -115,6 +116,8 @@ contains
     site_in%terminated_nindivs(:,:,:) = 0._r8
     site_in%termination_carbonflux(:) = 0._r8
     site_in%recruitment_rate(:) = 0._r8
+    site_in%imort_rate(:,:) = 0._r8
+    site_in%imort_carbonflux = 0._r8
 
     ! demotion/promotion info
     site_in%demotion_rate(:) = 0._r8
@@ -270,15 +273,12 @@ contains
         call initialize_sites_by_inventory(nsites,sites,bc_in)
 
         do s = 1, nsites
-           if (hlm_use_planthydro.eq.itrue) then
-              call updateSizeDepRhizHydProps(sites(s), bc_in(s))
-           end if
+
            ! For carbon balance checks, we need to initialize the 
            ! total carbon stock
            call SiteCarbonStock(sites(s),sites(s)%old_stock,biomass_stock,litter_stock,seed_stock)
            
         enddo
-        
      else
 
         !FIX(SPM,032414) clean this up...inits out of this loop
@@ -301,14 +301,6 @@ contains
 
            call init_cohorts(newp, bc_in(s))
 
-           ! This sets the rhizosphere shells based on the plant initialization
-           ! The initialization of the plant-relevant hydraulics variables
-           ! were set from a call inside of the init_cohorts()->create_cohort() subroutine
-           if (hlm_use_planthydro.eq.itrue) then
-              call updateSizeDepRhizHydProps(sites(s), bc_in(s))
-           end if
-
-
            ! For carbon balance checks, we need to initialize the 
            ! total carbon stock
            call SiteCarbonStock(sites(s),sites(s)%old_stock,biomass_stock,litter_stock,seed_stock)
@@ -317,6 +309,16 @@ contains
 
      end if
 
+     ! This sets the rhizosphere shells based on the plant initialization
+     ! The initialization of the plant-relevant hydraulics variables
+     ! were set from a call inside of the init_cohorts()->create_cohort() subroutine
+     if (hlm_use_planthydro.eq.itrue) then 
+        do s = 1, nsites
+           call updateSizeDepRhizHydProps(sites(s), bc_in(s))
+        end do
+     end if
+
+     return
   end subroutine init_patches
 
   ! ============================================================================
@@ -334,11 +336,14 @@ contains
     ! !LOCAL VARIABLES:
     type(ed_cohort_type),pointer :: temp_cohort
     integer :: cstatus
-    integer :: pft
+    integer :: recruitstatus
+    integer :: pft  
     !----------------------------------------------------------------------
 
     patch_in%tallest  => null()
     patch_in%shortest => null()
+    
+    recruitstatus = 0
 
     do pft =  1,numpft
 
@@ -387,7 +392,7 @@ contains
 
        call create_cohort(patch_in, pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
             temp_cohort%balive, temp_cohort%bdead, temp_cohort%bstore, &
-            temp_cohort%laimemory,  cstatus, temp_cohort%canopy_trim, 1, bc_in)
+            temp_cohort%laimemory,  cstatus,recruitstatus, temp_cohort%canopy_trim, 1, bc_in)
 
        deallocate(temp_cohort) ! get rid of temporary cohort
 

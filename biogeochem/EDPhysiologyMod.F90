@@ -12,6 +12,7 @@ module EDPhysiologyMod
   use FatesInterfaceMod, only    : hlm_freq_day
   use FatesInterfaceMod, only    : hlm_day_of_year
   use FatesInterfaceMod, only    : numpft
+  use FatesInterfaceMod, only    : hlm_use_planthydro
   use FatesConstantsMod, only    : r8 => fates_r8
   use EDPftvarcon      , only    : EDPftvarcon_inst
   use FatesInterfaceMod, only    : bc_in_type
@@ -32,6 +33,7 @@ module EDPhysiologyMod
   use FatesGlobals          , only : endrun => fates_endrun
   use EDParamsMod           , only : fates_mortality_disturbance_fraction
   use FatesConstantsMod        , only : itrue,ifalse
+  use FatesPlantHydraulicsMod  , only : AccumulateMortalityWaterStorage
 
   implicit none
   private
@@ -844,8 +846,10 @@ contains
     if (hlm_use_ed_prescribed_phys .eq. itrue) then
        if (currentCohort%canopy_layer .eq. 1) then
           currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_canopy(currentCohort%pft) * currentCohort%c_area / currentCohort%n
+          currentCohort%npp_acc = currentCohort%npp_acc_hold / hlm_days_per_year ! add these for balance checking purposes
        else
           currentCohort%npp_acc_hold = EDPftvarcon_inst%prescribed_npp_understory(currentCohort%pft) * currentCohort%c_area / currentCohort%n
+          currentCohort%npp_acc = currentCohort%npp_acc_hold / hlm_days_per_year ! add these for balance checking purposes
        endif
     endif
 
@@ -1061,6 +1065,7 @@ contains
     integer :: ft
     type (ed_cohort_type) , pointer :: temp_cohort
     integer :: cohortstatus
+    integer :: recruitstatus
     !----------------------------------------------------------------------
 
     allocate(temp_cohort) ! create temporary cohort
@@ -1078,41 +1083,46 @@ contains
        temp_cohort%bstore      = EDPftvarcon_inst%cushion(ft)*(temp_cohort%balive/ (1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) &
             + EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))
 
-       if (hlm_use_ed_prescribed_phys .eq. ifalse) then
+       if (hlm_use_ed_prescribed_phys .eq. ifalse .or. EDPftvarcon_inst%prescribed_recruitment(ft) .lt. 0. ) then
           temp_cohort%n           = currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day &
                / (temp_cohort%bdead+temp_cohort%balive+temp_cohort%bstore)
        else
           ! prescribed recruitment rates. number per sq. meter per year
           temp_cohort%n        = currentPatch%area * EDPftvarcon_inst%prescribed_recruitment(ft) * hlm_freq_day
+          ! modify the carbon balance accumulators to take into account the different way of defining recruitment
+          ! add prescribed rates as an input C flux, and the recruitment that would have otherwise occured as an output flux
+          ! (since the carbon associated with them effectively vanishes)
+          currentSite%flux_in = currentSite%flux_in + temp_cohort%n * (temp_cohort%bstore + temp_cohort%balive + temp_cohort%bdead)
+          currentSite%flux_out = currentSite%flux_out + currentPatch%area * currentPatch%seed_germination(ft)*hlm_freq_day
        endif
 
        temp_cohort%laimemory = 0.0_r8     
        if (EDPftvarcon_inst%season_decid(temp_cohort%pft) == 1.and.currentSite%status == 1)then
-         temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
-              EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
+          temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
+               EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
        endif
        if (EDPftvarcon_inst%stress_decid(temp_cohort%pft) == 1.and.currentSite%dstatus == 1)then
-         temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
-            EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
+          temp_cohort%laimemory = (1.0_r8/(1.0_r8 + EDPftvarcon_inst%allom_l2fr(ft) + &
+               EDpftvarcon_inst%allom_latosa_int(ft)*temp_cohort%hite))*temp_cohort%balive
        endif
 
        cohortstatus = currentSite%status
        if (EDPftvarcon_inst%stress_decid(ft) == 1)then !drought decidous, override status. 
           cohortstatus = currentSite%dstatus
        endif
-
+ 
        if (temp_cohort%n > 0.0_r8 )then
-           if ( DEBUG ) write(fates_log(),*) 'EDPhysiologyMod.F90 call create_cohort '
-           call create_cohort(currentPatch, temp_cohort%pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
-                temp_cohort%balive, temp_cohort%bdead, temp_cohort%bstore,  &
-                temp_cohort%laimemory, cohortstatus, temp_cohort%canopy_trim, currentPatch%NCL_p, &
-                bc_in)
+          if ( DEBUG ) write(fates_log(),*) 'EDPhysiologyMod.F90 call create_cohort '
+	  recruitstatus = 1
+          call create_cohort(currentPatch, temp_cohort%pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
+               temp_cohort%balive, temp_cohort%bdead, temp_cohort%bstore,  &
+               temp_cohort%laimemory, cohortstatus,recruitstatus, temp_cohort%canopy_trim, currentPatch%NCL_p, &
+               bc_in)
 
-           ! keep track of how many individuals were recruited for passing to history
-           currentSite%recruitment_rate(ft) = currentSite%recruitment_rate(ft) + temp_cohort%n
+          ! keep track of how many individuals were recruited for passing to history
+          currentSite%recruitment_rate(ft) = currentSite%recruitment_rate(ft) + temp_cohort%n
 
        endif
-
     enddo  !pft loop
 
     deallocate(temp_cohort) ! delete temporary cohort
@@ -1173,7 +1183,7 @@ contains
               SF_val_CWD_frac(c) * currentCohort%n/currentPatch%area *(1.0_r8-EDPftvarcon_inst%allom_agb_frac(currentCohort%pft))
       enddo
 
-      if (currentCohort%canopy_layer > 1)then   
+      !if (currentCohort%canopy_layer > 1)then   
 
           ! ================================================        
           ! Litter fluxes for understorey  mortality. KgC/m2/year
@@ -1211,6 +1221,11 @@ contains
                 (currentCohort%bl+currentCohort%br+currentCohort%bstore) * &
                 (dead_n_ilogging+dead_n_dlogging) * & 
                 hlm_freq_day * currentPatch%area
+
+          if( hlm_use_planthydro == itrue ) then
+             call AccumulateMortalityWaterStorage(currentSite,currentCohort,dead_n)
+          end if
+          
 
           do c = 1,ncwd
              
@@ -1272,7 +1287,7 @@ contains
                 currentSite%resources_management%delta_individual + &
                 (dead_n_dlogging+dead_n_ilogging) * hlm_freq_day * currentPatch%area
           
-       endif !canopy layer
+       !endif !canopy layer
        
        currentCohort => currentCohort%taller
     enddo  ! end loop over cohorts 

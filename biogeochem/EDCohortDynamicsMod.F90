@@ -28,6 +28,7 @@ module EDCohortDynamicsMod
   use FatesPlantHydraulicsMod, only : initTreeHydStates
   use FatesPlantHydraulicsMod, only : InitHydrCohort
   use FatesPlantHydraulicsMod, only : DeallocateHydrCohort
+  use FatesPlantHydraulicsMod, only : AccumulateMortalityWaterStorage
   use FatesSizeAgeTypeIndicesMod, only : sizetype_class_index
 
 
@@ -61,7 +62,7 @@ contains
 
   !-------------------------------------------------------------------------------------!
   subroutine create_cohort(patchptr, pft, nn, hite, dbh, &
-       balive, bdead, bstore, laimemory, status, ctrim, clayer, bc_in)
+       balive, bdead, bstore, laimemory, status,recruitstatus, ctrim, clayer, bc_in)
     !
     ! !DESCRIPTION:
     ! create new cohort
@@ -73,6 +74,7 @@ contains
     integer,  intent(in)   :: pft       ! Cohort Plant Functional Type
     integer,  intent(in)   :: clayer    ! canopy status of cohort (1 = canopy, 2 = understorey, etc.)
     integer,  intent(in)   :: status    ! growth status of plant  (2 = leaves on , 1 = leaves off)
+    integer,  intent(in)   :: recruitstatus    ! recruit status of plant  (1 = recruitment , 0 = other)
     real(r8), intent(in)   :: nn        ! number of individuals in cohort per 'area' (10000m2 default)
     real(r8), intent(in)   :: hite      ! height: meters
     real(r8), intent(in)   :: dbh       ! dbh: cm
@@ -82,6 +84,7 @@ contains
     real(r8), intent(in)   :: laimemory ! target leaf biomass- set from previous year: kGC per indiv
     real(r8), intent(in)   :: ctrim     ! What is the fraction of the maximum leaf biomass that we are targeting? :-
     type(bc_in_type), intent(in) :: bc_in ! External boundary conditions
+     
     !
     ! !LOCAL VARIABLES:
     type(ed_cohort_type), pointer :: new_cohort         ! Pointer to New Cohort structure.
@@ -177,7 +180,10 @@ contains
     if( hlm_use_planthydro.eq.itrue ) then
        call InitHydrCohort(new_cohort)
        call updateSizeDepTreeHydProps(new_cohort, bc_in) 
-       call initTreeHydStates(new_cohort, bc_in) 
+       call initTreeHydStates(new_cohort, bc_in)
+       if(recruitstatus==1)then
+        new_cohort%co_hydr%is_newly_recuited = .true.
+       endif 
     endif
     
     call insert_cohort(new_cohort, patchptr%tallest, patchptr%shortest, tnull, snull, &
@@ -660,7 +666,10 @@ contains
                   currentSite%root_litter_diagnostic_input_carbonflux(currentCohort%pft) + &
                   currentCohort%n * (currentCohort%br+currentCohort%bstore) * hlm_days_per_year  / AREA
 
-             if (hlm_use_planthydro.eq.itrue) call DeallocateHydrCohort(currentCohort)
+             if( hlm_use_planthydro == itrue ) then
+                call AccumulateMortalityWaterStorage(currentSite,currentCohort,currentCohort%n)
+                call DeallocateHydrCohort(currentCohort)
+             end if
 
              deallocate(currentCohort)     
           endif
@@ -880,7 +889,6 @@ contains
                                    currentCohort%cmort = (currentCohort%n*currentCohort%cmort + nextc%n*nextc%cmort)/newn
                                    currentCohort%hmort = (currentCohort%n*currentCohort%hmort + nextc%n*nextc%hmort)/newn
                                    currentCohort%bmort = (currentCohort%n*currentCohort%bmort + nextc%n*nextc%bmort)/newn
-                                   currentCohort%imort = (currentCohort%n*currentCohort%imort + nextc%n*nextc%imort)/newn
                                    currentCohort%fmort = (currentCohort%n*currentCohort%fmort + nextc%n*nextc%fmort)/newn
                                    currentCohort%d13cmort = (currentCohort%n*currentCohort%d13cmort + nextc%n*nextc%d13cmort)/newn ! Hang ZHOU
 
@@ -893,18 +901,27 @@ contains
                                          nextc%n*nextc%lmort_infra)/newn
 
                                    ! npp diagnostics
-                                   currentCohort%npp_leaf  = (currentCohort%n*currentCohort%npp_leaf  + nextc%n*nextc%npp_leaf)/newn
-                                   currentCohort%npp_froot = (currentCohort%n*currentCohort%npp_froot + nextc%n*nextc%npp_froot)/newn
-                                   currentCohort%npp_bsw   = (currentCohort%n*currentCohort%npp_bsw   + nextc%n*nextc%npp_bsw)/newn
-                                   currentCohort%npp_bdead = (currentCohort%n*currentCohort%npp_bdead + nextc%n*nextc%npp_bdead)/newn
-                                   currentCohort%npp_bseed = (currentCohort%n*currentCohort%npp_bseed + nextc%n*nextc%npp_bseed)/newn
-                                   currentCohort%npp_store = (currentCohort%n*currentCohort%npp_store + nextc%n*nextc%npp_store)/newn
+                                   currentCohort%npp_leaf  = (currentCohort%n*currentCohort%npp_leaf  + nextc%n*nextc%npp_leaf) &
+                                                              /newn
+                                   currentCohort%npp_froot = (currentCohort%n*currentCohort%npp_froot + nextc%n*nextc%npp_froot) &
+                                                              /newn
+                                   currentCohort%npp_bsw   = (currentCohort%n*currentCohort%npp_bsw   + nextc%n*nextc%npp_bsw) &
+                                                              /newn
+                                   currentCohort%npp_bdead = (currentCohort%n*currentCohort%npp_bdead + nextc%n*nextc%npp_bdead) &
+                                                              /newn
+                                   currentCohort%npp_bseed = (currentCohort%n*currentCohort%npp_bseed + nextc%n*nextc%npp_bseed) &
+                                                              /newn
+                                   currentCohort%npp_store = (currentCohort%n*currentCohort%npp_store + nextc%n*nextc%npp_store) &
+                                                              /newn
 
                                    ! biomass and dbh tendencies
                                    currentCohort%ddbhdt     = (currentCohort%n*currentCohort%ddbhdt  + nextc%n*nextc%ddbhdt)/newn
-                                   currentCohort%dbalivedt  = (currentCohort%n*currentCohort%dbalivedt  + nextc%n*nextc%dbalivedt)/newn
-                                   currentCohort%dbdeaddt   = (currentCohort%n*currentCohort%dbdeaddt  + nextc%n*nextc%dbdeaddt)/newn
-                                   currentCohort%dbstoredt  = (currentCohort%n*currentCohort%dbstoredt  + nextc%n*nextc%dbstoredt)/newn
+                                   currentCohort%dbalivedt  = (currentCohort%n*currentCohort%dbalivedt  + nextc%n*nextc%dbalivedt) &
+                                                               /newn
+                                   currentCohort%dbdeaddt   = (currentCohort%n*currentCohort%dbdeaddt  + nextc%n*nextc%dbdeaddt) &
+                                                               /newn
+                                   currentCohort%dbstoredt  = (currentCohort%n*currentCohort%dbstoredt  + nextc%n*nextc%dbstoredt) &
+                                                               /newn
 
                                    do i=1, nlevleaf     
                                       if (currentCohort%year_net_uptake(i) == 999._r8 .or. nextc%year_net_uptake(i) == 999._r8) then
@@ -1267,7 +1284,6 @@ contains
     ! Mortality diagnostics
     n%cmort = o%cmort
     n%bmort = o%bmort
-    n%imort = o%imort
     n%fmort = o%fmort
     n%hmort = o%hmort
     n%d13cmort = o%d13cmort ! Hang ZHOU
@@ -1300,7 +1316,9 @@ contains
 
     ! Plant Hydraulics
     
-    if( hlm_use_planthydro.eq.itrue ) call CopyCohortHydraulics(n,o)
+    if( hlm_use_planthydro.eq.itrue ) then
+      call CopyCohortHydraulics(n,o)
+    endif
 
     ! indices for binning
     n%size_class      = o%size_class
