@@ -28,7 +28,7 @@ module EDGrowthFunctionsMod
   public ::  c_area
   public ::  mortality_rates
 
-  logical :: DEBUG_growth = .true.
+  logical :: DEBUG_growth = .false.
 
   ! ============================================================================
   ! 10/30/09: Created by Rosie Fisher
@@ -474,7 +474,8 @@ contains
     ! D13C related drought induced mortality
     ! some quick output of the daily weighted mean d13c flux for debugging
 
-    if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical)then
+    !if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical)then
+    if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical .and. cohort_in%c13disc_acc /= 0)then
        d13cmort = d13c_mortrate
     else
        d13cmort = 0.0_r8
