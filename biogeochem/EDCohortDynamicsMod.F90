@@ -48,8 +48,8 @@ module EDCohortDynamicsMod
   public :: count_cohorts
   public :: allocate_live_biomass
 
-  ! logical, parameter :: DEBUG  = .false. ! local debug flag
-  logical, parameter :: DEBUG  = .true. ! local debug flag ! Hang ZHOU, temporarily turn it on for debugging
+  logical, parameter :: DEBUG  = .false. ! local debug flag
+  !logical, parameter :: DEBUG  = .true. ! local debug flag ! Hang ZHOU, temporarily turn it on for debugging
 
   character(len=*), parameter, private :: sourcefile = &
        __FILE__
