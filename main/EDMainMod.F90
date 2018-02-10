@@ -142,14 +142,10 @@ contains
     !******************************************************************************
 
     if(hlm_use_ed_st3.eq.ifalse) then 
-       currentPatch => currentSite%oldest_patch
-       do while (associated(currentPatch))                 
-          
-          ! adds small cohort of each PFT
-          call recruitment(currentSite, currentPatch, bc_in)
-          
-          currentPatch => currentPatch%younger
-       enddo
+
+       ! adds small cohort of each PFT
+       call recruitment(currentSite, bc_in)
+
     end if
     
        
