@@ -14,6 +14,7 @@ module EDMainMod
   use FatesInterfaceMod        , only : hlm_current_month
   use FatesInterfaceMod        , only : hlm_current_day 
   use FatesInterfaceMod        , only : hlm_use_planthydro 
+  use FatesInterfaceMod        , only : hlm_use_insect 
   use FatesInterfaceMod        , only : hlm_reference_date
   use FatesInterfaceMod        , only : hlm_use_ed_st3 
   use FatesInterfaceMod        , only : bc_in_type
@@ -49,6 +50,7 @@ module EDMainMod
   use FatesPlantHydraulicsMod  , only : updateSizeDepRhizHydProps 
 !  use FatesPlantHydraulicsMod , only : updateSizeDepRhizHydStates
   use EDLoggingMortalityMod    , only : IsItLoggingTime
+  use FatesInsectMod	       , only : insect_model 
   use FatesGlobals             , only : endrun => fates_endrun
   use ChecksBalancesMod        , only : SiteCarbonStock
   
@@ -63,6 +65,7 @@ module EDMainMod
   ! !PUBLIC MEMBER FUNCTIONS:
   public  :: ed_ecosystem_dynamics
   public  :: ed_update_site
+  
   !
   ! !PRIVATE MEMBER FUNCTIONS:
   
@@ -103,7 +106,7 @@ contains
     call IsItLoggingTime(hlm_masterproc,currentSite)
 
     !**************************************************************************
-    ! Fire, growth, biogeochemistry. 
+    ! Fire, growth, biogeochemistry, insect mortality. 
     !**************************************************************************
     
     !FIX(SPM,032414) take this out.  On startup these values are all zero and on restart it
@@ -117,6 +120,28 @@ contains
 
     if (hlm_use_ed_st3.eq.ifalse) then   ! Bypass if ST3
        call fire_model(currentSite, bc_in) 
+       
+       !-----------------------------------------------------------------------
+       ! The insect_model subroutine is called at the patch level.
+    	if(hlm_use_insect.eq.itrue) then 
+    
+       		currentPatch => currentSite%oldest_patch
+       
+       		do while (associated(currentPatch))
+       
+       	  		! calling the insect mortality subroutine to update
+	  		! the insect caused mortality in each cohort within
+	  		! the patch
+	  		call insect_model(currentPatch, bc_in)
+          
+          		currentPatch => currentPatch%younger
+	  
+       		enddo
+       
+    	end if
+	! It might be nicer to reformulate the insect_model subroutine so that it
+	! can be called excatly like the fire_model above...
+	!-----------------------------------------------------------------------
 
        ! Calculate disturbance and mortality based on previous timestep vegetation.
        ! disturbance_rates calls logging mortality and other mortalities, Yi Xu
@@ -610,6 +635,7 @@ contains
           currentCohort%hmort = 0.0_r8
           currentCohort%cmort = 0.0_r8
           currentCohort%imort = 0.0_r8
+	  currentCohort%inmort = 0.0_r8
           currentCohort%fmort = 0.0_r8
 
           currentCohort => currentCohort%taller
