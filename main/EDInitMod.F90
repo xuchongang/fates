@@ -64,6 +64,7 @@ contains
     allocate(site_in%terminated_nindivs(1:nlevsclass,1:numpft,2))
     allocate(site_in%demotion_rate(1:nlevsclass))
     allocate(site_in%promotion_rate(1:nlevsclass))
+
     !
     end subroutine init_site_vars
 
@@ -211,6 +212,7 @@ contains
        sites(s)%old_stock  = 0.0_r8
 
        sites(s)%spread     = 1.0_r8
+       
     end do
 
     return
@@ -225,7 +227,6 @@ contains
      ! load patches from an inventory.
 
      !
-     
 
      use FatesPlantHydraulicsMod, only : updateSizeDepRhizHydProps 
      use FatesInventoryInitMod,   only : initialize_sites_by_inventory
@@ -273,6 +274,7 @@ contains
            if (hlm_use_planthydro.eq.itrue) then
               call updateSizeDepRhizHydProps(sites(s), bc_in(s))
            end if
+	   
            ! For carbon balance checks, we need to initialize the 
            ! total carbon stock
            call SiteCarbonStock(sites(s),sites(s)%old_stock,biomass_stock,litter_stock,seed_stock)
