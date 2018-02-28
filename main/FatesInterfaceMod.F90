@@ -129,6 +129,10 @@ module FatesInterfaceMod
                                                ! plant hydraulics (bchristo/xu methods)
                                                ! 1 = TRUE, 0 = FALSE
                                                ! THIS IS CURRENTLY NOT SUPPORTED 
+   integer, protected :: hlm_use_insect        ! This flag signals whether or not to use
+                                               ! insect dynamics (currently mostly MPB)
+                                               ! 1 = TRUE, 0 = FALSE
+                                               ! THIS IS CURRENTLY NOT SUPPORTED 					       
 
    integer, protected :: hlm_use_ed_st3        ! This flag signals whether or not to use
                                                ! (ST)atic (ST)and (ST)ructure mode (ST3)
@@ -296,7 +300,7 @@ module FatesInterfaceMod
 
       ! Patch 24-hour running mean of wind (m/s ?)
       real(r8), allocatable :: wind24_pa(:)
-
+      
 
       ! Radiation variables for calculating sun/shade fractions
       ! ---------------------------------------------------------------------------------
@@ -345,7 +349,13 @@ module FatesInterfaceMod
              
       ! air temperature at agcm reference height (kelvin)
       real(r8), allocatable :: tgcm_pa(:)
+      
+      !daily maximum air temperature at agcm reference height (kelvin)
+      real(r8), allocatable :: tgcm_max_pa(:)
 
+      !daily minimum air temperature at agcm reference height (kelvin)
+      real(r8), allocatable :: tgcm_min_pa(:)
+      
       ! soil temperature (Kelvin)
       real(r8), allocatable :: t_soisno_gl(:)
 
@@ -656,7 +666,13 @@ contains
       allocate(bc_in%t_veg_pa(maxPatchesPerSite))
       allocate(bc_in%tgcm_pa(maxPatchesPerSite))
       allocate(bc_in%t_soisno_gl(hlm_numlevgrnd))
-
+      
+      !Insects
+      allocate(bc_in%tgcm_max_pa(maxPatchesPerSite))
+      allocate(bc_in%tgcm_min_pa(maxPatchesPerSite))
+      bc_in%tgcm_max_pa(:) = -999.0_r8
+      bc_in%tgcm_min_pa(:) = 999.0_r8
+      
       ! Canopy Radiation
       allocate(bc_in%filter_vegzen_pa(maxPatchesPerSite))
       allocate(bc_in%coszen_pa(maxPatchesPerSite))
@@ -791,7 +807,9 @@ contains
          this%bc_in(s)%bsw_sisl(:) = 0.0_r8
          this%bc_in(s)%hksat_sisl(:) = 0.0_r8
       end if
-
+	
+      this%bc_in(s)%tgcm_max_pa(:) = -999.0_r8
+      this%bc_in(s)%tgcm_min_pa(:) = 999.0_r8
 
       ! Output boundaries
       this%bc_out(s)%active_suction_gl(:) = .false.
@@ -1153,6 +1171,7 @@ contains
          hlm_use_vertsoilc = unset_int
          hlm_use_spitfire  = unset_int
          hlm_use_planthydro = unset_int
+	 hlm_use_insect = unset_int
          hlm_use_logging   = unset_int
          hlm_use_ed_st3    = unset_int
          hlm_use_ed_prescribed_phys = unset_int
@@ -1191,6 +1210,13 @@ contains
          if (  .not.((hlm_use_planthydro.eq.1).or.(hlm_use_planthydro.eq.0))    ) then
             if (fates_global_verbose()) then
                write(fates_log(), *) 'The FATES namelist planthydro flag must be 0 or 1, exiting'
+            end if
+            call endrun(msg=errMsg(sourcefile, __LINE__))
+         end if
+	 
+	 if (  .not.((hlm_use_insect.eq.1).or.(hlm_use_insect.eq.0))    ) then
+            if (fates_global_verbose()) then
+               write(fates_log(), *) 'The FATES namelist insect flag must be 0 or 1, exiting'
             end if
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
@@ -1431,6 +1457,12 @@ contains
                hlm_use_planthydro = ival
                if (fates_global_verbose()) then
                   write(fates_log(),*) 'Transfering hlm_use_planthydro= ',ival,' to FATES'
+               end if
+	       
+	    case('use_insect')
+               hlm_use_insect = ival
+               if (fates_global_verbose()) then
+                  write(fates_log(),*) 'Transfering hlm_use_insect ',ival,' to FATES'
                end if
 
             case('use_logging')
