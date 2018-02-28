@@ -16,7 +16,11 @@ module EDPatchDynamicsMod
   use EDTypesMod           , only : dtype_ifall
   use EDTypesMod           , only : dtype_ilog
   use EDTypesMod           , only : dtype_ifire
+  use EDTypesMod	   , only : dtype_inmort
+  use FatesInsectMemMod	   , only : InitInsectPatch, ed_patch_insect_type
+  use FatesInsectMemMod	   , only : DomainSize, numberInsectTypes, maxNumStages
   use FatesInterfaceMod    , only : hlm_use_planthydro
+  use FatesInterfaceMod	   , only : hlm_use_insect
   use FatesInterfaceMod    , only : hlm_numlevgrnd
   use FatesInterfaceMod    , only : hlm_numlevsoil
   use FatesInterfaceMod    , only : hlm_numSWb
@@ -31,7 +35,6 @@ module EDPatchDynamicsMod
   use EDLoggingMortalityMod, only : logging_litter_fluxes 
   use EDLoggingMortalityMod, only : logging_time
   use EDParamsMod          , only : fates_mortality_disturbance_fraction
-
 
   ! CIME globals
   use shr_infnan_mod       , only : nan => shr_infnan_nan, assignment(=)
@@ -73,6 +76,8 @@ contains
 	! 2016-2017
 	! Modify to add logging disturbance
 	
+	! Feb. 24, 2018: modified to add insect mortality.
+	
     ! !USES:
     use EDGrowthFunctionsMod , only : c_area, mortality_rates
     ! loging flux
@@ -106,7 +111,7 @@ contains
 
        currentCohort => currentPatch%shortest
        do while(associated(currentCohort))        
-          ! Mortality for trees in the understorey.
+          ! Mortality for trees in the understory.
           currentCohort%patchptr => currentPatch
 
           call mortality_rates(currentCohort,cmort,hmort,bmort)
@@ -132,6 +137,9 @@ contains
        end do
        currentPatch => currentPatch%younger
     end do
+    
+    ! For insect mortality, I believe it is unnecessary to recalculate inmort as this is already stored
+    ! at the cohort level when the insect_model subroutine is called in EDMainMod.F90.
 
     ! ---------------------------------------------------------------------------------------------
     ! Calculate Disturbance Rates based on the mortality rates just calculated
@@ -142,6 +150,7 @@ contains
        
        currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
        currentPatch%disturbance_rates(dtype_ilog)  = 0.0_r8
+       currentPatch%disturbance_rates(dtype_inmort)  = 0.0_r8
 
        currentCohort => currentPatch%shortest
        do while(associated(currentCohort))   
@@ -152,6 +161,8 @@ contains
              currentPatch%disturbance_rates(dtype_ifall) = currentPatch%disturbance_rates(dtype_ifall) + &
                   fates_mortality_disturbance_fraction * &
                   min(1.0_r8,currentCohort%dmort)*hlm_freq_day*currentCohort%c_area/currentPatch%area
+		  ! I think that hlm_freq_day should be inside the parentheses delimiting the min function args
+		  ! rather than outside as it currently is.
 
              ! Logging Disturbance Rate
              currentPatch%disturbance_rates(dtype_ilog) = currentPatch%disturbance_rates(dtype_ilog) + &
@@ -159,6 +170,12 @@ contains
                                currentCohort%lmort_collateral +                      &
                                currentCohort%lmort_infra ) *                         &
                                currentCohort%c_area/currentPatch%area
+		
+	     ! Insect disturbance rate
+             currentPatch%disturbance_rates(dtype_inmort) = currentPatch%disturbance_rates(dtype_inmort) + &
+                  fates_mortality_disturbance_fraction * &
+                  min(1.0_r8,currentCohort%inmort*hlm_freq_day)*currentCohort%c_area/currentPatch%area
+
              
           endif
           currentCohort => currentCohort%taller
@@ -186,7 +203,8 @@ contains
        
        
        if (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-             currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) ) then 
+             currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+	     currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then ! DISTURBANCE IS LOGGING
           
           currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_ilog)
 
@@ -199,6 +217,7 @@ contains
                 currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+		currentCohort%inmort = currentCohort%inmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 ! currentCohort%imort will likely exist with logging
              end if
              currentCohort => currentCohort%taller
@@ -206,7 +225,8 @@ contains
           
           
        elseif (currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-             currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) ) then  ! DISTURBANCE IS FIRE
+             currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+	     currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then  ! DISTURBANCE IS FIRE
 
           currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_ifire)
 
@@ -218,6 +238,7 @@ contains
                 currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+		currentCohort%inmort = currentCohort%inmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%lmort_logging    = 0.0_r8
                 currentCohort%lmort_collateral = 0.0_r8
                 currentCohort%lmort_infra      = 0.0_r8
@@ -231,8 +252,29 @@ contains
 
              currentCohort => currentCohort%taller
           enddo !currentCohort
+	  
+	elseif (currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifall) .and. &
+             currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+	     currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifire)) then  ! DISTURBANCE IS INSECT
+	     
+	currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_inmort)
+	
+	   ! Update diagnostics, zero non-insect mortality rates
+	   do while(associated(currentCohort))
+             if(currentCohort%canopy_layer == 1)then
+                currentCohort%cmort = currentCohort%cmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                currentCohort%lmort_logging    = 0.0_r8
+                currentCohort%lmort_collateral = 0.0_r8
+                currentCohort%lmort_infra      = 0.0_r8
+             end if
+ 
+             currentCohort => currentCohort%taller
+          enddo !currentCohort
 
-       else  ! If fire and loggin are not greater than treefall, just set disturbance rate to tree-fall
+       else  ! If fire, logging and insect are not greater than treefall, just set disturbance rate to tree-fall
              ! which is most likely a 0.0
 
           currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_ifall)
@@ -245,6 +287,7 @@ contains
                 currentCohort%lmort_collateral = 0.0_r8
                 currentCohort%lmort_infra      = 0.0_r8
                 currentCohort%fmort            = 0.0_r8
+		currentCohort%inmort	       = 0.0_r8
              end if
              currentCohort => currentCohort%taller
           enddo !currentCohort
@@ -347,18 +390,22 @@ contains
           call average_patch_properties(currentPatch, new_patch, patch_site_areadis)
           
           if (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-                currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) ) then 
+                currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+		currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then 
              
              call logging_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)
              
           elseif (currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-                currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) ) then
+                currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+		currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
              
              call fire_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)  
              
           else
              
              call mortality_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)
+	     ! We currently assume that litter fluxes from insect caused mortality are the same as for general mortality.
+	     ! This may need to be corrected later.
              
           endif
 
@@ -381,7 +428,8 @@ contains
 
              ! treefall mortality is the dominant disturbance
              if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_ifire) .and. &
-                    currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_ilog))then 
+                    currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+		    currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then 
 
                 if(currentCohort%canopy_layer == 1)then
 
@@ -463,10 +511,101 @@ contains
                       
                    endif
                 endif
+		
+		! Insects are the dominant disturbance 
+		elseif(currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifall) .and. &
+                    currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+		    currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ilog)) then 
+
+                if(currentCohort%canopy_layer == 1)then
+
+                   ! In the donor patch we are left with fewer trees because the area has decreased
+                   ! the plant density for large trees does not actually decrease in the donor patch
+                   ! because this is the part of the original patch where no trees have actually fallen
+                   ! The diagnostic cmort,bmort and hmort rates have already been saved         
+
+                   currentCohort%n = currentCohort%n * (1.0_r8 - fates_mortality_disturbance_fraction * &
+                        min(1.0_r8,currentCohort%inmort * hlm_freq_day))
+
+                   nc%n = 0.0_r8      ! kill all of the trees who caused the disturbance.  
+       
+                   nc%cmort = nan     ! The mortality diagnostics are set to nan because the cohort should dissappear
+                   nc%hmort = nan
+                   nc%bmort = nan
+                   nc%fmort = nan
+                   nc%imort = nan
+                   nc%lmort_logging    = nan
+                   nc%lmort_collateral = nan
+                   nc%lmort_infra      = nan
+		   nc%inmort = nan
+
+                else
+                   ! small trees 
+                   if(EDPftvarcon_inst%woody(currentCohort%pft) == 1)then
+
+
+                      ! Survivorship of undestory woody plants.  Two step process.
+                      ! Step 1:  Reduce current number of plants to reflect the change in area.
+                      !          The number density per square are doesn't change, but since the patch is smaller
+                      !          and cohort counts are absolute, reduce this number.
+                      nc%n = currentCohort%n * patch_site_areadis/currentPatch%area
+                      
+                      ! Step 2:  Apply survivor ship function based on the understory death fraction
+                      ! remaining of understory plants of those that are knocked over by the overstorey trees dying...  
+                      nc%n = nc%n * (1.0_r8 - ED_val_understorey_death)
+                      
+                      ! since the donor patch split and sent a fraction of its members
+                      ! to the new patch and a fraction to be preserved in itself,
+                      ! when reporting diagnostic rates, we must carry over the mortality rates from
+                      ! the donor that were applied before the patch split.  Remember this is only
+                      ! for diagnostics.  But think of it this way, the rates are weighted by 
+                      ! number density in EDCLMLink, and the number density of this new patch is donated
+                      ! so with the number density must come the effective mortality rates.
+
+                      nc%fmort            = 0.0_r8               ! Should had also been zero in the donor
+                      nc%imort            = ED_val_understorey_death/hlm_freq_day  ! This was zero in the donor
+                      nc%cmort            = currentCohort%cmort
+                      nc%hmort            = currentCohort%hmort
+                      nc%bmort            = currentCohort%bmort
+                      nc%dmort            = currentCohort%dmort
+                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_collateral = currentCohort%lmort_collateral
+                      nc%lmort_infra      = currentCohort%lmort_infra
+		      nc%dmort            = currentCohort%inmort
+
+                      ! understory trees that might potentially be knocked over in the disturbance. 
+                      ! The existing (donor) patch should not have any impact mortality, it should
+                      ! only lose cohorts due to the decrease in area.  This is not mortality.
+                      ! Besides, the current and newly created patch sum to unity                      
+
+                      currentCohort%n = currentCohort%n * (1._r8 -  patch_site_areadis/currentPatch%area)
+                   else 
+                      ! grass is not killed by mortality disturbance events. Just move it into the new patch area. 
+                      ! Just split the grass into the existing and new patch structures
+                      nc%n = currentCohort%n * patch_site_areadis/currentPatch%area
+
+                      ! Those remaining in the existing
+                      currentCohort%n = currentCohort%n * (1._r8 - patch_site_areadis/currentPatch%area)
+
+                      nc%fmort            = 0.0_r8
+                      nc%imort            = 0.0_r8
+                      nc%cmort            = currentCohort%cmort
+                      nc%hmort            = currentCohort%hmort
+                      nc%bmort            = currentCohort%bmort
+                      nc%dmort            = currentCohort%dmort
+                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_collateral = currentCohort%lmort_collateral
+                      nc%lmort_infra      = currentCohort%lmort_infra
+		      nc%dmort            = currentCohort%inmort
+                      
+                   endif
+                endif
 
              ! Fire is the dominant disturbance 
              elseif (currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-                     currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog)) then !fire
+                     currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+		    currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then 
+
 
                 ! Number of members in the new patch, before we impose fire survivorship
                 nc%n = currentCohort%n * patch_site_areadis/currentPatch%area
@@ -490,7 +629,8 @@ contains
                 
              ! Logging is the dominant disturbance  
              elseif (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-                     currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire)) then  ! Logging 
+                     currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+		    currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then  ! Logging 
 
                 ! If this cohort is in the upper canopy. It generated 
                 if(currentCohort%canopy_layer == 1)then
@@ -1107,7 +1247,12 @@ contains
     allocate(new_patch%rootfr_ft(numpft,hlm_numlevgrnd))
     allocate(new_patch%rootr_ft(numpft,hlm_numlevgrnd)) 
     
-    call zero_patch(new_patch) !The nan value in here is not working??
+    if(hlm_use_insect)then
+       allocate(new_patch%pa_insect)
+       call InitInsectPatch(new_patch%pa_insect)    
+    endif
+    
+    call zero_patch(new_patch) !The nan value in here is not working??d
 
     new_patch%tallest  => null() ! pointer to patch's tallest cohort    
     new_patch%shortest => null() ! pointer to patch's shortest cohort   
@@ -1275,6 +1420,14 @@ contains
     currentPatch%sabs_dir(:)                = 0.0_r8
     currentPatch%sabs_dif(:)                = 0.0_r8
     currentPatch%zstar                      = 0.0_r8
+    
+    ! INSECTS (More variables will need to be added if additional insect species are added)
+    currentPatch%pa_insect%InsectPFTPref = 0 				
+    currentPatch%pa_insect%MPB_PhysAge(1:DomainSize, 1:7) = 0.0
+    currentPatch%pa_insect%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
+    currentPatch%pa_insect%PrS = 0.0_r8
+    currentPatch%pa_insect%Ct = 0.0_r8
+    currentPatch%pa_insect%counter = 0
 
   end subroutine zero_patch
 
@@ -1383,7 +1536,7 @@ contains
                       tmpptr => currentPatch%older       
                       call fuse_2_patches(currentPatch, tpp)
                       call fuse_cohorts(tpp, bc_in)
-                      call sort_cohorts(tpp)
+                      call sort_cohorts(tpp)		      
                       currentPatch => tmpptr
                    else
                      ! write(fates_log(),*) 'patches not fused'
@@ -1434,10 +1587,11 @@ contains
     ! This function fuses the two patches specified in the argument.
     ! It fuses the first patch in the argument (the "donor") into the second
     ! patch in the argument (the "recipient"), and frees the memory 
-    ! associated with the secnd patch
+    ! associated with the second patch
     !
     ! !USES:
     use FatesSizeAgeTypeIndicesMod, only: get_age_class_index
+    use FatesInterfaceMod	  , only: hlm_use_insect
     !
     ! !ARGUMENTS:
     type (ed_patch_type) , intent(inout), pointer :: dp ! Donor Patch
@@ -1511,6 +1665,14 @@ contains
     rp%zstar                = (dp%zstar*dp%area + rp%zstar*rp%area) * inv_sum_area
 
     rp%area = rp%area + dp%area !THIS MUST COME AT THE END!
+    
+    ! INSECTS: fuse insect patches
+    ! This subroutine needs to be called before the donor
+    ! patch pointer is deallocated because it does not deallocate 
+    ! internally.
+    if(hlm_use_insect.eq.itrue) then
+    	call Fuse_2_Insect_Patches(dp, rp)
+    end if
 
     !insert donor cohorts into recipient patch
     if(associated(dp%shortest))then
@@ -1603,6 +1765,45 @@ contains
 
 
   end subroutine fuse_2_patches
+  
+  !==========================================================================================================
+  subroutine Fuse_2_Insect_Patches(dp,rp)
+    ! !DESCRIPTION:
+    ! This subroutine fuses the two sets of insect related variables associated with the
+    ! patches specified in the argument. It fuses the first patch in the argument (the "donor") 
+    ! into the second patch in the argument (the "recipient"). It is different from the subroutine
+    ! called Fuse_2_Patches in the EDPatchDynamicsMod.F90 script in the biogeochem directory
+    ! because many of the variables used in the insect module CANNOT be naively added 
+    ! in a weighted mean. Therefore, the code determines which patch is largest 
+    ! and assigns the recipent patch the characteristics of the larger of the two patches. 
+    
+    ! If averages are absolutely necessary, they may be computed using convolution implemented via
+    ! Fast Fourier Tranforms (FFT). This could be done in a later version of the code but will involve
+    ! some additional complexity.
+    
+    ! IMPORTANT: An additional difference between Fuse_2_Insect_Patches and Fuse_2_Patches
+    ! is that the Fuse_2_Insect_Patches subroutine does not free the memory 
+    ! associated with the second patch (deallocate), but the Fuse_2_Patches subroutine does.
+    ! Therefore, the Fuse_2_Insect_Patches subroutine needs to be called WITHIN the Fuse_2_Patches 
+    ! subroutine before the donor patch, or its pointer at least, is deallocated. 
+    
+    ! !ARGUMENTS:
+      type (ed_patch_type) , intent(inout), pointer :: dp               ! Donor Patch
+      type (ed_patch_type) , intent(inout), pointer :: rp               ! Recipient Patch
+      
+      ! These variables do not depend on the patch history or characteristics.
+      rp%pa_insect%InsectPFTPref = 0 
+      rp%pa_insect%InsectPFTPref(1,1)= 1						! This is currently initialized only for mountain pine beetle
+      
+      if(dp%area >= rp%area)then
+      	rp%pa_insect%PrS = dp%pa_insect%PrS
+      	rp%pa_insect%Ct = dp%pa_insect%Ct
+      	rp%pa_insect%MPB_PhysAge = dp%pa_insect%MPB_PhysAge
+      	rp%pa_insect%indensity = dp%pa_insect%indensity
+      	rp%pa_insect%counter = dp%pa_insect%counter
+      end if
+      
+  end subroutine Fuse_2_Insect_Patches
 
   ! ============================================================================
   subroutine terminate_patches(cs_pnt)
@@ -1702,6 +1903,11 @@ contains
        deallocate(cpatch%sabs_dif)
        deallocate(cpatch%rootfr_ft)
        deallocate(cpatch%rootr_ft)
+    end if
+    
+    if(hlm_use_insect.eq.itrue)then
+       deallocate(cpatch%pa_insect%MPB_PhysAge)
+       deallocate(cpatch%pa_insect)    
     end if
 
     return
