@@ -1183,6 +1183,7 @@ contains
                 rio_hmort_co(io_idx_co)        = ccohort%hmort
                 rio_cmort_co(io_idx_co)        = ccohort%cmort
                 rio_imort_co(io_idx_co)        = ccohort%imort
+		rio_inmort_co(io_idx_co)       = ccohort%inmort
                 rio_fmort_co(io_idx_co)        = ccohort%fmort
 
                 !Logging
@@ -1750,6 +1751,7 @@ contains
                 ccohort%hmort        = rio_hmort_co(io_idx_co)
                 ccohort%cmort        = rio_cmort_co(io_idx_co)
                 ccohort%imort        = rio_imort_co(io_idx_co)
+		ccohort%inmort       = rio_inmort_co(io_idx_co)
                 ccohort%fmort        = rio_fmort_co(io_idx_co)
 
 		!Logging
