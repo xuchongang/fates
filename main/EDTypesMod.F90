@@ -8,7 +8,7 @@ module EDTypesMod
   use FatesHydraulicsMemMod, only : ed_patch_hydr_type
   use FatesHydraulicsMemMod, only : ed_site_hydr_type
   
-  use FatesInsectMemMod, only : ed_patch_insect_type
+  use FatesInsectMemMod,     only : ed_patch_insect_type
 
   implicit none
   save

@@ -122,26 +122,11 @@ contains
        call fire_model(currentSite, bc_in) 
        
        !-----------------------------------------------------------------------
-       ! The insect_model subroutine is called at the patch level.
+       ! The insect_model subroutines
     	if(hlm_use_insect.eq.itrue) then 
-    
-       		currentPatch => currentSite%oldest_patch
-       
-       		do while (associated(currentPatch))
-       
-       	  		! calling the insect mortality subroutine to update
-	  		! the insect caused mortality in each cohort within
-	  		! the patch
-	  		call insect_model(currentPatch, bc_in)
-          
-          		currentPatch => currentPatch%younger
-	  
-       		enddo
-       
+		call insect_model(currentSite, bc_in)
     	end if
-	! It might be nicer to reformulate the insect_model subroutine so that it
-	! can be called excatly like the fire_model above...
-	!-----------------------------------------------------------------------
+       !-----------------------------------------------------------------------
 
        ! Calculate disturbance and mortality based on previous timestep vegetation.
        ! disturbance_rates calls logging mortality and other mortalities, Yi Xu

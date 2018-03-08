@@ -1,9 +1,8 @@
 module FatesInsectMod
-! This is a copy of the script in the insect directory, which the compiler is currently having trouble finding.
   use shr_kind_mod              , only : r8 => shr_kind_r8
   use FatesInterfaceMod         , only : bc_in_type
   use FatesInterfaceMod         , only : hlm_current_month, hlm_current_day, hlm_freq_day
-  use EDtypesMod                , only : ed_patch_type, ed_cohort_type
+  use EDtypesMod                , only : ed_site_type, ed_patch_type, ed_cohort_type
   use FatesInsectMemMod         , only : ed_patch_insect_type, numberInsectTypes
 
   ! !PUBLIC MEMBER FUNCTIONS:
@@ -16,7 +15,7 @@ module FatesInsectMod
   private :: EPTDev		! development subroutine for mountain pine beetle eggs, pupae, and teneral adults
   private :: LarvDev		! mountain pine beetle larval development subroutine
   private :: AdDev		! mountain pine beetle adult development subroutine (unflown adults)
-  private :: ConvolveSR		! Performs a convolution of two distributions (for insect dev.) using fast FFT subroutines below
+  private :: ConvolveSR		! Performs a convolution of two distributions (for insect dev.) using FFT
   private :: LnormPDF		! produces a lognormal distribution on a specified domain
   private :: RegnierFunc	! produces a hump shaped development rate curve for temperature-dependent insect development
   private :: FlightFunc		! temperature dependent flight probability for adult mountain pine beetles
@@ -26,55 +25,67 @@ module FatesInsectMod
 contains
 
   !========================================================================
-  subroutine insect_model(currentPatch, bc_in)
+  subroutine insect_model(currentSite, bc_in)
     !
     ! !DESCRIPTION:
-    !  Core of insect model, calling all insect population demography routines
+    !  Core of insect model, calling all insect population demography routines.
+    !  Although the insect model is called at the site level, all of the insect-
+    !  related state variables are stored at the patch level (see FatesInsectMemMod)
     !
     use EDTypesMod           , only : AREA
     ! !ARGUMENTS:
-    type(ed_patch_type)      , intent(inout), target  :: currentPatch
+    type(ed_site_type)      , intent(inout), target  :: currentSite
     type(bc_in_type)        , intent(in)             :: bc_in
 
+    ! patch pointer	
+    type (ed_patch_type), pointer :: currentPatch
     ! cohort pointer
-    type (ed_cohort_type), pointer :: currentCohort
+    type (ed_cohort_type), pointer :: currentCohort  
+    
+    ! For each site we cycle through the patches from oldest to youngest  
+    currentPatch => currentSite%oldest_patch	! starting with the oldest 
+    do while (associated(currentPatch))
 
-    !-----------------------------------------------------------------------
-    ! zero out the insect mortality for the current day
+    	!-----------------------------------------------------------------------
+    	! zero out the insect mortality for the current day
 
-    currentCohort => currentPatch%tallest
+    	currentCohort => currentPatch%tallest
 
-    do while(associated(currentCohort))
+    	do while(associated(currentCohort))
 
-     currentCohort%inmort = 0.0_r8
+     		currentCohort%inmort = 0.0_r8
 
-     currentCohort => currentCohort%shorter
+     		currentCohort => currentCohort%shorter
 
-    enddo
+    	end do
 
-    !-----------------------------------------------------------------------
-    ! Calling the insect demography submodels (currently only the mountain
-    ! pine beetle model is implemented). Later there will be calls to other
-    ! insect models that may attack different plant functional types.
+    	!-----------------------------------------------------------------------
+    	! Calling the insect demography submodels (currently only the mountain
+    	! pine beetle model is implemented). Later there will be calls to other
+    	! insect models that may attack different plant functional types.
 
-    call beetle_model(currentPatch, bc_in)
+    	call beetle_model(currentPatch, bc_in)
 
-    !-----------------------------------------------------------------------
-    ! Check the total insect mortality. If the proportion if insect caused mortality in the cohort for
-    ! the day is larger than one, we reset it to one (one corresponds to 365.0_r8 for a 365 day long year)
-    ! as mortality is expressed on a per year basis but implemented on a daily basis.
+    	!-----------------------------------------------------------------------
+    	! Check the total insect mortality. If the proportion if insect caused mortality in the cohort for
+    	! the day is larger than one, we reset it to one (one corresponds to 365.0_r8 for a 365 day long year)
+    	! as mortality is expressed on a per year basis but implemented on a daily basis.
 
-    currentCohort => currentPatch%tallest
+    	currentCohort => currentPatch%tallest
 
-    do while(associated(currentCohort))
+    	do while(associated(currentCohort))
 
-     if(currentCohort%inmort*hlm_freq_day > 1.0_r8) then
-     	currentCohort%inmort = 1.0_r8/hlm_freq_day
-     end if
+     		if(currentCohort%inmort*hlm_freq_day > 1.0_r8) then
+     			currentCohort%inmort = 1.0_r8/hlm_freq_day
+     		end if
 
-     currentCohort => currentCohort%shorter
+     		currentCohort => currentCohort%shorter
 
-    end do
+    	end do ! Cohort do loop
+	
+	currentPatch => currentPatch%younger
+	
+     end do	! Patch do loop
 
   end subroutine insect_model
 
@@ -219,7 +230,7 @@ contains
 
 	! The first row of the InsectPFTPref array corresponds to insect type. The one specifies that
 	! this submodel is for the mountain pine beetle.
-        if(InsectPFTPref(1,currentCohort%pft) == 1) then  ! only attacks pfts preferred by mountain pine beetle
+        if(currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then  ! only attacks pfts preferred by mountain pine beetle
           ! Below I compute the tree density per 225 m^2 in each of the size classes
           ! used in the current version of the insect mortality model.
 
@@ -304,7 +315,7 @@ contains
         ! Below I compute the tree density per 225 m^2 in each of the size classes
         ! used in the current version of the insect mortality model.
 
-        if(FebInPopn > EndInPopn .and. InsectPFTPref(1,currentCohort%pft) == 1) then
+        if(FebInPopn > EndInPopn .and. currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then
             ! Here is the 5-8 inch dbh size class we use in the model.
 	    ! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 	    ! to the mortality rate on a yearly basis.
@@ -394,108 +405,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! the adult stage, the flying adult stage, and then attack.
 
     implicit none
-
-        ! The subroutine calls the following subroutines.
-    Interface
-
-        subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
-            real(kind = 8), intent(inout) :: Fec
-            real(kind = 8), intent(in) :: Parents
-            real(kind = 8), intent(in) :: med
-            real(kind = 8), intent(in) :: Tmn2
-            real(kind = 8), intent(out) :: NewEggs
-        end subroutine Ovipos
-
-        subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcurrent, NewNext)
-            integer(kind = 4), intent(in) :: n
-            real(kind = 8), intent(in) :: avec(n)
-            real(kind = 8), intent(in) :: med
-            real(kind = 8), intent(in) :: mu
-            real(kind = 8), intent(in) :: sigma
-            real(kind = 8), intent(in) :: Tmn2
-            real(kind = 8), intent(in) :: NewEPT
-            real(kind = 8), intent(inout) :: NewEPTtm1
-            complex(kind = 8), intent(inout) :: OEPT(n)
-            real(kind = 8), intent(out) :: EPTcurrent
-            real(kind = 8), intent(out) :: NewNext
-        end subroutine
-
-        subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext)
-             integer(kind = 4), intent(in) :: n
-            real(kind = 8), intent(in) :: avec(n)
-            real(kind = 8), intent(in) :: med
-            real(kind = 8), intent(in) :: mu
-            real(kind = 8), intent(in) :: sigma
-            real(kind = 8), intent(in) :: NewL
-            real(kind = 8), intent(inout) :: NewLtm1
-            complex(kind = 8), intent(inout) :: OL(n)
-            real(kind = 8), intent(out) :: Lcurrent
-            real(kind = 8), intent(out) :: NewNext
-        end subroutine
-
-        subroutine AdSR(NewA, Tmn2, Tmx2, Adtm1, FA)
-            real(kind = 8), intent(in) :: NewA
-            real(kind = 8), intent(in) :: Tmn2
-            real(kind = 8), intent(in) :: Tmx2
-            real(kind = 8), intent(inout) :: Adtm1
-            real(kind = 8), intent(out) :: FA
-        end subroutine
-
-        Subroutine ConvolveSR(ItemA, ItemB, AconvB)
-            complex(kind = 8), intent(in) :: ItemA(:)
-            complex(kind = 8), intent(in) :: ItemB(:)
-            complex(kind = 8), intent(out) :: AconvB(:)
-        End Subroutine ConvolveSR
-
-        Subroutine LnormPDF(x, mulog, sigmalog, PDF)
-            real(kind = 8), intent(in) :: x(:)
-            real(kind = 8), intent(in) :: mulog
-            real(kind = 8), intent(in) :: sigmalog
-            complex(kind = 8), intent(out) :: PDF(:)
-        End Subroutine LnormPDF
-
-        subroutine RegniereFunc(TC, TB, DeltaB, TM, DeltaM, omega, psi, DevR)
-            real(kind = 8), intent(in) :: TC
-            real(kind = 8), intent(in) :: TB
-            real(kind = 8), intent(in) :: DeltaB
-            real(kind = 8), intent(in) :: TM
-            real(kind = 8), intent(in) :: DeltaM
-            real(kind = 8), intent(in) :: omega
-            real(kind = 8), intent(in) :: psi
-            real(kind = 8), intent(out) :: DevR
-        end subroutine RegniereFunc
-
-        subroutine FlightFunc(TC, Flying)
-            real(kind = 8), intent(in) :: TC
-            real(kind = 8), intent(out) :: Flying
-        end subroutine
-
-        subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
-            real(kind = 8), intent(in) :: Tmx2
-            real(kind = 8), intent(in) :: Tmn2
-            real(kind = 8), intent(out) :: PrSurv
-            real(kind = 8), intent(inout) :: Ct
-            integer(kind = 4), intent(inout) :: counter
-        end subroutine
-
-        subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, &
-            an, bn, ab, bb, delta1)
-            real(kind = 8), intent(inout) :: Nt68
-            real(kind = 8), intent(inout) :: Nt10
-            real(kind = 8), intent(inout) :: Nt12
-            real(kind = 8), intent(inout) :: Nt14
-            real(kind = 8), intent(inout) :: Nt16s
-            real(kind = 8), intent(inout) :: Bt
-            real(kind = 8), intent(in) :: FA
-            real(kind = 8), intent(out) :: Parents
-            real(kind = 8), intent(in) :: an
-            real(kind = 8), intent(in) :: bn
-            real(kind = 8), intent(in) :: ab
-            real(kind = 8), intent(in) :: bb
-            real(kind = 8), intent(in) :: delta1
-        end subroutine MPBAttack
-
-    End Interface
 
     ! Here are the input and output variables
     real(kind = 8), intent(in) :: Tmax
@@ -786,10 +695,9 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             an, bn, ab, bb, delta1)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
-
-End Subroutine MPBSim2
-
-!=================================================================================================================
+    
+    contains
+    !=================================================================================================================
 subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab, bb, delta1)
     ! In this subroutine I solve the differential equations using the Euler method with an exceedingly small time step.
 
@@ -938,7 +846,7 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
     ! Now I compute the number of new parents in this one day time interval.
     Parents = Pt68 + Pt10 + Pt12 + Pt14 + Pt16s
 
-end subroutine
+end subroutine MPBAttack
 
 !======================================================================================================
 subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
@@ -1019,26 +927,6 @@ subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcur
     complex(kind = 8) :: OldEPT(n)                  ! copy of the distribution of physiological age
     complex(kind = 8) :: AconvB(n)                  ! An array to hold the convolution result
     complex(kind = 8) PDF(n)                        ! An array to hold the aging kernel
-
-    ! The subroutine calls the ConvolveSR subroutine to do the
-    ! convolution and the LnormPDF subroutine to create the
-    ! log-normally distributed development rate.
-    Interface
-
-        Subroutine ConvolveSR(ItemA, ItemB, AconvB)
-            complex(kind = 8), intent(in) :: ItemA(:)
-            complex(kind = 8), intent(in) :: ItemB(:)
-            complex(kind = 8), intent(out) :: AconvB(:)
-        End Subroutine ConvolveSR
-
-        Subroutine LnormPDF(x, mulog, sigmalog, PDF)
-            real(kind = 8), intent(in) :: x(:)
-            real(kind = 8), intent(in) :: mulog
-            real(kind = 8), intent(in) :: sigmalog
-            complex(kind = 8), intent(out) :: PDF(:)
-        End Subroutine LnormPDF
-
-    End Interface
 
     ! To compute the number of new individuals in the next stage,
     ! we need to know how many old individuals there were
@@ -1128,26 +1016,6 @@ subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext
     complex(kind = 8) :: AconvB(n)                  ! An array to hold the convolution result
     complex(kind = 8) PDF(n)                        ! An array to hold the aging kernel
 
-    ! The subroutine calls the ConvolveSR subroutine to do the
-    ! convolution and the LnormPDF subroutine to create the
-    ! log-normally distributed development rate.
-    Interface
-
-        Subroutine ConvolveSR(ItemA, ItemB, AconvB)
-            complex(kind = 8), intent(in) :: ItemA(:)
-            complex(kind = 8), intent(in) :: ItemB(:)
-            complex(kind = 8), intent(out) :: AconvB(:)
-        End Subroutine ConvolveSR
-
-        Subroutine LnormPDF(x, mulog, sigmalog, PDF)
-            real(kind = 8), intent(in) :: x(:)
-            real(kind = 8), intent(in) :: mulog
-            real(kind = 8), intent(in) :: sigmalog
-            complex(kind = 8), intent(out) :: PDF(:)
-        End Subroutine LnormPDF
-
-    End Interface
-
     ! To compute the number of new individuals in the next stage,
     ! we need to know how many old individuals there were
     ! in the previous step.
@@ -1220,14 +1088,6 @@ subroutine AdSR(NewA, Tmn2, Tmx2, Adtm1, FA)
 
     ! An internal variable
     real(kind = 8) :: PropFly                       ! The proportion of adult beetles that fly
-
-    ! The subroutine calls the FlightFunc subroutine.
-    Interface
-        Subroutine FlightFunc(TC, Flying)
-            real(kind = 8), intent(in) :: TC
-            real(kind = 8), intent(out) :: Flying
-        End Subroutine FlightFunc
-    End Interface
 
     ! I use the -18 threshold to kill all adults as
     ! described in Regniere 2015
@@ -1394,6 +1254,7 @@ subroutine FlightFunc(TC, Flying)
 
 end subroutine FlightFunc
 
+!===============================================================================
 Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! The RBMortSim subroutine implements the Regniere and Bentz (2007)
@@ -1506,5 +1367,7 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
     counter = counter + 1
 
 End Subroutine RBMortSim
+
+End Subroutine MPBSim2
 
 end module FatesInsectMod

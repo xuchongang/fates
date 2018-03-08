@@ -99,6 +99,7 @@ module FatesRestartInterfaceMod
   integer, private :: ir_hmort_co
   integer, private :: ir_cmort_co
   integer, private :: ir_imort_co
+  integer, private :: ir_inmort_co
   integer, private :: ir_fmort_co
 
    !Logging
@@ -1061,6 +1062,7 @@ contains
            rio_hmort_co                => this%rvars(ir_hmort_co)%r81d, &
            rio_cmort_co                => this%rvars(ir_cmort_co)%r81d, &
            rio_imort_co                => this%rvars(ir_imort_co)%r81d, &
+	   rio_inmort_co               => this%rvars(ir_inmort_co)%r81d, &
            rio_fmort_co                => this%rvars(ir_fmort_co)%r81d, &
 
 
@@ -1646,6 +1648,7 @@ contains
           rio_hmort_co                => this%rvars(ir_hmort_co)%r81d, &
           rio_cmort_co                => this%rvars(ir_cmort_co)%r81d, &
           rio_imort_co                => this%rvars(ir_imort_co)%r81d, &
+	  rio_inmort_co               => this%rvars(ir_inmort_co)%r81d, &
           rio_fmort_co                => this%rvars(ir_fmort_co)%r81d, &
 
 	  rio_lmort_logging_co                => this%rvars(ir_lmort_logging_co)%r81d, &
