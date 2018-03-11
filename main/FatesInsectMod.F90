@@ -116,13 +116,13 @@ contains
 
     ! Containers for the distributions of physiological age for each life stage. In the
     ! InitInsectSite subroutine these will be allocated with size equal to the domain size.
-    complex(kind = 8) :: OE(2**8)           	! vector to hold physiological age distribution for eggs
-    complex(kind = 8) :: OL1(2**8)          	! vector to hold physiological age distribution for first instar larvae
-    complex(kind = 8) :: OL2(2**8)          	! vector to hold physiological age distribution for second instar larvae
-    complex(kind = 8) :: OL3(2**8)          	! vector to hold physiological age distribution for third instar larvae
-    complex(kind = 8) :: OL4(2**8)          	! vector to hold physiological age distribution for fourth instar larvae
-    complex(kind = 8) :: OP(2**8)           	! vector to hold physiological age distribution for pupae
-    complex(kind = 8) :: OT(2**8)           	! vector to hold physiological age distribution for teneral adults
+    complex(r8) :: OE(2**8)           	! vector to hold physiological age distribution for eggs
+    complex(r8) :: OL1(2**8)          	! vector to hold physiological age distribution for first instar larvae
+    complex(r8) :: OL2(2**8)          	! vector to hold physiological age distribution for second instar larvae
+    complex(r8) :: OL3(2**8)          	! vector to hold physiological age distribution for third instar larvae
+    complex(r8) :: OL4(2**8)          	! vector to hold physiological age distribution for fourth instar larvae
+    complex(r8) :: OP(2**8)           	! vector to hold physiological age distribution for pupae
+    complex(r8) :: OT(2**8)           	! vector to hold physiological age distribution for teneral adults
 
     real(r8) :: NewEggstm1                  	! density of new eggs oviposited in the previous time step (t minus 1)
     real(r8) :: NewL1tm1                    	! density of new L1 in the previous time step (t minus 1)
@@ -407,56 +407,56 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     implicit none
 
     ! Here are the input and output variables
-    real(kind = 8), intent(in) :: Tmax
-    real(kind = 8), intent(in) :: Tmin
-    real(kind = 8), intent(inout) :: Parents
-    real(kind = 8), intent(out) :: FA
+    real(r8), intent(in) :: Tmax
+    real(r8), intent(in) :: Tmin
+    real(r8), intent(inout) :: Parents
+    real(r8), intent(out) :: FA
 
-    complex(kind = 8), intent(inout) :: OE(2**8)
-    complex(kind = 8), intent(inout) :: OL1(2**8)
-    complex(kind = 8), intent(inout) :: OL2(2**8)
-    complex(kind = 8), intent(inout) :: OL3(2**8)
-    complex(kind = 8), intent(inout) :: OL4(2**8)
-    complex(kind = 8), intent(inout) :: OP(2**8)
-    complex(kind = 8), intent(inout) :: OT(2**8)
+    complex(r8), intent(inout) :: OE(2**8)
+    complex(r8), intent(inout) :: OL1(2**8)
+    complex(r8), intent(inout) :: OL2(2**8)
+    complex(r8), intent(inout) :: OL3(2**8)
+    complex(r8), intent(inout) :: OL4(2**8)
+    complex(r8), intent(inout) :: OP(2**8)
+    complex(r8), intent(inout) :: OT(2**8)
 
-    real(kind = 8), intent(inout) :: NewEggstm1
-    real(kind = 8), intent(inout) :: NewL1tm1
-    real(kind = 8), intent(inout) :: NewL2tm1
-    real(kind = 8), intent(inout) :: NewL3tm1
-    real(kind = 8), intent(inout) :: NewL4tm1
-    real(kind = 8), intent(inout) :: NewPtm1
-    real(kind = 8), intent(inout) :: NewTtm1
+    real(r8), intent(inout) :: NewEggstm1
+    real(r8), intent(inout) :: NewL1tm1
+    real(r8), intent(inout) :: NewL2tm1
+    real(r8), intent(inout) :: NewL3tm1
+    real(r8), intent(inout) :: NewL4tm1
+    real(r8), intent(inout) :: NewPtm1
+    real(r8), intent(inout) :: NewTtm1
 
-    real(kind = 8), intent(inout) :: Fec            ! the expected number of pre-eggs at each time
-    real(kind = 8), intent(inout) :: E                ! the expected number of eggs at each time
-    real(kind = 8), intent(inout) :: L1               ! the expected number of L1 at each time step
-    real(kind = 8), intent(inout) :: L2               ! the expected number of L2 at each time step
-    real(kind = 8), intent(inout) :: L3               ! the expected number of L3 at each time step
-    real(kind = 8), intent(inout) :: L4               ! the expected number of L4 at each time step
-    real(kind = 8), intent(inout) :: P                ! the expected number of pupae at each time step
-    real(kind = 8), intent(inout) :: Te               ! the expected number of tenerals at each time step
-    real(kind = 8), intent(inout) :: A              ! the expected number of flying adults at each time step
+    real(r8), intent(inout) :: Fec            ! the expected number of pre-eggs at each time
+    real(r8), intent(inout) :: E                ! the expected number of eggs at each time
+    real(r8), intent(inout) :: L1               ! the expected number of L1 at each time step
+    real(r8), intent(inout) :: L2               ! the expected number of L2 at each time step
+    real(r8), intent(inout) :: L3               ! the expected number of L3 at each time step
+    real(r8), intent(inout) :: L4               ! the expected number of L4 at each time step
+    real(r8), intent(inout) :: P                ! the expected number of pupae at each time step
+    real(r8), intent(inout) :: Te               ! the expected number of tenerals at each time step
+    real(r8), intent(inout) :: A              ! the expected number of flying adults at each time step
 
     ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
-    real(kind = 8), intent(inout) :: PrS
-    real(kind = 8), intent(inout) :: Ct             ! The level of larval cold tolerance in the population.
+    real(r8), intent(inout) :: PrS
+    real(r8), intent(inout) :: Ct             ! The level of larval cold tolerance in the population.
     integer(kind = 4), intent(inout) :: counter     ! the duration of cold tolerance accumulation
 
     ! input and output variables
-    real(kind = 8), intent(inout) :: Nt68                   ! initial susceptible host trees in the 5 to 8 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt10                   ! initial susceptible host trees in the 8 to 10 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt12                   ! initial susceptible host trees in the 10 to 12 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt14                   ! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt16s                  ! initial susceptible host trees in the  14 inch or larger dbh size class
-    real(kind = 8), intent(inout) :: Bt                     ! beetles that remain in flight from the previous step
+    real(r8), intent(inout) :: Nt68                   ! initial susceptible host trees in the 5 to 8 inch dbh size class
+    real(r8), intent(inout) :: Nt10                   ! initial susceptible host trees in the 8 to 10 inch dbh size class
+    real(r8), intent(inout) :: Nt12                   ! initial susceptible host trees in the 10 to 12 inch dbh size class
+    real(r8), intent(inout) :: Nt14                   ! initial susceptible host trees in the 12 to 14 inch dbh size class
+    real(r8), intent(inout) :: Nt16s                  ! initial susceptible host trees in the  14 inch or larger dbh size class
+    real(r8), intent(inout) :: Bt                     ! beetles that remain in flight from the previous step
 
     ! input parameters (dbh stands for tree diameter at breast height)
-    real(kind = 8), intent(in) :: an                        ! controls the tree loss rate as a function of tree size class
-    real(kind = 8), intent(in) :: bn                        ! controls the tree loss rate as a function of tree size class
-    real(kind = 8), intent(in) :: ab                        ! controls the beetle loss rate as a function of tree size class
-    real(kind = 8), intent(in) :: bb                        ! controls the beetle loss rate as a function of tree size class
-    real(kind = 8), intent(in) :: delta1                  ! the beetle settling rate per hour estimated in Goodsman et al (2016)
+    real(r8), intent(in) :: an                        ! controls the tree loss rate as a function of tree size class
+    real(r8), intent(in) :: bn                        ! controls the tree loss rate as a function of tree size class
+    real(r8), intent(in) :: ab                        ! controls the beetle loss rate as a function of tree size class
+    real(r8), intent(in) :: bb                        ! controls the beetle loss rate as a function of tree size class
+    real(r8), intent(in) :: delta1                  ! the beetle settling rate per hour estimated in Goodsman et al (2016)
 
     !---------------------------------------------------------------------------------
     ! All of the parameters below are internal parameters (internal to the subroutine)
@@ -465,126 +465,126 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     integer(kind = 4) :: j
     ! Defining the time step (1 day)
 
-    real(kind = 8), parameter :: deltat = 1.0 ! units are days
+    real(r8), parameter :: deltat = 1.0 ! units are days
 
     !! Below I instantiate all of the rate constants. These
     !! are given in (from Regniere et al 2012) and were updated
     !! by personal communication with Jacques Regniere.
 
     ! parameters for oviposition rate
-    real(kind = 8), parameter :: sigma0 = 0.2458         ! controls rate variability
-    real(kind = 8), parameter :: TB0 = 4.6341            ! base temperature in degrees C
-    real(kind = 8), parameter :: DeltaB0 = 0.1
-    real(kind = 8), parameter :: TM0 = 27.7587           ! max temperature in degree C
-    real(kind = 8), parameter :: DeltaM0 = 3.0759
-    real(kind = 8), parameter :: omega0 = 0.3684
-    real(kind = 8), parameter :: psi0 = 0.005199
+    real(r8), parameter :: sigma0 = 0.2458         ! controls rate variability
+    real(r8), parameter :: TB0 = 4.6341            ! base temperature in degrees C
+    real(r8), parameter :: DeltaB0 = 0.1
+    real(r8), parameter :: TM0 = 27.7587           ! max temperature in degree C
+    real(r8), parameter :: DeltaM0 = 3.0759
+    real(r8), parameter :: omega0 = 0.3684
+    real(r8), parameter :: psi0 = 0.005199
 
     ! parameters for development rate for eggs
-    real(kind = 8), parameter :: sigma1 = 0.1799         ! controls rate variability
-    real(kind = 8), parameter :: TB1 = 7.0               ! base temperature in degrees C
-    real(kind = 8), parameter :: DeltaB1 = 0.019297569
-    real(kind = 8), parameter :: TM1 = 30.0928           ! max temperature in degree C
-    real(kind = 8), parameter :: DeltaM1 = 4.4175
-    real(kind = 8), parameter :: omega1 = 0.2563
-    real(kind = 8), parameter :: psi1 = 0.02317
+    real(r8), parameter :: sigma1 = 0.1799         ! controls rate variability
+    real(r8), parameter :: TB1 = 7.0               ! base temperature in degrees C
+    real(r8), parameter :: DeltaB1 = 0.019297569
+    real(r8), parameter :: TM1 = 30.0928           ! max temperature in degree C
+    real(r8), parameter :: DeltaM1 = 4.4175
+    real(r8), parameter :: omega1 = 0.2563
+    real(r8), parameter :: psi1 = 0.02317
 
     ! parameters for development rate for L1 larvae
-    real(kind = 8), parameter :: sigma2 = 0.2911      ! controls rate variability
-    real(kind = 8), parameter :: TB2 = 3.5559
-    real(kind = 8), parameter :: DeltaB2 = 0.1
-    real(kind = 8), parameter :: TM2 = 29.2647
-    real(kind = 8), parameter :: DeltaM2 = 3.8227
-    real(kind = 8), parameter :: omega2 = 0.2398
-    real(kind = 8), parameter :: psi2 = 0.01082
+    real(r8), parameter :: sigma2 = 0.2911      ! controls rate variability
+    real(r8), parameter :: TB2 = 3.5559
+    real(r8), parameter :: DeltaB2 = 0.1
+    real(r8), parameter :: TM2 = 29.2647
+    real(r8), parameter :: DeltaM2 = 3.8227
+    real(r8), parameter :: omega2 = 0.2398
+    real(r8), parameter :: psi2 = 0.01082
 
     ! parameters for development rate for L2 larvae
-    real(kind = 8), parameter :: sigma3 = 0.3799       ! controls rate variability
-    real(kind = 8), parameter :: TB3 = 6.9598
-    real(kind = 8), parameter :: DeltaB3 = 0.097087379
-    real(kind = 8), parameter :: TM3 = 28.9047
-    real(kind = 8), parameter :: DeltaM3 = 3.0374
-    real(kind = 8), parameter :: omega3 = 0.3714
-    real(kind = 8), parameter :: psi3 = 0.01072
+    real(r8), parameter :: sigma3 = 0.3799       ! controls rate variability
+    real(r8), parameter :: TB3 = 6.9598
+    real(r8), parameter :: DeltaB3 = 0.097087379
+    real(r8), parameter :: TM3 = 28.9047
+    real(r8), parameter :: DeltaM3 = 3.0374
+    real(r8), parameter :: omega3 = 0.3714
+    real(r8), parameter :: psi3 = 0.01072
 
     ! parameters for development rate for L3 larvae
-    real(kind = 8), parameter :: sigma4 = 0.3868      ! controls rate variability
-    real(kind = 8), parameter :: TB4 = 6.8462
-    real(kind = 8), parameter :: DeltaB4 = 0.1
-    real(kind = 8), parameter :: TM4 = 28.7013
-    real(kind = 8), parameter :: DeltaM4 = 2.5359
-    real(kind = 8), parameter :: omega4 = 0.4399
-    real(kind = 8), parameter :: psi4 = 0.003892
+    real(r8), parameter :: sigma4 = 0.3868      ! controls rate variability
+    real(r8), parameter :: TB4 = 6.8462
+    real(r8), parameter :: DeltaB4 = 0.1
+    real(r8), parameter :: TM4 = 28.7013
+    real(r8), parameter :: DeltaM4 = 2.5359
+    real(r8), parameter :: omega4 = 0.4399
+    real(r8), parameter :: psi4 = 0.003892
 
     ! parameters for development rate for L4 larvae
-    real(kind = 8), parameter :: sigma5 = 0.3932       ! controls rate variability
-    real(kind = 8), parameter :: TB5 = 16.2464
-    real(kind = 8), parameter :: DeltaB5 = 0.039052889
-    real(kind = 8), parameter :: TM5 = 28.0
-    real(kind = 8), parameter :: DeltaM5 = 4.5504
-    real(kind = 8), parameter :: omega5 = 0.2593
-    real(kind = 8), parameter :: psi5 = 0.05034
+    real(r8), parameter :: sigma5 = 0.3932       ! controls rate variability
+    real(r8), parameter :: TB5 = 16.2464
+    real(r8), parameter :: DeltaB5 = 0.039052889
+    real(r8), parameter :: TM5 = 28.0
+    real(r8), parameter :: DeltaM5 = 4.5504
+    real(r8), parameter :: omega5 = 0.2593
+    real(r8), parameter :: psi5 = 0.05034
 
     ! parameters for development rate for pupae
-    real(kind = 8), parameter :: sigma6 = 0.2998       ! controls rate variability
-    real(kind = 8), parameter :: TB6 = 5.63
-    real(kind = 8), parameter :: DeltaB6 = 0.10989011
-    real(kind = 8), parameter :: TM6 = 28.55
-    real(kind = 8), parameter :: DeltaM6 = 2.86
-    real(kind = 8), parameter :: omega6 = 0.1532
-    real(kind = 8), parameter :: psi6 = 0.02054
+    real(r8), parameter :: sigma6 = 0.2998       ! controls rate variability
+    real(r8), parameter :: TB6 = 5.63
+    real(r8), parameter :: DeltaB6 = 0.10989011
+    real(r8), parameter :: TM6 = 28.55
+    real(r8), parameter :: DeltaM6 = 2.86
+    real(r8), parameter :: omega6 = 0.1532
+    real(r8), parameter :: psi6 = 0.02054
 
     ! parameters for development rate for teneral adults
-    real(kind = 8), parameter :: sigma7 = 0.5284       ! controls rate variability
-    real(kind = 8), parameter :: TB7 = 4.24
-    real(kind = 8), parameter :: DeltaB7 = 0.099967011
-    real(kind = 8), parameter :: TM7 = 35.0
-    real(kind = 8), parameter :: DeltaM7 = 7.1479
-    real(kind = 8), parameter :: omega7 = 0.1463
-    real(kind = 8), parameter :: psi7 = 0.01173
+    real(r8), parameter :: sigma7 = 0.5284       ! controls rate variability
+    real(r8), parameter :: TB7 = 4.24
+    real(r8), parameter :: DeltaB7 = 0.099967011
+    real(r8), parameter :: TM7 = 35.0
+    real(r8), parameter :: DeltaM7 = 7.1479
+    real(r8), parameter :: omega7 = 0.1463
+    real(r8), parameter :: psi7 = 0.01173
 
     ! Here are variables to hold the buffered under bark temperatures
-    real(kind = 8) :: Tmean     ! mean temperature at each time step in degrees Celcius
-    real(kind = 8) :: Tmin2     ! the buffered under-bark minimum temperature
-    real(kind = 8) :: Tmax2     ! the warmer under bark maximum temperature
+    real(r8) :: Tmean     ! mean temperature at each time step in degrees Celcius
+    real(r8) :: Tmin2     ! the buffered under-bark minimum temperature
+    real(r8) :: Tmax2     ! the warmer under bark maximum temperature
 
     ! Variables that relate to the domain of the lognormal distribution
     integer(kind = 4), parameter :: n = 2**8    ! input variable. Must be specified
-    real(kind = 8), parameter :: Mx = 2.0
-    real(kind = 8), parameter :: Mn = 1.0e-20
-    real(kind = 8), parameter :: da = (Mx - Mn)/(2.0**8.0)
+    real(r8), parameter :: Mx = 2.0
+    real(r8), parameter :: Mn = 1.0e-20
+    real(r8), parameter :: da = (Mx - Mn)/(2.0**8.0)
 
-    real(kind = 8) :: avec(n) = (/(Mn + j*da, j=0,n-1)/)          ! vector defining the domain
+    real(r8) :: avec(n) = (/(Mn + j*da, j=0,n-1)/)          ! vector defining the domain
 
     ! parameters that change with each iteration
-    real(kind = 8) :: med0              ! median development rate in the pre-egg stage
-    real(kind = 8) :: med1              ! median development rate in egg stage
-    real(kind = 8) :: med2              ! median development rate in L1 stage
-    real(kind = 8) :: med3              ! median development rate in L2 stage
-    real(kind = 8) :: med4              ! median development rate in L3 stage
-    real(kind = 8) :: med5              ! median development rate in L4 stage
-    real(kind = 8) :: med6              ! median development rate in Pupa stage
-    real(kind = 8) :: med7              ! median development rate in teneral adult stage
-    real(kind = 8) :: mu1               ! mean of the log transformed random development rate in egg stage
-    real(kind = 8) :: mu2               ! mean of the log transformed random development rate in L1 stage
-    real(kind = 8) :: mu3               ! mean of the log transformed random development rate in L2 stage
-    real(kind = 8) :: mu4               ! mean of the log transformed random development rate in L3 stage
-    real(kind = 8) :: mu5               ! mean of the log transformed random development rate in L4 stage
-    real(kind = 8) :: mu6               ! mean of the log transformed random development rate in Pupa stage
-    real(kind = 8) :: mu7               ! mean of the log transformed random development rate in teneral adult stage
+    real(r8) :: med0              ! median development rate in the pre-egg stage
+    real(r8) :: med1              ! median development rate in egg stage
+    real(r8) :: med2              ! median development rate in L1 stage
+    real(r8) :: med3              ! median development rate in L2 stage
+    real(r8) :: med4              ! median development rate in L3 stage
+    real(r8) :: med5              ! median development rate in L4 stage
+    real(r8) :: med6              ! median development rate in Pupa stage
+    real(r8) :: med7              ! median development rate in teneral adult stage
+    real(r8) :: mu1               ! mean of the log transformed random development rate in egg stage
+    real(r8) :: mu2               ! mean of the log transformed random development rate in L1 stage
+    real(r8) :: mu3               ! mean of the log transformed random development rate in L2 stage
+    real(r8) :: mu4               ! mean of the log transformed random development rate in L3 stage
+    real(r8) :: mu5               ! mean of the log transformed random development rate in L4 stage
+    real(r8) :: mu6               ! mean of the log transformed random development rate in Pupa stage
+    real(r8) :: mu7               ! mean of the log transformed random development rate in teneral adult stage
 
     ! New individuals that developed into the next life stage in the
     ! time step (these are each scalar values)
-    real(kind = 8) :: NewEggs
-    real(kind = 8) :: NewL1
-    real(kind = 8) :: NewL2
-    real(kind = 8) :: NewL3
-    real(kind = 8) :: NewL4
-    real(kind = 8) :: NewP
-    real(kind = 8) :: NewT
-    real(kind = 8) :: NewA
+    real(r8) :: NewEggs
+    real(r8) :: NewL1
+    real(r8) :: NewL2
+    real(r8) :: NewL3
+    real(r8) :: NewL4
+    real(r8) :: NewP
+    real(r8) :: NewT
+    real(r8) :: NewA
 
-    real(kind = 8) :: PrSurvNew         ! a container for the new candidate for larval minimum survival probability
+    real(r8) :: PrSurvNew         ! a container for the new candidate for larval minimum survival probability
 
     !--------------------------------------------------------------------------------------------------
 
@@ -705,53 +705,53 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
 
     ! input and output variables.
     ! Tree density in size classes per 225 m^2 (15m X 15m gap).
-    real(kind = 8), intent(inout) :: Nt68                 ! initial susceptible host trees in the 5 to 8 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt10                 ! initial susceptible host trees in the 8 to 10 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt12                 ! initial susceptible host trees in the 10 to 12 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt14                 ! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(kind = 8), intent(inout) :: Nt16s                ! initial susceptible host trees in the  14 inch or larger dbh size class
-    real(kind = 8), intent(inout) :: Bt                   ! beetles that remain in flight from the previous step
+    real(r8), intent(inout) :: Nt68                 ! initial susceptible host trees in the 5 to 8 inch dbh size class
+    real(r8), intent(inout) :: Nt10                 ! initial susceptible host trees in the 8 to 10 inch dbh size class
+    real(r8), intent(inout) :: Nt12                 ! initial susceptible host trees in the 10 to 12 inch dbh size class
+    real(r8), intent(inout) :: Nt14                 ! initial susceptible host trees in the 12 to 14 inch dbh size class
+    real(r8), intent(inout) :: Nt16s                ! initial susceptible host trees in the  14 inch or larger dbh size class
+    real(r8), intent(inout) :: Bt                   ! beetles that remain in flight from the previous step
 
     ! input variable
-    real(kind = 8), intent(in) :: FA                      ! Adults that just started to fly in this time step
+    real(r8), intent(in) :: FA                      ! Adults that just started to fly in this time step
 
     ! output variables
-    real(kind = 8), intent(out) :: Parents                ! the density of beetles that entered trees killed in this time step
+    real(r8), intent(out) :: Parents                ! the density of beetles that entered trees killed in this time step
 
     ! input parameters (dbh stands for tree diameter at breast height)
-    real(kind = 8), intent(in) :: an                      ! controls the tree loss rate as a function of dbh class
-    real(kind = 8), intent(in) :: bn                      ! controls the tree loss rate as a function of dbh class
-    real(kind = 8), intent(in) :: ab                      ! controls the beetle loss rate as a function of dbh class
-    real(kind = 8), intent(in) :: bb                      ! controls the beetle loss rate as a function of dbh class
-    real(kind = 8), intent(in) :: delta1                  ! the beetle settling rate per hour estimated in Goodsman et al (2016)
+    real(r8), intent(in) :: an                      ! controls the tree loss rate as a function of dbh class
+    real(r8), intent(in) :: bn                      ! controls the tree loss rate as a function of dbh class
+    real(r8), intent(in) :: ab                      ! controls the beetle loss rate as a function of dbh class
+    real(r8), intent(in) :: bb                      ! controls the beetle loss rate as a function of dbh class
+    real(r8), intent(in) :: delta1                  ! the beetle settling rate per hour estimated in Goodsman et al (2016)
 
     ! Here are internal variables
 
     ! First we need to keep track of how many trees there initially were in each size class so that we can
     ! compute the density of infested trees at the end of the one day time step.
-    real(kind = 8) :: Btp1                      ! an updated value for the beetles
-    real(kind = 8) :: Ntp168                    ! updated susceptible host trees in the 5 to 8 inch dbh size class
-    real(kind = 8) :: Ntp110                    ! updated susceptible host trees in the 8 to 10 inch dbh size class
-    real(kind = 8) :: Ntp112                    ! updated susceptible host trees in the 10 to 12 inch dbh size class
-    real(kind = 8) :: Ntp114                    ! updated susceptible host trees in the 12 to 14 inch dbh size class
-    real(kind = 8) :: Ntp116s                   ! updated susceptible host trees in the  14 inch or larger dbh size class
+    real(r8) :: Btp1                      ! an updated value for the beetles
+    real(r8) :: Ntp168                    ! updated susceptible host trees in the 5 to 8 inch dbh size class
+    real(r8) :: Ntp110                    ! updated susceptible host trees in the 8 to 10 inch dbh size class
+    real(r8) :: Ntp112                    ! updated susceptible host trees in the 10 to 12 inch dbh size class
+    real(r8) :: Ntp114                    ! updated susceptible host trees in the 12 to 14 inch dbh size class
+    real(r8) :: Ntp116s                   ! updated susceptible host trees in the  14 inch or larger dbh size class
 
-    real(kind = 8) :: Pt68                      ! parent beetles the 5 to 8 inch dbh size class
-    real(kind = 8) :: Pt10                      ! parent beetles in the 8 to 10 inch dbh size class
-    real(kind = 8) :: Pt12                      ! parent beetles in the 10 to 12 inch dbh size class
-    real(kind = 8) :: Pt14                      ! parent beetles in the 12 to 14 inch dbh size class
-    real(kind = 8) :: Pt16s                     ! parent beetles in the 14 inch or larger dbh size class
+    real(r8) :: Pt68                      ! parent beetles the 5 to 8 inch dbh size class
+    real(r8) :: Pt10                      ! parent beetles in the 8 to 10 inch dbh size class
+    real(r8) :: Pt12                      ! parent beetles in the 10 to 12 inch dbh size class
+    real(r8) :: Pt14                      ! parent beetles in the 12 to 14 inch dbh size class
+    real(r8) :: Pt16s                     ! parent beetles in the 14 inch or larger dbh size class
 
-    real(kind = 8) :: Ptp168                    ! updated parent beetles the 5 to 8 inch dbh size class
-    real(kind = 8) :: Ptp110                    ! updated parent beetles in the 8 to 10 inch dbh size class
-    real(kind = 8) :: Ptp112                    ! updated parent beetles in the 10 to 12 inch dbh size class
-    real(kind = 8) :: Ptp114                    ! updated parent beetles in the 12 to 14 inch dbh size class
-    real(kind = 8) :: Ptp116s                   ! updated parent beetles in the 14 inch or larger dbh size class
+    real(r8) :: Ptp168                    ! updated parent beetles the 5 to 8 inch dbh size class
+    real(r8) :: Ptp110                    ! updated parent beetles in the 8 to 10 inch dbh size class
+    real(r8) :: Ptp112                    ! updated parent beetles in the 10 to 12 inch dbh size class
+    real(r8) :: Ptp114                    ! updated parent beetles in the 12 to 14 inch dbh size class
+    real(r8) :: Ptp116s                   ! updated parent beetles in the 14 inch or larger dbh size class
 
     ! parameters and variables related to the integration routine
     integer(kind = 4), parameter :: timesteps = 8640  ! number of 10 second time steps in a 24 hour day
     integer(kind = 4) :: i                            ! the iterator
-    real(kind = 8) :: deltat = 1.0/8640.0
+    real(r8) :: deltat = 1.0/8640.0
 
     ! I add in the beetles that just started flying in the time step
     Bt = Bt + FA
@@ -859,14 +859,14 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     implicit none
 
     ! Here are the input and output variables
-    real(kind = 8), intent(inout) :: Fec            ! fecundity (eggs remaining to be laid)
-    real(kind = 8), intent(in) :: Parents           ! number of parents doing the ovipositing
-    real(kind = 8), intent(in) :: med               ! median oviposition rate
-    real(kind = 8), intent(in) :: Tmn2              ! minimum temperature under the bark
-    real(kind = 8), intent(out) :: NewEggs          ! Eggs laid in the time step
+    real(r8), intent(inout) :: Fec            ! fecundity (eggs remaining to be laid)
+    real(r8), intent(in) :: Parents           ! number of parents doing the ovipositing
+    real(r8), intent(in) :: med               ! median oviposition rate
+    real(r8), intent(in) :: Tmn2              ! minimum temperature under the bark
+    real(r8), intent(out) :: NewEggs          ! Eggs laid in the time step
 
     ! internal parameters
-    real(kind = 8), parameter :: fmax = 82.0      ! Regniere et al 2012 estimate that 82 eggs are produced per female
+    real(r8), parameter :: fmax = 82.0      ! Regniere et al 2012 estimate that 82 eggs are produced per female
 
     ! Aplying winter mortality to egg laying adults
      if(Tmn2 <= -18.0)then
@@ -912,21 +912,21 @@ subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcur
 
     ! Here are the input and output variables
     integer(kind = 4), intent(in) :: n              ! size of aging domain
-    real(kind = 8), intent(in) :: avec(n)           ! The aging domain
-    real(kind = 8), intent(in) :: med               ! median development rate
-    real(kind = 8), intent(in) :: mu                ! mean of the log transformed random development rate
-    real(kind = 8), intent(in) :: sigma             ! scale parameter of the log-normally distributed rate
-    real(kind = 8), intent(in) :: Tmn2              ! the buffered under-bark minimum temperature
-    real(kind = 8), intent(in) :: NewEPT            ! New individuals (just developed from previous stage)
-    real(kind = 8), intent(inout) :: NewEPTtm1      ! New individuals from the previous time step
-    complex(kind = 8), intent(inout) :: OEPT(n)     ! Distribution of physiological age
-    real(kind = 8), intent(out) :: EPTcurrent       ! Number of individuals currently in the stage
-    real(kind = 8), intent(out) :: NewNext          ! New that just developed out of the current stage into the next one
+    real(r8), intent(in) :: avec(n)           ! The aging domain
+    real(r8), intent(in) :: med               ! median development rate
+    real(r8), intent(in) :: mu                ! mean of the log transformed random development rate
+    real(r8), intent(in) :: sigma             ! scale parameter of the log-normally distributed rate
+    real(r8), intent(in) :: Tmn2              ! the buffered under-bark minimum temperature
+    real(r8), intent(in) :: NewEPT            ! New individuals (just developed from previous stage)
+    real(r8), intent(inout) :: NewEPTtm1      ! New individuals from the previous time step
+    complex(r8), intent(inout) :: OEPT(n)     ! Distribution of physiological age
+    real(r8), intent(out) :: EPTcurrent       ! Number of individuals currently in the stage
+    real(r8), intent(out) :: NewNext          ! New that just developed out of the current stage into the next one
 
     ! Here are variables related to the convolution
-    complex(kind = 8) :: OldEPT(n)                  ! copy of the distribution of physiological age
-    complex(kind = 8) :: AconvB(n)                  ! An array to hold the convolution result
-    complex(kind = 8) PDF(n)                        ! An array to hold the aging kernel
+    complex(r8) :: OldEPT(n)                  ! copy of the distribution of physiological age
+    complex(r8) :: AconvB(n)                  ! An array to hold the convolution result
+    complex(r8) PDF(n)                        ! An array to hold the aging kernel
 
     ! To compute the number of new individuals in the next stage,
     ! we need to know how many old individuals there were
@@ -1001,20 +1001,20 @@ subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext
 
     ! Here are the input and output variables
     integer(kind = 4), intent(in) :: n              ! size of aging domain
-    real(kind = 8), intent(in) :: avec(n)           ! The aging domain
-    real(kind = 8), intent(in) :: med               ! median development rate
-    real(kind = 8), intent(in) :: mu                ! mean of the log transformed random development rate
-    real(kind = 8), intent(in) :: sigma             ! scale parameter of the log-normally distributed rate
-    real(kind = 8), intent(in) :: NewL              ! New larvae (just developed from the previous stage)
-    real(kind = 8), intent(inout) :: NewLtm1        ! New larvae from the previous time step
-    complex(kind = 8), intent(inout) :: OL(n)       ! Distribution of physiological age
-    real(kind = 8), intent(out) :: Lcurrent         ! Number of larvae
-    real(kind = 8), intent(out) :: NewNext          ! New individuals in the next stage (just developed out of current stage)
+    real(r8), intent(in) :: avec(n)           ! The aging domain
+    real(r8), intent(in) :: med               ! median development rate
+    real(r8), intent(in) :: mu                ! mean of the log transformed random development rate
+    real(r8), intent(in) :: sigma             ! scale parameter of the log-normally distributed rate
+    real(r8), intent(in) :: NewL              ! New larvae (just developed from the previous stage)
+    real(r8), intent(inout) :: NewLtm1        ! New larvae from the previous time step
+    complex(r8), intent(inout) :: OL(n)       ! Distribution of physiological age
+    real(r8), intent(out) :: Lcurrent         ! Number of larvae
+    real(r8), intent(out) :: NewNext          ! New individuals in the next stage (just developed out of current stage)
 
     ! Here are variables related to the convolution
-    complex(kind = 8) :: OldL(n)                    ! copy of the distribution of physiological age
-    complex(kind = 8) :: AconvB(n)                  ! An array to hold the convolution result
-    complex(kind = 8) PDF(n)                        ! An array to hold the aging kernel
+    complex(r8) :: OldL(n)                    ! copy of the distribution of physiological age
+    complex(r8) :: AconvB(n)                  ! An array to hold the convolution result
+    complex(r8) PDF(n)                        ! An array to hold the aging kernel
 
     ! To compute the number of new individuals in the next stage,
     ! we need to know how many old individuals there were
@@ -1080,14 +1080,14 @@ subroutine AdSR(NewA, Tmn2, Tmx2, Adtm1, FA)
     implicit none
 
     ! Here are the input and output variables
-    real(kind = 8), intent(in) :: NewA              ! New adults
-    real(kind = 8), intent(in) :: Tmn2              ! minimum temperature under the bark
-    real(kind = 8), intent(in) :: Tmx2              ! maximum temperature under the bark
-    real(kind = 8), intent(inout) :: Adtm1          ! Number of adult individuals
-    real(kind = 8), intent(out) :: FA               ! Flying beetles
+    real(r8), intent(in) :: NewA              ! New adults
+    real(r8), intent(in) :: Tmn2              ! minimum temperature under the bark
+    real(r8), intent(in) :: Tmx2              ! maximum temperature under the bark
+    real(r8), intent(inout) :: Adtm1          ! Number of adult individuals
+    real(r8), intent(out) :: FA               ! Flying beetles
 
     ! An internal variable
-    real(kind = 8) :: PropFly                       ! The proportion of adult beetles that fly
+    real(r8) :: PropFly                       ! The proportion of adult beetles that fly
 
     ! I use the -18 threshold to kill all adults as
     ! described in Regniere 2015
@@ -1123,19 +1123,19 @@ Subroutine ConvolveSR(ItemA, ItemB, AconvB)
     include 'fftw3.f03'
     type(C_PTR) :: plan
 
-    complex(kind = 8), intent(in) :: ItemA(:)
-    complex(kind = 8), intent(in) :: ItemB(:)
-    complex(kind = 8), intent(out) :: AconvB(:)
+    complex(r8), intent(in) :: ItemA(:)
+    complex(r8), intent(in) :: ItemB(:)
+    complex(r8), intent(out) :: AconvB(:)
 
     ! Variables that are arguments of the fft functions
     integer(kind = 4), parameter :: m = 2**8        ! input variable. Must be specified
     integer(kind = 4), parameter :: Twom = 2*m      ! Because I use a pad of size n, we double n
 
-    complex(kind = 8) :: Convolved(Twom)
+    complex(r8) :: Convolved(Twom)
 
     ! First I do the padding with zeros on the right hand side of the two input arrays
-    complex(kind = 8) :: PaddedItemA(Twom)
-    complex(kind = 8) :: PaddedItemB(Twom)
+    complex(r8) :: PaddedItemA(Twom)
+    complex(r8) :: PaddedItemB(Twom)
     PaddedItemA(1:m) = ItemA
     PaddedItemB(1:m) = ItemB
     PaddedItemA(m+1:Twom) = 0.0
@@ -1185,12 +1185,12 @@ Subroutine LnormPDF(x, mulog, sigmalog, PDF)
     ! I use the assumed-shape convention for the 1-D array
     implicit none
 
-    real(kind = 8), intent(in) :: x(:)
-    real(kind = 8), intent(in) :: mulog
-    real(kind = 8), intent(in) :: sigmalog
-    complex(kind = 8), intent(out) :: PDF(:)
+    real(r8), intent(in) :: x(:)
+    real(r8), intent(in) :: mulog
+    real(r8), intent(in) :: sigmalog
+    complex(r8), intent(out) :: PDF(:)
 
-    real(kind = 8), parameter :: pi = 3.1415927
+    real(r8), parameter :: pi = 3.1415927
 
     PDF = 1.0/(x*sigmalog*sqrt(2.0*pi))*exp(-1.0/(2.0*sigmalog**2.0)*(log(x)-mulog)**2.0)
 
@@ -1209,14 +1209,14 @@ subroutine RegniereFunc(TC, TB, DeltaB, TM, DeltaM, omega, psi, DevR)
 
     implicit none
 
-    real(kind = 8), intent(in) :: TC
-    real(kind = 8), intent(in) :: TB
-    real(kind = 8), intent(in) :: DeltaB
-    real(kind = 8), intent(in) :: TM
-    real(kind = 8), intent(in) :: DeltaM
-    real(kind = 8), intent(in) :: omega
-    real(kind = 8), intent(in) :: psi
-    real(kind = 8), intent(out) :: DevR
+    real(r8), intent(in) :: TC
+    real(r8), intent(in) :: TB
+    real(r8), intent(in) :: DeltaB
+    real(r8), intent(in) :: TM
+    real(r8), intent(in) :: DeltaM
+    real(r8), intent(in) :: omega
+    real(r8), intent(in) :: psi
+    real(r8), intent(out) :: DevR
 
     ! We start by defining it as zero in case the condition below does not hold
     DevR = 0.0
@@ -1240,8 +1240,8 @@ subroutine FlightFunc(TC, Flying)
 
     implicit none
 
-    real(kind = 8), intent(in) :: TC
-    real(kind = 8), intent(out) :: Flying
+    real(r8), intent(in) :: TC
+    real(r8), intent(out) :: Flying
 
     ! We start by defining it as zero in case the condition below does not hold
     Flying = 0.0
@@ -1263,15 +1263,15 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
 
     implicit none
 
-    real(kind = 8), intent(in) :: Tmx2              ! Daily maximum under bark temperature
-    real(kind = 8), intent(in) :: Tmn2              ! Daily minimum under bark temperature
-    real(kind = 8), intent(out) :: PrSurv           ! Lowest temperature to date.
-    real(kind = 8), intent(inout) :: Ct             ! current accumulated level of cold hardiness
+    real(r8), intent(in) :: Tmx2              ! Daily maximum under bark temperature
+    real(r8), intent(in) :: Tmn2              ! Daily minimum under bark temperature
+    real(r8), intent(out) :: PrSurv           ! Lowest temperature to date.
+    real(r8), intent(inout) :: Ct             ! current accumulated level of cold hardiness
     integer(kind = 4), intent(inout) :: counter     ! steps up by one every time the function is called
                                                     ! as long as there are larvae present.
 
     ! below are internal variables and parameters
-    real(kind = 8) :: CtNew                         ! The new level of cold hardiness
+    real(r8) :: CtNew                         ! The new level of cold hardiness
 
     ! Defining the constants
     ! the "parameter" indicates that
@@ -1283,45 +1283,45 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
     ! equation in the original manuscript
 
     ! parameters for distribution of supercooling points (equation 1)
-    real(kind = 8), parameter :: alpha1 = -9.8       ! mean supercooling point (SCP) in state 1 in degree C
-    real(kind = 8), parameter :: Beta1 = 2.26        ! spread of SCP in state 1
-    real(kind = 8), parameter :: alpha2 = -21.2      ! mean SCP in state 2
-    real(kind = 8), parameter :: Beta2 = 1.47        ! spread of SCP in state 2
-    real(kind = 8), parameter :: alpha3 = -32.3      ! mean SCP in state 3
-    real(kind = 8), parameter :: Beta3 = 2.42        ! spread of SCP in state 3
+    real(r8), parameter :: alpha1 = -9.8       ! mean supercooling point (SCP) in state 1 in degree C
+    real(r8), parameter :: Beta1 = 2.26        ! spread of SCP in state 1
+    real(r8), parameter :: alpha2 = -21.2      ! mean SCP in state 2
+    real(r8), parameter :: Beta2 = 1.47        ! spread of SCP in state 2
+    real(r8), parameter :: alpha3 = -32.3      ! mean SCP in state 3
+    real(r8), parameter :: Beta3 = 2.42        ! spread of SCP in state 3
 
     ! parameters for the gain rate (equation 3)
-    real(kind = 8), parameter :: rhoG = 0.311        ! maximum gain rate
-    real(kind = 8), parameter :: sigmaG = 8.716      ! spread of the gain temperature response
+    real(r8), parameter :: rhoG = 0.311        ! maximum gain rate
+    real(r8), parameter :: sigmaG = 8.716      ! spread of the gain temperature response
 
     ! parameters for the changing optimal temperature for gains in cold hardiness (equation 5)
-    real(kind = 8), parameter :: muG = -5.0
-    real(kind = 8), parameter :: kappaG = -39.3
+    real(r8), parameter :: muG = -5.0
+    real(r8), parameter :: kappaG = -39.3
 
     ! parameters for the loss rate (equation 4)
-    real(kind = 8), parameter :: rhoL = 0.791
-    real(kind = 8), parameter :: sigmaL = 3.251
+    real(r8), parameter :: rhoL = 0.791
+    real(r8), parameter :: sigmaL = 3.251
 
     ! parameters for the changing optimal temperature for loss of cold hardiness (equation 6)
-    real(kind = 8), parameter :: muL = 33.9
-    real(kind = 8), parameter :: kappaL = -32.7
+    real(r8), parameter :: muL = 33.9
+    real(r8), parameter :: kappaL = -32.7
 
     ! These are the breakpoints that dictate what proportion of individuals are in each SCP state
-    real(kind = 8), parameter :: LambdaZero = 0.254
-    real(kind = 8), parameter :: LambdaOne = 0.764
+    real(r8), parameter :: LambdaZero = 0.254
+    real(r8), parameter :: LambdaOne = 0.764
 
     ! Variables involved in iteration
-    real(kind = 8) :: T               ! mean temperature at each time step in degrees Celcius
-    real(kind = 8) :: Range1          ! maximum range of temperature under the bark
+    real(r8) :: T               ! mean temperature at each time step in degrees Celcius
+    real(r8) :: Range1          ! maximum range of temperature under the bark
 
     ! Defining other variables that are recomputed in each time step
-    real(kind = 8) :: TG              ! optimum temperature for gaining cold hardiness
-    real(kind = 8) :: TL              ! optimum temperature for losing cold hardiness
-    real(kind = 8) :: Gt              ! gain of cold hardiness at time t
-    real(kind = 8) :: Lt              ! loss of cold hardiness at time t
-    real(kind = 8) :: p1              ! the proportion of individuals in stage 1
-    real(kind = 8) :: p2              ! the proportion of individuals in stage 2
-    real(kind = 8) :: p3              ! the proportion of individuals in stage 3
+    real(r8) :: TG              ! optimum temperature for gaining cold hardiness
+    real(r8) :: TL              ! optimum temperature for losing cold hardiness
+    real(r8) :: Gt              ! gain of cold hardiness at time t
+    real(r8) :: Lt              ! loss of cold hardiness at time t
+    real(r8) :: p1              ! the proportion of individuals in stage 1
+    real(r8) :: p2              ! the proportion of individuals in stage 2
+    real(r8) :: p3              ! the proportion of individuals in stage 3
 
     !---------------------------------------------------------------------------
     ! Now for the calculations
