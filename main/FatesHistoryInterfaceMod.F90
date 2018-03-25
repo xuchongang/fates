@@ -3253,14 +3253,14 @@ end subroutine flush_hvars
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m7_si_scpf )
 
-    !d13c mortality Hang ZHOU ! TODO, liang wei, check units
+    !d13c mortality Hang ZHOU 
     call this%set_history_var(vname='Md13c_SCPF', units = 'N/ha/event',               &
          long='d13c-related mortalities by pft/size',use_default='inactive',           &
          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_md13c_si_scpf )
 
     !c13 discrimination Hang ZHOU
-    call this%set_history_var(vname='C13disc_SCPF', units = 'N/ha/event',               &
+    call this%set_history_var(vname='C13disc_SCPF', units = 'per mil',               &
          long='c13 discrimination by pft/size',use_default='inactive',           &
          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_c13disc_si_scpf )
@@ -3271,7 +3271,7 @@ end subroutine flush_hvars
          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_md13crate_si_scpf )
 
-    ! !d13c Hang ZHOU
+    ! !d13c Hang ZHOU Liang Wei
     ! call this%set_history_var(vname='d13c_SCPF', units = 'per mil',               &
     !      long='d13c by pft/size',use_default='inactive',           &
     !      avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &

@@ -13,6 +13,9 @@ module EDAccumulateFluxesMod
   use FatesGlobals, only      : fates_log
   use shr_log_mod , only      : errMsg => shr_log_errMsg
   use FatesConstantsMod , only : r8 => fates_r8
+
+  use clm_time_manager   ,  only : get_curr_date  !Liang Wei
+
   implicit none
   private
   !
@@ -63,6 +66,15 @@ contains
     ! real(r8) :: c13disc_acc
     ! real(r8) :: c13disc_clm
 
+    real(r8) :: d13cmort = 0.0_r8                    ! d13c related drought induced mortality, Hang ZHOU
+    real(r8), parameter :: d13c_critical = -20.0_r8  ! -20 Liang Wei, threshold
+    real(r8), parameter :: d13c_mortrate = 0.6_r8    !Liang Wei define rate
+    integer ::&
+         yr,    &! year
+         mon,   &! month
+         day,   &! day of month
+         tod     ! time of day (seconds past 0Z)
+    real(r8) :: d13c_background = 0.0_r8
 
     !----------------------------------------------------------------------
 
@@ -89,7 +101,11 @@ contains
 
                 endif
 
-                ! Hang ZHOU,  Liang Wei
+
+                ! Hang ZHOU,  Liang Wei (2018-03-25)
+                d13cmort = 0.0_r8
+                d13c_background = 0.0_r8
+
                 !if((ccohort%gpp_acc + ccohort%gpp_clm) .eq. 0.0_r8) then
                 if((ccohort%gpp_acc + ccohort%gpp_tstep) .eq. 0.0_r8) then
                   ccohort%c13disc_acc = 0.0_r8
@@ -103,6 +119,27 @@ contains
                 ccohort%npp_acc  = ccohort%npp_acc  + ccohort%npp_tstep
                 ccohort%gpp_acc  = ccohort%gpp_acc  + ccohort%gpp_tstep
                 ccohort%resp_acc = ccohort%resp_acc + ccohort%resp_tstep
+
+                ! Hang ZHOU (2018-03-25)
+                ! caclulate the d13cmort and saved to ccohor (current cohort)
+                ! the related snippets stay in the `EDGrowthFunctionsMod/mortality_rates` before
+                ! they are moved here to make sure d13cmore will still be calculated even the static option is used
+                ! there maybe better way to organize the code structure and logic
+
+                call get_curr_date(yr, mon, day, tod)
+                if (yr < 1740) then
+                  d13c_background = -6.429_r8
+                else if (yr > 2019) then
+                  d13c_background = -9.000_r8
+                else
+                  d13c_background = -6.429_r8 - 0.0060_r8 * exp(0.0217_r8 * (yr - 1740))
+                endif
+                if((d13c_background - ccohort%c13disc_acc) >= d13c_critical .and. ccohort%c13disc_acc /= 0)then
+                   d13cmort = d13c_mortrate
+                else
+                   d13cmort = 0.0_r8
+                endif
+                ccohort%d13cmort = d13cmort
 
                 !----- THE FOLLOWING IS ONLY IMPLEMENTED TEMPORARILY FOR B4B reproducibility
                 !----- ALSO, THERE IS NO REASON TO USE THE ISNEW FLAG HERE

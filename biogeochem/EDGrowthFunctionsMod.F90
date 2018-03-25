@@ -426,28 +426,29 @@ contains
     type(ed_cohort_hydr_type), pointer :: ccohort_hydr
     real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold
 
-    ! Hang ZHOU
-    real(r8), parameter :: d13c_critical = -20.0_r8 ! -20 Liang Wei, threshold
-    real(r8), parameter :: d13c_mortrate = 0.6_r8  !Liang Wei define rate
-    integer ::&
-         yr,    &! year
-         mon,   &! month
-         day,   &! day of month
-         tod     ! time of day (seconds past 0Z)
-    real(r8) :: d13c_background = 0.0_r8
+    ! ! Hang ZHOU
+    ! real(r8), parameter :: d13c_critical = -20.0_r8 ! -20 Liang Wei, threshold
+    ! real(r8), parameter :: d13c_mortrate = 0.6_r8  !Liang Wei define rate
+    ! integer ::&
+    !      yr,    &! year
+    !      mon,   &! month
+    !      day,   &! day of month
+    !      tod     ! time of day (seconds past 0Z)
+    ! real(r8) :: d13c_background = 0.0_r8
+
     real(r8) :: flc_ag_min, flc_bg_min, flc_min !min fraction of conducitity for aboveground, belowground and whole tree 
 
     if (hlm_use_ed_prescribed_phys .eq. ifalse) then
 
-    ! Hang ZHOU, Liang wei, calculate background d13c, this may need further edits as people may start modeling from year 1
-    call get_curr_date(yr, mon, day, tod)
-    if (yr < 1740) then
-      d13c_background = -6.429_r8
-    else if (yr > 2019) then
-      d13c_background = -9.000_r8
-    else
-      d13c_background = -6.429_r8 - 0.0060_r8 * exp(0.0217_r8 * (yr - 1740))
-    endif
+    ! ! Hang ZHOU, Liang wei, calculate background d13c, this may need further edits as people may start modeling from year 1
+    ! call get_curr_date(yr, mon, day, tod)
+    ! if (yr < 1740) then
+    !   d13c_background = -6.429_r8
+    ! else if (yr > 2019) then
+    !   d13c_background = -9.000_r8
+    ! else
+    !   d13c_background = -6.429_r8 - 0.0060_r8 * exp(0.0217_r8 * (yr - 1740))
+    ! endif
 
     ! 'Background' mortality (can vary as a function of density as in ED1.0 and ED2.0, but doesn't here for tractability)
     bmort = EDPftvarcon_inst%bmort(cohort_in%pft)
@@ -488,15 +489,23 @@ contains
             cohort_in%dbh,cohort_in%pft,cohort_in%n,cohort_in%canopy_layer
     endif
 
-    ! D13C related drought induced mortality
-    ! some quick output of the daily weighted mean d13c flux for debugging
+    ! ! D13C related drought induced mortality
+    ! ! some quick output of the daily weighted mean d13c flux for debugging
 
-    !if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical)then
-    if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical .and. cohort_in%c13disc_acc /= 0)then
-       d13cmort = d13c_mortrate
-    else
-       d13cmort = 0.0_r8
-    endif
+    ! !if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical)then
+    ! if((d13c_background - cohort_in%c13disc_acc) >= d13c_critical .and. cohort_in%c13disc_acc /= 0)then
+    !    d13cmort = d13c_mortrate
+    ! else
+    !    d13cmort = 0.0_r8
+    ! endif
+
+    ! Hang ZHOU (joeyzhou1984@gmail.com) 2018-03-25
+    ! turn off all the calcualtion of d13cmort here, and move to EDAccumulatedFluxesMod
+    ! d13cmort would be caclulated there and passed into the cohort data-structure
+    ! so when the static mode is used, EDGrowthFUnctionsMode is not called, d13cmort will still be calculated
+    ! and when the static mode is not used, `mortality_rates` can still access the calculated d13cmort via the cohort data-structure
+    d13cmort = cohort_in%d13cmort
+
     if (DEBUG_growth) write(fates_log(), *) 'MORTALITY I, c13disc_acc', cohort_in%c13disc_acc
     if (DEBUG_growth) write(fates_log(), *) 'MORTALITY II, d13cmort', d13cmort
     if (DEBUG_growth) write(fates_log(), *) 'MORTALITY III, d13c_background', d13c_background

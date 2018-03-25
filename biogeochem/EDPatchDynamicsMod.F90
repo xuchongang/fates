@@ -119,8 +119,8 @@ contains
           ! currentCohort%dmort  = cmort+hmort+bmort
           call mortality_rates(currentCohort, cmort, hmort, bmort, d13cmort) ! Hang ZHOU
           ! currentCohort%dmort  = cmort + hmort + bmort + d13cmort ! Hang ZHOU
-          currentCohort%dmort  = cmort + hmort + bmort  ! original code
-	  !currentCohort%dmort  = bmort !Jan18 2018 testing drought mortality by keeping stand density Liang Wei
+          !currentCohort%dmort  = cmort + hmort + bmort  ! original code
+	  currentCohort%dmort  = 0 !Jan18 2018 testing drought mortality by keeping stand density Liang Wei
           currentCohort%c_area = c_area(currentCohort)
 
           ! Initialize diagnostic mortality rates

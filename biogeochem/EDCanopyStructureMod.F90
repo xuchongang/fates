@@ -2,7 +2,7 @@ module EDCanopyStructureMod
 
   ! ============================================================================
   ! Code to determine whether the canopy is closed, and which plants are either in the understorey or overstorey
-  ! This is obviosuly far too complicated for it's own good and needs re-writing.  
+  ! This is obviosuly far too complicated for it's own good and needs re-writing.
   ! ============================================================================
 
   use FatesConstantsMod      , only : r8 => fates_r8
@@ -58,34 +58,34 @@ contains
       ! All top leaves in the same canopy layer get the same light resources.
       ! The first canopy layer is the 'canopy' or 'overstorey'. The second is the 'understorey'.
       ! More than two layers is not permitted at the moment
-      ! Seeds germinating into the 3rd or higher layers are automatically removed. 
+      ! Seeds germinating into the 3rd or higher layers are automatically removed.
       !
       ! ------Perfect Plasticity-----
       ! The idea of these canopy layers derives originally from Purves et al. 2009
       ! Their concept is that, given enoughplasticity in canopy position, size, shape and depth
       ! all of the gound area will be filled perfectly by leaves, and additional leaves will have
-      ! to exist in the understorey. 
+      ! to exist in the understorey.
       ! Purves et al. use the concept of 'Z*' to assume that the height required to attain a place in the
       ! canopy is spatially uniform. In this implementation, described in Fisher et al. (2010, New Phyt) we
       ! extent that concept to assume that position in the canopy has some random element, and that BOTH height
-      ! and chance combine to determine whether trees get into the canopy. 
+      ! and chance combine to determine whether trees get into the canopy.
       ! Thus, when the canopy is closed and there is excess area, some of it must be demoted
-      ! If we demote -all- the trees less than a given height, there is a massive advantage in being the cohort that is 
-      ! the biggest when the canopy is closed. 
+      ! If we demote -all- the trees less than a given height, there is a massive advantage in being the cohort that is
+      ! the biggest when the canopy is closed.
       ! In this implementation, the amount demoted, ('weight') is a function of the height weighted by the competitive exclusion
-      ! parameter (ED_val_comp_excln). 
+      ! parameter (ED_val_comp_excln).
 
-      ! Complexity in this routine results from a few things. 
+      ! Complexity in this routine results from a few things.
       ! Firstly, the complication of the demotion amount sometimes being larger than the cohort area (for a very small, short cohort)
-      ! Second, occasionaly, disturbance (specifically fire) can cause the canopy layer to become less than closed, 
-      ! without changing the area of the patch. If this happens, then some of the plants in the lower layer need to be 'promoted' so 
-      ! all of the routine has to happen in both the downwards and upwards directions. 
+      ! Second, occasionaly, disturbance (specifically fire) can cause the canopy layer to become less than closed,
+      ! without changing the area of the patch. If this happens, then some of the plants in the lower layer need to be 'promoted' so
+      ! all of the routine has to happen in both the downwards and upwards directions.
       !
       ! The order of events here is therefore:
-      ! (The entire subroutine has a single outer 'patch' loop. 
-      ! Section 1: figure out the total area, and whether there are >1 canopy layers at all. 
+      ! (The entire subroutine has a single outer 'patch' loop.
+      ! Section 1: figure out the total area, and whether there are >1 canopy layers at all.
       !
-      ! Sorts out cohorts into canopy and understorey layers...                              
+      ! Sorts out cohorts into canopy and understorey layers...
       !
       ! !USES:
 
@@ -95,7 +95,7 @@ contains
       use EDTypesMod , only : val_check_ed_vars
       use FatesInterfaceMod, only : bc_in_type
       !
-      ! !ARGUMENTS    
+      ! !ARGUMENTS
       type(ed_site_type) , intent(inout), target   :: currentSite
       type(bc_in_type), intent(in)                 :: bc_in
 
@@ -104,19 +104,19 @@ contains
       type(ed_patch_type) , pointer :: currentPatch
       type(ed_cohort_type), pointer :: currentCohort
       integer  :: i_lyr                  ! current layer index
-      integer  :: z                      ! Current number of canopy layers. (1= canopy, 2 = understorey) 
+      integer  :: z                      ! Current number of canopy layers. (1= canopy, 2 = understorey)
       real(r8) :: arealayer(nclmax+2)    ! Amount of plant area currently in each canopy layer
       integer  :: patch_area_counter     ! count iterations used to solve canopy areas
       logical  :: area_not_balanced      ! logical controlling if the patch layer areas
                                          ! have successfully been redistributed
       integer  :: return_code            ! math checks on variables will return>0 if problems exist
       integer, parameter  :: max_patch_iterations = 100
-      
+
 
       !----------------------------------------------------------------------
 
-      currentPatch => currentSite%oldest_patch    
-      ! 
+      currentPatch => currentSite%oldest_patch
+      !
       ! zero site-level demotion / promotion tracking info
       currentSite%demotion_rate(:) = 0._r8
       currentSite%promotion_rate(:) = 0._r8
@@ -124,9 +124,9 @@ contains
       currentSite%promotion_carbonflux = 0._r8
 
       !
-      ! Section 1: Check  total canopy area.    
+      ! Section 1: Check  total canopy area.
       !
-      do while (associated(currentPatch)) ! Patch loop    
+      do while (associated(currentPatch)) ! Patch loop
 
 
          ! Perform numerical checks on some cohort and patch structures
@@ -1634,11 +1634,11 @@ contains
      logical                      :: include_substory
 
      type(ed_cohort_type),pointer :: currentCohort
-     
+
      integer :: z
-     
+
      real(r8) :: arealayer
-     
+
      z = 1
      currentCohort => currentPatch%tallest
      do while (associated(currentCohort))  
@@ -1649,20 +1649,20 @@ contains
      if(include_substory)then
         arealayer = 0.0
         currentCohort => currentPatch%tallest
-        do while (associated(currentCohort))  
+        do while (associated(currentCohort))
            if(currentCohort%canopy_layer == z) then
               arealayer = arealayer + c_area(currentCohort)
            end if
            currentCohort => currentCohort%shorter
         enddo
-        
-        ! Does the bottom layer have more than a full canopy? 
+
+        ! Does the bottom layer have more than a full canopy?
         ! If so we need to make another layer.
         if(arealayer > currentPatch%area)then
            z = z + 1
         endif
      end if
-     
+
   end function NumPotentialCanopyLayers
 
 end module EDCanopyStructureMod
