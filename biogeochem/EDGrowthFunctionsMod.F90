@@ -481,6 +481,11 @@ contains
     !    d13cmort = 0.0_r8
     ! endif
 
+    ! Hang ZHOU (joeyzhou1984@gmail.com) 2018-03-25
+    ! turn off all the calcualtion of d13cmort here, and move to EDAccumulatedFluxesMod
+    ! d13cmort would be caclulated there and passed into the cohort data-structure
+    ! so when the static mode is used, EDGrowthFUnctionsMode is not called, d13cmort will still be calculated
+    ! and when the static mode is not used, `mortality_rates` can still access the calculated d13cmort via the cohort data-structure
     d13cmort = cohort_in%d13cmort
 
     if (DEBUG_growth) write(fates_log(), *) 'MORTALITY I, c13disc_acc', cohort_in%c13disc_acc
