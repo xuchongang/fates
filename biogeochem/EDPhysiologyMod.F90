@@ -115,11 +115,11 @@ contains
     currentPatch%cwd_BG_in(:)        = 0.0_r8
     currentPatch%cwd_AG_out(:)       = 0.0_r8
     currentPatch%cwd_BG_out(:)       = 0.0_r8
-    currentPatch%seeds_in(:)         = 0.0_r8  
+    currentPatch%seeds_in(:)         = 0.0_r8
     currentPatch%seed_decay(:)       = 0.0_r8
     currentPatch%seed_germination(:) = 0.0_r8
 
-    ! update seed fluxes 
+    ! update seed fluxes
     call seeds_in(currentSite, currentPatch)
     call seed_decay(currentSite, currentPatch)
     call seed_germination(currentSite, currentPatch)
