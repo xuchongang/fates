@@ -12,6 +12,7 @@ module FatesHistoryInterfaceMod
   use FatesInterfaceMod        , only : hlm_hio_ignore_val
   use FatesInterfaceMod        , only : hlm_use_planthydro
   use FatesInterfaceMod        , only : hlm_use_ed_st3
+  use FatesInterfaceMod        , only : hlm_use_insect
   use FatesInterfaceMod        , only : numpft
   use EDParamsMod              , only : ED_val_comp_excln
   use FatesInterfaceMod        , only : nlevsclass, nlevage
@@ -162,6 +163,9 @@ module FatesHistoryInterfaceMod
 
    !LOGGING , make sure to add ih_m7_si_scpf and hio_m7_si_scpf
   integer, private :: ih_m7_si_scpf  
+  
+  ! Insect mortality at the site level by size class and pft
+  integer, private :: ih_m8_si_scpf
 
   integer, private :: ih_ar_si_scpf
   integer, private :: ih_ar_grow_si_scpf
@@ -1467,7 +1471,9 @@ end subroutine flush_hvars
                       !Y.X. 
 		       hio_m7_si_scpf(io_si,scpf) = hio_m7_si_scpf(io_si,scpf) + &
 		       	    (ccohort%lmort_logging+ccohort%lmort_collateral+ccohort%lmort_infra) * ccohort%n
-
+			        
+		      ! Computing mortality due to insects per size class per pft    
+		       hio_m8_si_scpf(io_si,scpf) = hio_m8_si_scpf(io_si,scpf) + ccohort%inmort*ccohort%n
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
@@ -1710,6 +1716,21 @@ end subroutine flush_hvars
                hio_litter_moisture_si_fuel(io_si, i_fuel) = hio_litter_moisture_si_fuel(io_si, i_fuel) + &
                     cpatch%litter_moisture(i_fuel) * cpatch%area * AREA_INV
             end do
+	    
+	    if(hlm_use_insect.eq.itrue) then
+	    	! Update the insect state variables (currently only mountain pine beetle)
+	    	hio_MPB_Eggs_pa(io_pa)	       = cpatch%pa_insect%indensity(1,2)
+		hio_MPB_L1_pa(io_pa)	       = cpatch%pa_insect%indensity(1,3)
+		hio_MPB_L2_pa(io_pa)	       = cpatch%pa_insect%indensity(1,4)
+		hio_MPB_L3_pa(io_pa)	       = cpatch%pa_insect%indensity(1,5)
+		hio_MPB_L4_pa(io_pa)	       = cpatch%pa_insect%indensity(1,6)
+		hio_MPB_P_pa(io_pa)	       = cpatch%pa_insect%indensity(1,7)
+		hio_MPB_T_pa(io_pa)	       = cpatch%pa_insect%indensity(1,8)
+		hio_MPB_A_pa(io_pa)	       = cpatch%pa_insect%indensity(1,9)
+		hio_MPB_FA_pa(io_pa)	       = cpatch%pa_insect%indensity(1,10)
+		hio_MPB_Bt_pa(io_pa)	       = cpatch%pa_insect%indensity(1,11)	
+	    end if
+	    
             ! Update Litter Flux Variables
 
             ! put litter_in flux onto site level variable so as to be able to append site-level distubance-related input flux after patch loop
@@ -1804,8 +1825,17 @@ end subroutine flush_hvars
                     hio_m5_si_scpf(io_si,i_scpf) + &
                     hio_m6_si_scpf(io_si,i_scpf) + &
 		    hio_m7_si_scpf(io_si,i_scpf)
-
-
+		    
+       		! Added insect mortality March. 2. 2018 (dgoodsman)
+	       	hio_mortality_si_pft(io_si,i_pft) = hio_mortality_si_pft(io_si,i_pft) + &
+              	    hio_m1_si_scpf(io_si,i_scpf) + &
+                    hio_m2_si_scpf(io_si,i_scpf) + &
+                    hio_m3_si_scpf(io_si,i_scpf) + &
+                    hio_m4_si_scpf(io_si,i_scpf) + &
+                    hio_m5_si_scpf(io_si,i_scpf) + &
+                    hio_m6_si_scpf(io_si,i_scpf) + &
+		    hio_m7_si_scpf(io_si,i_scpf) + &
+		    hio_m8_si_scpf(io_si,i_scpf)
 
             end do
          end do
@@ -2506,7 +2536,7 @@ end subroutine flush_hvars
     use FatesIOVariableKindMod, only : patch_r8, patch_ground_r8, patch_size_pft_r8
     use FatesIOVariableKindMod, only : site_r8, site_ground_r8, site_size_pft_r8    
     use FatesIOVariableKindMod, only : site_size_r8, site_pft_r8, site_age_r8
-    use FatesInterfaceMod     , only : hlm_use_planthydro
+    use FatesInterfaceMod     , only : hlm_use_planthydro, hlm_use_insect
     
     use FatesIOVariableKindMod, only : site_fuel_r8, site_cwdsc_r8, site_scag_r8
     use FatesIOVariableKindMod, only : site_can_r8, site_cnlf_r8, site_cnlfpft_r8
@@ -2584,6 +2614,58 @@ end subroutine flush_hvars
          long='Rate of total mortality by PFT', use_default='active',       &
          avgflag='A', vtype=site_pft_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
          ivar=ivar, initialize=initialize_variables, index = ih_mortality_si_pft )
+	 
+    ! insect density at the patch level (currently only the densities of various
+    ! stages of the mountain pine beetle life cycle).
+    call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_pa)
+
+    call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_pa)		
+
+    call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_pa)	
+
+    call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_pa)				
+
+    call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_pa)	
+
+    call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_pa)
+
+    call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_pa)	
+
+    call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_pa)
+
+    call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_pa)
+
+    call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/(225 m^2)', &
+            long='insect density by life stage', use_default='inactive',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+            ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_pa)
 
     ! patch age class variables
     call this%set_history_var(vname='PATCH_AREA_BY_AGE', units='m2/m2',             &
@@ -3194,7 +3276,12 @@ end subroutine flush_hvars
           long='logging mortalities by pft/size',use_default='inactive',           &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m7_si_scpf )
-
+	  
+    ! Insect induced mortality of plants per size class per pft
+    call this%set_history_var(vname='M8_SCPF', units = 'N/ha/yr',                  &
+          long='insect mortality by pft/size',use_default='inactive',              &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m8_si_scpf )  
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &
