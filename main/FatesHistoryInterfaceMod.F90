@@ -84,6 +84,16 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_gpp_understory_pa
   integer, private :: ih_canopy_biomass_pa
   integer, private :: ih_understory_biomass_pa
+  integer, private :: ih_MPB_Eggs_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L1_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L2_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L3_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L4_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_P_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_T_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_A_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_FA_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_Bt_pa 			! insect (mountain pine beetle variables)
   
   ! Indices to site by size-class by pft variables
   integer, private :: ih_nplant_si_scag
@@ -1213,7 +1223,21 @@ end subroutine flush_hvars
                hio_m5_si_scpf          => this%hvars(ih_m5_si_scpf)%r82d, &
                hio_m6_si_scpf          => this%hvars(ih_m6_si_scpf)%r82d, &
 
-               hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &                  
+               hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &  
+	       
+	       hio_m8_si_scpf          => this%hvars(ih_m8_si_scpf)%r82d, &
+	       
+	       ! Insect specific-variables  
+	       hio_MPB_Eggs_pa	       => this%hvars(ih_MPB_Eggs_pa)%r81d, & 
+	       hio_MPB_L1_pa	       => this%hvars(ih_MPB_L1_pa)%r81d, & 
+	       hio_MPB_L2_pa	       => this%hvars(ih_MPB_L2_pa)%r81d, &
+	       hio_MPB_L3_pa	       => this%hvars(ih_MPB_L3_pa)%r81d, &  
+	       hio_MPB_L4_pa	       => this%hvars(ih_MPB_L4_pa)%r81d, &  
+	       hio_MPB_P_pa	       => this%hvars(ih_MPB_P_pa)%r81d, &
+	       hio_MPB_T_pa	       => this%hvars(ih_MPB_T_pa)%r81d, &
+	       hio_MPB_A_pa	       => this%hvars(ih_MPB_A_pa)%r81d, &
+	       hio_MPB_FA_pa	       => this%hvars(ih_MPB_FA_pa)%r81d, &
+	       hio_MPB_Bt_pa	       => this%hvars(ih_MPB_Bt_pa)%r81d, &           
 
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_nplant_canopy_si_scls         => this%hvars(ih_nplant_canopy_si_scls)%r82d, &
@@ -1717,19 +1741,17 @@ end subroutine flush_hvars
                     cpatch%litter_moisture(i_fuel) * cpatch%area * AREA_INV
             end do
 	    
-	    if(hlm_use_insect.eq.itrue) then
-	    	! Update the insect state variables (currently only mountain pine beetle)
-	    	hio_MPB_Eggs_pa(io_pa)	       = cpatch%pa_insect%indensity(1,2)
-		hio_MPB_L1_pa(io_pa)	       = cpatch%pa_insect%indensity(1,3)
-		hio_MPB_L2_pa(io_pa)	       = cpatch%pa_insect%indensity(1,4)
-		hio_MPB_L3_pa(io_pa)	       = cpatch%pa_insect%indensity(1,5)
-		hio_MPB_L4_pa(io_pa)	       = cpatch%pa_insect%indensity(1,6)
-		hio_MPB_P_pa(io_pa)	       = cpatch%pa_insect%indensity(1,7)
-		hio_MPB_T_pa(io_pa)	       = cpatch%pa_insect%indensity(1,8)
-		hio_MPB_A_pa(io_pa)	       = cpatch%pa_insect%indensity(1,9)
-		hio_MPB_FA_pa(io_pa)	       = cpatch%pa_insect%indensity(1,10)
-		hio_MPB_Bt_pa(io_pa)	       = cpatch%pa_insect%indensity(1,11)	
-	    end if
+	    ! Update the insect state variables (currently only mountain pine beetle)
+	    hio_MPB_Eggs_pa(io_pa)	       = cpatch%pa_insect%indensity(1,2)
+	    hio_MPB_L1_pa(io_pa)	       = cpatch%pa_insect%indensity(1,3)
+	    hio_MPB_L2_pa(io_pa)	       = cpatch%pa_insect%indensity(1,4)
+	    hio_MPB_L3_pa(io_pa)	       = cpatch%pa_insect%indensity(1,5)
+	    hio_MPB_L4_pa(io_pa)	       = cpatch%pa_insect%indensity(1,6)
+	    hio_MPB_P_pa(io_pa)	       	       = cpatch%pa_insect%indensity(1,7)
+	    hio_MPB_T_pa(io_pa)	               = cpatch%pa_insect%indensity(1,8)
+	    hio_MPB_A_pa(io_pa)	               = cpatch%pa_insect%indensity(1,9)
+	    hio_MPB_FA_pa(io_pa)	       = cpatch%pa_insect%indensity(1,10)
+	    hio_MPB_Bt_pa(io_pa)	       = cpatch%pa_insect%indensity(1,11)
 	    
             ! Update Litter Flux Variables
 
@@ -1817,14 +1839,14 @@ end subroutine flush_hvars
                !     hio_m5_si_scpf(io_si,i_scpf) + &
                !     hio_m6_si_scpf(io_si,i_scpf) 
          
-               hio_mortality_si_pft(io_si,i_pft) = hio_mortality_si_pft(io_si,i_pft) + &
-                    hio_m1_si_scpf(io_si,i_scpf) + &
-                    hio_m2_si_scpf(io_si,i_scpf) + &
-                    hio_m3_si_scpf(io_si,i_scpf) + &
-                    hio_m4_si_scpf(io_si,i_scpf) + &
-                    hio_m5_si_scpf(io_si,i_scpf) + &
-                    hio_m6_si_scpf(io_si,i_scpf) + &
-		    hio_m7_si_scpf(io_si,i_scpf)
+               !hio_mortality_si_pft(io_si,i_pft) = hio_mortality_si_pft(io_si,i_pft) + &
+               !     hio_m1_si_scpf(io_si,i_scpf) + &
+               !     hio_m2_si_scpf(io_si,i_scpf) + &
+               !     hio_m3_si_scpf(io_si,i_scpf) + &
+               !     hio_m4_si_scpf(io_si,i_scpf) + &
+               !     hio_m5_si_scpf(io_si,i_scpf) + &
+               !     hio_m6_si_scpf(io_si,i_scpf) + &
+	       !     hio_m7_si_scpf(io_si,i_scpf)
 		    
        		! Added insect mortality March. 2. 2018 (dgoodsman)
 	       	hio_mortality_si_pft(io_si,i_pft) = hio_mortality_si_pft(io_si,i_pft) + &

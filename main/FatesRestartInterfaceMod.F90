@@ -105,7 +105,8 @@ module FatesRestartInterfaceMod
   integer, private :: ir_lmort_logging_co
   integer, private :: ir_lmort_collateral_co
   integer, private :: ir_lmort_infra_co
-
+  
+  integer, private :: ir_inmort_co		! index for insect mortality
 
   integer, private :: ir_ddbhdt_co
   integer, private :: ir_dbalivedt_co
@@ -1062,13 +1063,11 @@ contains
            rio_cmort_co                => this%rvars(ir_cmort_co)%r81d, &
            rio_imort_co                => this%rvars(ir_imort_co)%r81d, &
            rio_fmort_co                => this%rvars(ir_fmort_co)%r81d, &
-
-
+	   rio_inmort_co               => this%rvars(ir_inmort_co)%r81d, &
 
 	   rio_lmort_logging_co                => this%rvars(ir_lmort_logging_co)%r81d, &
 	   rio_lmort_collateral_co              => this%rvars(ir_lmort_collateral_co)%r81d, &
 	   rio_lmort_infra_co                => this%rvars(ir_lmort_infra_co)%r81d, &
-
 
            rio_ddbhdt_co               => this%rvars(ir_ddbhdt_co)%r81d, &
            rio_dbalivedt_co            => this%rvars(ir_dbalivedt_co)%r81d, &
@@ -1191,7 +1190,7 @@ contains
 	        rio_lmort_collateral_co(io_idx_co)     = ccohort%lmort_collateral
 	        rio_lmort_infra_co(io_idx_co)        = ccohort%lmort_infra
 
-
+		rio_inmort_co(io_idx_co)        = ccohort%inmort
 
                 rio_ddbhdt_co(io_idx_co)       = ccohort%ddbhdt
                 rio_dbalivedt_co(io_idx_co)    = ccohort%dbalivedt
@@ -1652,7 +1651,7 @@ contains
 	  rio_lmort_collateral_co                => this%rvars(ir_lmort_collateral_co)%r81d, &
 	  rio_lmort_infra_co                => this%rvars(ir_lmort_infra_co)%r81d, &
 
-
+          rio_inmort_co               => this%rvars(ir_inmort_co)%r81d, &
 
           rio_ddbhdt_co               => this%rvars(ir_ddbhdt_co)%r81d, &
           rio_dbalivedt_co            => this%rvars(ir_dbalivedt_co)%r81d, &
