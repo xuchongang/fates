@@ -129,6 +129,11 @@ module FatesInterfaceMod
                                                ! plant hydraulics (bchristo/xu methods)
                                                ! 1 = TRUE, 0 = FALSE
                                                ! THIS IS CURRENTLY NOT SUPPORTED 
+   
+   integer, protected :: hlm_use_insect        ! This flag signals whether or not to use
+                                               ! insect dynamics (currently mostly MPB)
+                                               ! 1 = TRUE, 0 = FALSE
+                                               ! THIS IS CURRENTLY NOT SUPPORTED 
 
    integer, protected :: hlm_use_ed_st3        ! This flag signals whether or not to use
                                                ! (ST)atic (ST)and (ST)ructure mode (ST3)
@@ -662,6 +667,12 @@ contains
       allocate(bc_in%coszen_pa(maxPatchesPerSite))
       allocate(bc_in%albgr_dir_rb(hlm_numSWb))
       allocate(bc_in%albgr_dif_rb(hlm_numSWb))
+      
+      !Insects
+      allocate(bc_in%tgcm_max_pa(maxPatchesPerSite))
+      allocate(bc_in%tgcm_min_pa(maxPatchesPerSite))
+      bc_in%tgcm_max_pa(:) = -999.0_r8
+      bc_in%tgcm_min_pa(:) = 999.0_r8
 
       ! Plant-Hydro BC's
       if (hlm_use_planthydro.eq.itrue) then
@@ -1153,6 +1164,7 @@ contains
          hlm_use_vertsoilc = unset_int
          hlm_use_spitfire  = unset_int
          hlm_use_planthydro = unset_int
+	 hlm_use_insect = unset_int
          hlm_use_logging   = unset_int
          hlm_use_ed_st3    = unset_int
          hlm_use_ed_prescribed_phys = unset_int
@@ -1205,6 +1217,13 @@ contains
          if (  .not.((hlm_use_ed_st3.eq.1).or.(hlm_use_ed_st3.eq.0))    ) then
             if (fates_global_verbose()) then
                write(fates_log(), *) 'The FATES namelist stand structure flag must be 0 or 1, exiting'
+            end if
+            call endrun(msg=errMsg(sourcefile, __LINE__))
+         end if
+	 
+	 if (  .not.((hlm_use_insect.eq.1).or.(hlm_use_insect.eq.0))    ) then
+            if (fates_global_verbose()) then
+               write(fates_log(), *) 'The FATES namelist insect flag must be 0 or 1, exiting'
             end if
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
@@ -1431,6 +1450,12 @@ contains
                hlm_use_planthydro = ival
                if (fates_global_verbose()) then
                   write(fates_log(),*) 'Transfering hlm_use_planthydro= ',ival,' to FATES'
+               end if
+	       
+	    case('use_insect')
+               hlm_use_insect = ival
+               if (fates_global_verbose()) then
+                  write(fates_log(),*) 'Transfering hlm_use_insect ',ival,' to FATES'
                end if
 
             case('use_logging')
