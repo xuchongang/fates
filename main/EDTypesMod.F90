@@ -7,6 +7,8 @@ module EDTypesMod
   use FatesHydraulicsMemMod, only : ed_cohort_hydr_type
   use FatesHydraulicsMemMod, only : ed_patch_hydr_type
   use FatesHydraulicsMemMod, only : ed_site_hydr_type
+  
+  use FatesInsectMemMod, only : ed_patch_insect_type
 
   implicit none
   save
@@ -66,10 +68,11 @@ module EDTypesMod
   integer , parameter :: external_recruitment = 0          ! external recruitment flag 1=yes  
   integer , parameter :: SENES                = 10         ! Window of time over which we track temp for cold sensecence (days)
   real(r8), parameter :: DINC_ED              = 1.0_r8     ! size of LAI bins. 
-  integer , parameter :: N_DIST_TYPES         = 3          ! Disturbance Modes 1) tree-fall, 2) fire, 3) logging
+  integer , parameter :: N_DIST_TYPES         = 4          ! Disturbance Modes 1) tree-fall, 2) fire, 3) logging, 4) insects
   integer , parameter :: dtype_ifall          = 1          ! index for naturally occuring tree-fall generated event
   integer , parameter :: dtype_ifire          = 2          ! index for fire generated disturbance event
   integer , parameter :: dtype_ilog           = 3          ! index for logging generated disturbance event
+  integer , parameter :: dtype_inmort         = 4          ! index for insect generated disturbance event
 
   ! SPITFIRE     
   integer,  parameter :: NCWD                 = 4          ! number of coarse woody debris pools (twig,s branch,l branch, trunk)
@@ -228,6 +231,7 @@ module EDTypesMod
      real(r8) ::  hmort                                  ! hydraulic failure mortality rate n/year
      real(r8) ::  imort                                  ! mortality from impacts by others n/year
      real(r8) ::  fmort                                  ! fire mortality                   n/year
+     real(r8) ::  inmort			         ! insect mortality		    (year)^(-1) 
 
       ! Logging Mortality Rate 
 	 ! Yi Xu
@@ -360,6 +364,7 @@ module EDTypesMod
                                                                    !                       2) fire: fraction/day 
                                                                    !                       3) logging mortatliy
      real(r8) ::  disturbance_rate                                 ! larger effective disturbance rate: fraction/day
+     								   !                       4) insect mortality
 
      ! LITTER AND COARSE WOODY DEBRIS 
      ! Pools of litter (non respiring) 
@@ -423,6 +428,9 @@ module EDTypesMod
 
      ! PLANT HYDRAULICS     
      type(ed_patch_hydr_type) , pointer :: pa_hydr                 ! All patch hydraulics data, see FatesHydraulicsMemMod.F90
+     
+     ! INSECTS
+     type(ed_patch_insect_type), pointer :: pa_insect		   ! State vars at the patch level: see FatesInsectMemMod.F90
 
    contains
 
