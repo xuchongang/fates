@@ -106,7 +106,7 @@ module FatesRestartInterfaceMod
   integer, private :: ir_lmort_collateral_co
   integer, private :: ir_lmort_infra_co
 
-
+  integer, private :: ir_inmort_co		! index for insect mortality
   integer, private :: ir_ddbhdt_co
   integer, private :: ir_dbalivedt_co
   integer, private :: ir_dbdeaddt_co
