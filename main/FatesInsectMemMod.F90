@@ -26,7 +26,7 @@ module FatesInsectMemMod
 
         ! Containers for the distributions of physiological age for each life stage. 
 	! The MPB_PhysAge array holds physiological age distributions for each of the relevant stages of the MPB.
-	complex(kind = 8), allocatable :: MPB_PhysAge(:,:)		! array to hold physiological age for eggs, L1, L2, L3, L4, P, T
+	real(kind = 8), allocatable :: MPB_PhysAge(:,:)		! array to hold physiological age for eggs, L1, L2, L3, L4, P, T
 	
 	! Containers for densities of insects transitioning from one stage to another for each insect type.
 	! The MPB_Tranit array holds beetles trasitionaing into the egg life stage, into L1, into L2, into L3, 
@@ -64,9 +64,8 @@ module FatesInsectMemMod
 	this%InsectPFTPref = 0 
         this%InsectPFTPref(1,1)= 1					! This is currently initialized only for mountain pine beetle
 
-        ! These are complex(kind = 8) and so I don't initialize with r8
 	allocate(this%MPB_PhysAge(1:DomainSize,1:7))
-	this%MPB_PhysAge(1:DomainSize, 1:7) = 0.0
+	this%MPB_PhysAge(1:DomainSize, 1:7) = 0.0_r8
 	
 	this%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
 
