@@ -13,7 +13,8 @@ module EDMainMod
   use FatesInterfaceMod        , only : hlm_current_year
   use FatesInterfaceMod        , only : hlm_current_month
   use FatesInterfaceMod        , only : hlm_current_day 
-  use FatesInterfaceMod        , only : hlm_use_planthydro 
+  use FatesInterfaceMod        , only : hlm_use_planthydro
+  use FatesInterfaceMod        , only : hlm_use_insect  
   use FatesInterfaceMod        , only : hlm_reference_date
   use FatesInterfaceMod        , only : hlm_use_ed_st3 
   use FatesInterfaceMod        , only : bc_in_type
@@ -49,6 +50,7 @@ module EDMainMod
   use FatesPlantHydraulicsMod  , only : updateSizeDepRhizHydProps 
 !  use FatesPlantHydraulicsMod , only : updateSizeDepRhizHydStates
   use EDLoggingMortalityMod    , only : IsItLoggingTime
+  use FatesInsectMod	       , only : insect_model 
   use FatesGlobals             , only : endrun => fates_endrun
   use ChecksBalancesMod        , only : SiteCarbonStock
   
@@ -103,7 +105,7 @@ contains
     call IsItLoggingTime(hlm_masterproc,currentSite)
 
     !**************************************************************************
-    ! Fire, growth, biogeochemistry. 
+    ! Fire, growth, biogeochemistry, insect mortality. 
     !**************************************************************************
     
     !FIX(SPM,032414) take this out.  On startup these values are all zero and on restart it
@@ -117,6 +119,13 @@ contains
 
     if (hlm_use_ed_st3.eq.ifalse) then   ! Bypass if ST3
        call fire_model(currentSite, bc_in) 
+       
+       !-----------------------------------------------------------------------
+       ! The insect_model subroutines
+    	if(hlm_use_insect.eq.itrue) then 
+		call insect_model(currentSite, bc_in)
+    	end if
+       !-----------------------------------------------------------------------
 
        ! Calculate disturbance and mortality based on previous timestep vegetation.
        ! disturbance_rates calls logging mortality and other mortalities, Yi Xu
