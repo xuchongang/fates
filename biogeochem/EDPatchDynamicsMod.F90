@@ -257,7 +257,22 @@ contains
              currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ilog) .and. &
 	     currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifire)) then  ! DISTURBANCE IS INSECT
 	     
-	     	currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_inmort)
+	     currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_inmort)
+	     
+	   	! Update diagnostics, zero non-insect mortality rates
+	  	 do while(associated(currentCohort))
+             		if(currentCohort%canopy_layer == 1)then
+                		currentCohort%cmort = currentCohort%cmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                		currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                		currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                		currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                		currentCohort%lmort_logging    = 0.0_r8
+                		currentCohort%lmort_collateral = 0.0_r8
+                		currentCohort%lmort_infra      = 0.0_r8
+            	 	end if
+ 
+             		currentCohort => currentCohort%taller
+          	enddo !currentCohort
 
        else  ! If fire and logging and insect are not greater than treefall, just set disturbance rate to tree-fall
              ! which is most likely a 0.0
@@ -375,19 +390,23 @@ contains
           call average_patch_properties(currentPatch, new_patch, patch_site_areadis)
           
           if (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-                currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) ) then 
+                currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+		currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then 
              
              call logging_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)
              
           elseif (currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-                currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) ) then
+                currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+		currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
              
              call fire_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)  
              
           else
              
              call mortality_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)
-             
+             ! We currently assume that litter fluxes from insect caused mortality are the same as for general mortality.
+	     ! This may need to be corrected later.
+	     
           endif
 
           !INSERT SURVIVORS FROM DISTURBANCE INTO NEW PATCH 
@@ -409,7 +428,8 @@ contains
 
              ! treefall mortality is the dominant disturbance
              if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_ifire) .and. &
-                    currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_ilog))then 
+                    currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+		    currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then            
 
                 if(currentCohort%canopy_layer == 1)then
 
@@ -428,6 +448,7 @@ contains
                    nc%bmort = nan
                    nc%fmort = nan
                    nc%imort = nan
+		   nc%inmort = nan
                    nc%lmort_logging    = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
@@ -491,6 +512,15 @@ contains
                       
                    endif
                 endif
+		
+	    ! Insects are the dominant disturbance 
+	    elseif(currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifall) .and. &
+                    currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+		    currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ilog)) then 
+	    
+	    currentCohort%n = currentCohort%n * (1.0_r8 - fates_mortality_disturbance_fraction * &
+            	min(1.0_r8,currentCohort%inmort * hlm_freq_day))
+
 
              ! Fire is the dominant disturbance 
              elseif (currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ifall) .and. &
