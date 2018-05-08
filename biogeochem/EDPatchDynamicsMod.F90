@@ -16,7 +16,10 @@ module EDPatchDynamicsMod
   use EDTypesMod           , only : dtype_ifall
   use EDTypesMod           , only : dtype_ilog
   use EDTypesMod           , only : dtype_ifire
+  use EDTypesMod	   , only : dtype_inmort
+  use FatesInsectMemMod	   , only : InitInsectPatch, ed_patch_insect_type
   use FatesInterfaceMod    , only : hlm_use_planthydro
+  use FatesInterfaceMod	   , only : hlm_use_insect
   use FatesInterfaceMod    , only : hlm_numlevgrnd
   use FatesInterfaceMod    , only : hlm_numlevsoil
   use FatesInterfaceMod    , only : hlm_numSWb
@@ -72,6 +75,8 @@ contains
     
 	! 2016-2017
 	! Modify to add logging disturbance
+	
+	! Feb. 24, 2018: modified to add insect mortality.
 	
     ! !USES:
     use EDGrowthFunctionsMod , only : c_area, mortality_rates
@@ -133,6 +138,9 @@ contains
        currentPatch => currentPatch%younger
     end do
 
+    ! For insect mortality, I believe it is unnecessary to recalculate inmort as this is already stored
+    ! at the cohort level when the insect_model subroutine is called in EDMainMod.F90.
+    
     ! ---------------------------------------------------------------------------------------------
     ! Calculate Disturbance Rates based on the mortality rates just calculated
     ! ---------------------------------------------------------------------------------------------
@@ -142,6 +150,7 @@ contains
        
        currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
        currentPatch%disturbance_rates(dtype_ilog)  = 0.0_r8
+       currentPatch%disturbance_rates(dtype_inmort)  = 0.0_r8
 
        currentCohort => currentPatch%shortest
        do while(associated(currentCohort))   
@@ -163,6 +172,11 @@ contains
           endif
           currentCohort => currentCohort%taller
        enddo !currentCohort
+       
+       ! Insect disturbance rate
+       currentPatch%disturbance_rates(dtype_inmort) = currentPatch%disturbance_rates(dtype_inmort) + &
+       		fates_mortality_disturbance_fraction * &
+       		min(1.0_r8,currentCohort%inmort*hlm_freq_day)*currentCohort%c_area/currentPatch%area
 
        ! Fire Disturbance Rate
        ! Fudge - fires can't burn the whole patch, as this causes /0 errors.
@@ -183,10 +197,14 @@ contains
        ! not always disturbance generating, so when tree-fall mort is non-dominant, make sure
        ! to still diagnose and track the non-disturbance rate
        ! ------------------------------------------------------------------------------------------
-       
-       
+    
+    
+    
+    
+
        if (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-             currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) ) then 
+             currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) .and. &
+	     currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then ! DISTURBANCE IS LOGGING
           
           currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_ilog)
 
@@ -199,14 +217,16 @@ contains
                 currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+		currentCohort%inmort = currentCohort%inmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 ! currentCohort%imort will likely exist with logging
              end if
              currentCohort => currentCohort%taller
           enddo !currentCohort
           
-          
+
        elseif (currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ifall) .and. &
-             currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) ) then  ! DISTURBANCE IS FIRE
+             currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+	     currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then  ! DISTURBANCE IS FIRE
 
           currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_ifire)
 
@@ -218,6 +238,7 @@ contains
                 currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+		currentCohort%inmort = currentCohort%inmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%lmort_logging    = 0.0_r8
                 currentCohort%lmort_collateral = 0.0_r8
                 currentCohort%lmort_infra      = 0.0_r8
@@ -231,8 +252,14 @@ contains
 
              currentCohort => currentCohort%taller
           enddo !currentCohort
+	  
+	elseif (currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifall) .and. &
+             currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ilog) .and. &
+	     currentPatch%disturbance_rates(dtype_inmort) > currentPatch%disturbance_rates(dtype_ifire)) then  ! DISTURBANCE IS INSECT
+	     
+	     	currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_inmort)
 
-       else  ! If fire and loggin are not greater than treefall, just set disturbance rate to tree-fall
+       else  ! If fire and logging and insect are not greater than treefall, just set disturbance rate to tree-fall
              ! which is most likely a 0.0
 
           currentPatch%disturbance_rate = currentPatch%disturbance_rates(dtype_ifall)
@@ -245,6 +272,7 @@ contains
                 currentCohort%lmort_collateral = 0.0_r8
                 currentCohort%lmort_infra      = 0.0_r8
                 currentCohort%fmort            = 0.0_r8
+		currentCohort%inmort	       = 0.0_r8
              end if
              currentCohort => currentCohort%taller
           enddo !currentCohort
