@@ -1223,7 +1223,21 @@ end subroutine flush_hvars
                hio_m5_si_scpf          => this%hvars(ih_m5_si_scpf)%r82d, &
                hio_m6_si_scpf          => this%hvars(ih_m6_si_scpf)%r82d, &
 
-               hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &                  
+               hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &    
+	       
+	       hio_m8_si_scpf          => this%hvars(ih_m8_si_scpf)%r82d, &
+	       
+	       ! Insect specific-variables  
+	       hio_MPB_Eggs_pa	       => this%hvars(ih_MPB_Eggs_pa)%r81d, & 
+	       hio_MPB_L1_pa	       => this%hvars(ih_MPB_L1_pa)%r81d, & 
+	       hio_MPB_L2_pa	       => this%hvars(ih_MPB_L2_pa)%r81d, &
+	       hio_MPB_L3_pa	       => this%hvars(ih_MPB_L3_pa)%r81d, &  
+	       hio_MPB_L4_pa	       => this%hvars(ih_MPB_L4_pa)%r81d, &  
+	       hio_MPB_P_pa	       => this%hvars(ih_MPB_P_pa)%r81d, &
+	       hio_MPB_T_pa	       => this%hvars(ih_MPB_T_pa)%r81d, &
+	       hio_MPB_A_pa	       => this%hvars(ih_MPB_A_pa)%r81d, &
+	       hio_MPB_FA_pa	       => this%hvars(ih_MPB_FA_pa)%r81d, &
+	       hio_MPB_Bt_pa	       => this%hvars(ih_MPB_Bt_pa)%r81d, &              
 
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_nplant_canopy_si_scls         => this%hvars(ih_nplant_canopy_si_scls)%r82d, &
@@ -1474,13 +1488,16 @@ end subroutine flush_hvars
                        hio_m2_si_scpf(io_si,scpf) = hio_m2_si_scpf(io_si,scpf) + ccohort%hmort*ccohort%n
                        hio_m3_si_scpf(io_si,scpf) = hio_m3_si_scpf(io_si,scpf) + ccohort%cmort*ccohort%n
                        hio_m4_si_scpf(io_si,scpf) = hio_m4_si_scpf(io_si,scpf) + ccohort%imort*ccohort%n
+		       		      hio_m4_si_scpf(io_si,scpf) = hio_m4_si_scpf(io_si,scpf) + ccohort%inmort*ccohort%n
                        hio_m5_si_scpf(io_si,scpf) = hio_m5_si_scpf(io_si,scpf) + ccohort%fmort*ccohort%n
                        
 
                       !Y.X. 
 		       hio_m7_si_scpf(io_si,scpf) = hio_m7_si_scpf(io_si,scpf) + &
 		       	    (ccohort%lmort_logging+ccohort%lmort_collateral+ccohort%lmort_infra) * ccohort%n
-
+			    
+		       ! Computing mortality due to insects per size class per pft    
+		       hio_m8_si_scpf(io_si,scpf) = hio_m8_si_scpf(io_si,scpf) + ccohort%inmort*ccohort%n
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
