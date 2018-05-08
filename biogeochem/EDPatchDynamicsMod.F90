@@ -1247,6 +1247,11 @@ contains
     allocate(new_patch%rootfr_ft(numpft,hlm_numlevgrnd))
     allocate(new_patch%rootr_ft(numpft,hlm_numlevgrnd)) 
     
+    if(hlm_use_insect)then
+       allocate(new_patch%pa_insect)
+       call InitInsectPatch(new_patch%pa_insect)    
+    endif
+    
     call zero_patch(new_patch) !The nan value in here is not working??
 
     new_patch%tallest  => null() ! pointer to patch's tallest cohort    
@@ -1415,6 +1420,14 @@ contains
     currentPatch%sabs_dir(:)                = 0.0_r8
     currentPatch%sabs_dif(:)                = 0.0_r8
     currentPatch%zstar                      = 0.0_r8
+    
+    ! INSECTS (More variables will need to be added if additional insect species are added)
+    currentPatch%pa_insect%InsectPFTPref = 0 				
+    currentPatch%pa_insect%MPB_PhysAge(1:DomainSize, 1:7) = 0.0_r8
+    currentPatch%pa_insect%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
+    currentPatch%pa_insect%PrS = 0.0_r8
+    currentPatch%pa_insect%Ct = 0.0_r8
+    currentPatch%pa_insect%counter = 0
 
   end subroutine zero_patch
 
@@ -1578,6 +1591,7 @@ contains
     !
     ! !USES:
     use FatesSizeAgeTypeIndicesMod, only: get_age_class_index
+    use FatesInterfaceMod	  , only: hlm_use_insect
     !
     ! !ARGUMENTS:
     type (ed_patch_type) , intent(inout), pointer :: dp ! Donor Patch
@@ -1652,6 +1666,14 @@ contains
 
     rp%area = rp%area + dp%area !THIS MUST COME AT THE END!
 
+    ! INSECTS: fuse insect patches
+    ! This subroutine needs to be called before the donor
+    ! patch pointer is deallocated because it does not deallocate 
+    ! internally.
+    if(hlm_use_insect.eq.itrue) then
+    	call Fuse_2_Insect_Patches(dp, rp)
+    end if
+     
     !insert donor cohorts into recipient patch
     if(associated(dp%shortest))then
 
@@ -1744,6 +1766,45 @@ contains
 
   end subroutine fuse_2_patches
 
+  !==========================================================================================================
+  subroutine Fuse_2_Insect_Patches(dp,rp)
+    ! !DESCRIPTION:
+    ! This subroutine fuses the two sets of insect related variables associated with the
+    ! patches specified in the argument. It fuses the first patch in the argument (the "donor") 
+    ! into the second patch in the argument (the "recipient"). It is different from the subroutine
+    ! called Fuse_2_Patches in the EDPatchDynamicsMod.F90 script in the biogeochem directory
+    ! because many of the variables used in the insect module CANNOT be naively added 
+    ! in a weighted mean. Therefore, the code determines which patch is largest 
+    ! and assigns the recipent patch the characteristics of the larger of the two patches. 
+    
+    ! If averages are absolutely necessary, they may be computed using convolution implemented via
+    ! Fast Fourier Tranforms (FFT). This could be done in a later version of the code but will involve
+    ! some additional complexity.
+    
+    ! IMPORTANT: An additional difference between Fuse_2_Insect_Patches and Fuse_2_Patches
+    ! is that the Fuse_2_Insect_Patches subroutine does not free the memory 
+    ! associated with the second patch (deallocate), but the Fuse_2_Patches subroutine does.
+    ! Therefore, the Fuse_2_Insect_Patches subroutine needs to be called WITHIN the Fuse_2_Patches 
+    ! subroutine before the donor patch, or its pointer at least, is deallocated. 
+    
+    ! !ARGUMENTS:
+      type (ed_patch_type) , intent(inout), pointer :: dp               ! Donor Patch
+      type (ed_patch_type) , intent(inout), pointer :: rp               ! Recipient Patch
+      
+      ! These variables do not depend on the patch history or characteristics.
+      rp%pa_insect%InsectPFTPref = 0 
+      rp%pa_insect%InsectPFTPref(1,1)= 1						! This is currently initialized only for mountain pine beetle
+      
+      if(dp%area >= rp%area)then
+      	rp%pa_insect%PrS = dp%pa_insect%PrS
+      	rp%pa_insect%Ct = dp%pa_insect%Ct
+      	rp%pa_insect%MPB_PhysAge = dp%pa_insect%MPB_PhysAge
+      	rp%pa_insect%indensity = dp%pa_insect%indensity
+      	rp%pa_insect%counter = dp%pa_insect%counter
+      end if
+      
+  end subroutine Fuse_2_Insect_Patches
+  
   ! ============================================================================
   subroutine terminate_patches(cs_pnt)
     !
@@ -1844,6 +1905,11 @@ contains
        deallocate(cpatch%rootr_ft)
     end if
 
+    if(hlm_use_insect.eq.itrue)then
+       deallocate(cpatch%pa_insect%MPB_PhysAge)
+       deallocate(cpatch%pa_insect)    
+    end if
+    
     return
   end subroutine dealloc_patch
 
