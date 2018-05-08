@@ -18,6 +18,7 @@ module EDPatchDynamicsMod
   use EDTypesMod           , only : dtype_ifire
   use EDTypesMod	   , only : dtype_inmort
   use FatesInsectMemMod	   , only : InitInsectPatch, ed_patch_insect_type
+  use FatesInsectMemMod	   , only : DomainSize, numberInsectTypes, maxNumStages
   use FatesInterfaceMod    , only : hlm_use_planthydro
   use FatesInterfaceMod	   , only : hlm_use_insect
   use FatesInterfaceMod    , only : hlm_numlevgrnd
