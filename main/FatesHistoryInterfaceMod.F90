@@ -12,6 +12,7 @@ module FatesHistoryInterfaceMod
   use FatesInterfaceMod        , only : hlm_hio_ignore_val
   use FatesInterfaceMod        , only : hlm_use_planthydro
   use FatesInterfaceMod        , only : hlm_use_ed_st3
+  use FatesInterfaceMod        , only : hlm_use_insect
   use FatesInterfaceMod        , only : numpft
   use EDParamsMod              , only : ED_val_comp_excln
   use FatesInterfaceMod        , only : nlevsclass, nlevage
@@ -83,6 +84,16 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_gpp_understory_pa
   integer, private :: ih_canopy_biomass_pa
   integer, private :: ih_understory_biomass_pa
+  integer, private :: ih_MPB_Eggs_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L1_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L2_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L3_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L4_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_P_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_T_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_A_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_FA_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_Bt_pa 			! insect (mountain pine beetle variables)
   
   ! Indices to site by size-class by pft variables
   integer, private :: ih_nplant_si_scag
