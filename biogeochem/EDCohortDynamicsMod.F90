@@ -864,6 +864,7 @@ contains
                                    currentCohort%hmort = (currentCohort%n*currentCohort%hmort + nextc%n*nextc%hmort)/newn
                                    currentCohort%bmort = (currentCohort%n*currentCohort%bmort + nextc%n*nextc%bmort)/newn
                                    currentCohort%imort = (currentCohort%n*currentCohort%imort + nextc%n*nextc%imort)/newn
+				   currentCohort%inmort = (currentCohort%n*currentCohort%inmort + nextc%n*nextc%inmort)/newn
                                    currentCohort%fmort = (currentCohort%n*currentCohort%fmort + nextc%n*nextc%fmort)/newn
 
                                    ! logging mortality, Yi Xu
