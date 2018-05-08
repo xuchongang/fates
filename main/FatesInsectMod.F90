@@ -116,13 +116,13 @@ contains
 
     ! Containers for the distributions of physiological age for each life stage. In the
     ! InitInsectSite subroutine these will be allocated with size equal to the domain size.
-    complex(r8) :: OE(2**8)           	! vector to hold physiological age distribution for eggs
-    complex(r8) :: OL1(2**8)          	! vector to hold physiological age distribution for first instar larvae
-    complex(r8) :: OL2(2**8)          	! vector to hold physiological age distribution for second instar larvae
-    complex(r8) :: OL3(2**8)          	! vector to hold physiological age distribution for third instar larvae
-    complex(r8) :: OL4(2**8)          	! vector to hold physiological age distribution for fourth instar larvae
-    complex(r8) :: OP(2**8)           	! vector to hold physiological age distribution for pupae
-    complex(r8) :: OT(2**8)           	! vector to hold physiological age distribution for teneral adults
+    real(r8) :: OE(2**8)           	! vector to hold physiological age distribution for eggs
+    real(r8) :: OL1(2**8)          	! vector to hold physiological age distribution for first instar larvae
+    real(r8) :: OL2(2**8)          	! vector to hold physiological age distribution for second instar larvae
+    real(r8) :: OL3(2**8)          	! vector to hold physiological age distribution for third instar larvae
+    real(r8) :: OL4(2**8)          	! vector to hold physiological age distribution for fourth instar larvae
+    real(r8) :: OP(2**8)           	! vector to hold physiological age distribution for pupae
+    real(r8) :: OT(2**8)           	! vector to hold physiological age distribution for teneral adults
 
     real(r8) :: NewEggstm1                  	! density of new eggs oviposited in the previous time step (t minus 1)
     real(r8) :: NewL1tm1                    	! density of new L1 in the previous time step (t minus 1)
@@ -412,13 +412,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(inout) :: Parents
     real(r8), intent(out) :: FA
 
-    complex(r8), intent(inout) :: OE(2**8)
-    complex(r8), intent(inout) :: OL1(2**8)
-    complex(r8), intent(inout) :: OL2(2**8)
-    complex(r8), intent(inout) :: OL3(2**8)
-    complex(r8), intent(inout) :: OL4(2**8)
-    complex(r8), intent(inout) :: OP(2**8)
-    complex(r8), intent(inout) :: OT(2**8)
+    real(r8), intent(inout) :: OE(2**8)
+    real(r8), intent(inout) :: OL1(2**8)
+    real(r8), intent(inout) :: OL2(2**8)
+    real(r8), intent(inout) :: OL3(2**8)
+    real(r8), intent(inout) :: OL4(2**8)
+    real(r8), intent(inout) :: OP(2**8)
+    real(r8), intent(inout) :: OT(2**8)
 
     real(r8), intent(inout) :: NewEggstm1
     real(r8), intent(inout) :: NewL1tm1
@@ -919,14 +919,14 @@ subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcur
     real(r8), intent(in) :: Tmn2              ! the buffered under-bark minimum temperature
     real(r8), intent(in) :: NewEPT            ! New individuals (just developed from previous stage)
     real(r8), intent(inout) :: NewEPTtm1      ! New individuals from the previous time step
-    complex(r8), intent(inout) :: OEPT(n)     ! Distribution of physiological age
+    real(r8), intent(inout) :: OEPT(n)     ! Distribution of physiological age
     real(r8), intent(out) :: EPTcurrent       ! Number of individuals currently in the stage
     real(r8), intent(out) :: NewNext          ! New that just developed out of the current stage into the next one
 
     ! Here are variables related to the convolution
-    complex(r8) :: OldEPT(n)                  ! copy of the distribution of physiological age
-    complex(r8) :: AconvB(n)                  ! An array to hold the convolution result
-    complex(r8) PDF(n)                        ! An array to hold the aging kernel
+    real(r8) :: OldEPT(n)                  ! copy of the distribution of physiological age
+    real(r8) :: AconvB(n)                  ! An array to hold the convolution result
+    real(r8) PDF(n)                        ! An array to hold the aging kernel
 
     ! To compute the number of new individuals in the next stage,
     ! we need to know how many old individuals there were
@@ -1007,14 +1007,14 @@ subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext
     real(r8), intent(in) :: sigma             ! scale parameter of the log-normally distributed rate
     real(r8), intent(in) :: NewL              ! New larvae (just developed from the previous stage)
     real(r8), intent(inout) :: NewLtm1        ! New larvae from the previous time step
-    complex(r8), intent(inout) :: OL(n)       ! Distribution of physiological age
+    real(r8), intent(inout) :: OL(n)       ! Distribution of physiological age
     real(r8), intent(out) :: Lcurrent         ! Number of larvae
     real(r8), intent(out) :: NewNext          ! New individuals in the next stage (just developed out of current stage)
 
     ! Here are variables related to the convolution
-    complex(r8) :: OldL(n)                    ! copy of the distribution of physiological age
-    complex(r8) :: AconvB(n)                  ! An array to hold the convolution result
-    complex(r8) PDF(n)                        ! An array to hold the aging kernel
+    real(r8) :: OldL(n)                    ! copy of the distribution of physiological age
+    real(r8) :: AconvB(n)                  ! An array to hold the convolution result
+    real(r8) PDF(n)                        ! An array to hold the aging kernel
 
     ! To compute the number of new individuals in the next stage,
     ! we need to know how many old individuals there were
@@ -1111,59 +1111,55 @@ end subroutine AdSR
 !=============================================================================================================================
 Subroutine ConvolveSR(ItemA, ItemB, AconvB)
     ! This subroutine convolves to arrays of the same dimensions (ItemA and ItemB)
-    ! by first Fast Fourier transforming them, then multiplying their
-    ! Fast Fourier transforms and then inverse Fast Fourier
-    ! transforming them. However, to prevent circular creep (due to circular domain
-    ! assumption for FFT) I pad the arrays on the right hand side with zeros.
+    ! In this version I do the convolution using matrix multiplication rather than by
+    ! using fast Fourier transforms as I had previously done even though the fft
+    ! approach is more computationally efficient and elegant.
 
-    ! This new version calls C functions that implement the fastest Fourier
-    ! transform in the west (fftw). Here are parameters needed for that.
+    implicit none
 
-    use, intrinsic :: iso_c_binding
-    include 'fftw3.f03'
-    type(C_PTR) :: plan
+    real(r8), intent(in) :: ItemA(:)
+    real(r8), intent(in) :: ItemB(:)
+    real(r8), intent(out) :: AconvB(:)
 
-    complex(r8), intent(in) :: ItemA(:)
-    complex(r8), intent(in) :: ItemB(:)
-    complex(r8), intent(out) :: AconvB(:)
-
-    ! Variables that are arguments of the fft functions
+    ! Parameters used in the convolution
     integer(kind = 4), parameter :: m = 2**8        ! input variable. Must be specified
     integer(kind = 4), parameter :: Twom = 2*m      ! Because I use a pad of size n, we double n
 
-    complex(r8) :: Convolved(Twom)
+    ! Variables used in the convolution
+    integer(kind = 4) :: i,j,k                      ! iterators
+    real(r8) :: ItemBmatrix(Twom, Twom)       ! Here's a matrix for the item we are convolving
+    real(r8) :: PaddedItemA(Twom)
+    real(r8) :: Convolved(Twom)
 
     ! First I do the padding with zeros on the right hand side of the two input arrays
-    complex(r8) :: PaddedItemA(Twom)
-    complex(r8) :: PaddedItemB(Twom)
     PaddedItemA(1:m) = ItemA
-    PaddedItemB(1:m) = ItemB
     PaddedItemA(m+1:Twom) = 0.0
-    PaddedItemB(m+1:Twom) = 0.0
 
-    ! Fast Fourier transforming the first item
-    ! The argument that is 1 is the rank which is one (one dimensional array)
-    ! The first PaddedItemA argument is input, while the second is output.
-    plan = fftw_plan_dft_1d(Twom, PaddedItemA, PaddedItemA, FFTW_FORWARD, FFTW_ESTIMATE)
-    call fftw_execute_dft(plan, PaddedItemA, PaddedItemA)
-    call fftw_destroy_plan(plan)
+    ItemBmatrix = 0.0
+    Convolved = 0.0
 
-    ! Fast Fourier transforming the second item
-    plan = fftw_plan_dft_1d(Twom, PaddedItemB, PaddedItemB, FFTW_FORWARD, FFTW_ESTIMATE)
-    call fftw_execute_dft(plan, PaddedItemB, PaddedItemB)
-    call fftw_destroy_plan(plan)                    ! Deallocating the memory
+    ! Now I fill in the elements of the matrix.
+    do i = 1,m
+       ItemBmatrix(i:(m + i - 1),i) = ItemB
+    end do
 
-    ! Doing the convolution
-    ! Note that we need to renormalize as the forward
-    ! transform rescales the items (2.0**9.0 is the
-    ! real number equivalent of Twom).
-    Convolved = PaddedItemA*PaddedItemB/(2.0**9.0)
+    ! Now do the convolution using matrix multiplication.
+    ! I do the matrix multiplication manually to minimize any
+    ! dependencies on particular versions of Fortran.
+    ! Because the ItemBmatrix is a diagonal matrix, we can
+    ! do this more efficiently.
+    do j = 1,Twom
+        ! j loops over the rows
+        ! we use the j index in the k do-loop below to
+        ! capitalize on the diagonal nature of the ItemBmatrix
+        do k = 1,j
 
-    ! Inverse Fourier transforming the convolution (backward)
-    ! The first argument for Convolved is input, while the second is output
-    plan = fftw_plan_dft_1d(Twom, Convolved, Convolved, FFTW_BACKWARD, FFTW_ESTIMATE)
-    call fftw_execute_dft(plan, Convolved, Convolved)
-    call fftw_destroy_plan(plan)                    ! Deallocating the memory
+            ! k loops over all of the columns
+            Convolved(j) = Convolved(j) + ItemBmatrix(j,k)*PaddedItemA(k)
+
+         end do ! ends the k loop over columns
+
+    end do ! ends the j loop over rows
 
     ! To not loose individuals that developed past the threshold I add
     AconvB = Convolved(1:m)
@@ -1188,7 +1184,7 @@ Subroutine LnormPDF(x, mulog, sigmalog, PDF)
     real(r8), intent(in) :: x(:)
     real(r8), intent(in) :: mulog
     real(r8), intent(in) :: sigmalog
-    complex(r8), intent(out) :: PDF(:)
+    real(r8), intent(out) :: PDF(:)
 
     real(r8), parameter :: pi = 3.1415927
 
