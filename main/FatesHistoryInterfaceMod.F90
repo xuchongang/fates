@@ -1118,6 +1118,7 @@ end subroutine flush_hvars
     use EDtypesMod          , only : ican_ustory
     use FatesSizeAgeTypeIndicesMod, only : get_sizeage_class_index
     use EDTypesMod        , only : nlevleaf
+    use FatesInsectMemMod   , only : ed_patch_insect_type
 
     ! Arguments
     class(fates_history_interface_type)             :: this
@@ -1147,6 +1148,8 @@ end subroutine flush_hvars
 
     type(ed_patch_type),pointer  :: cpatch
     type(ed_cohort_type),pointer :: ccohort
+    ! INSECTS
+    type(ed_patch_insect_type), pointer :: cpa_insect		   ! State vars at the patch level: see FatesInsectMemMod.F90
 
     real(r8), parameter :: tiny = 1.e-5_r8      ! some small number
     
@@ -1745,16 +1748,16 @@ end subroutine flush_hvars
             end do
 	    
 	    ! Update the insect state variables (currently only mountain pine beetle)
-	    hio_MPB_Eggs_pa(io_pa)	       = cpatch%pa_insect%indensity(1,2)
-	    hio_MPB_L1_pa(io_pa)	       = cpatch%pa_insect%indensity(1,3)
-	    hio_MPB_L2_pa(io_pa)	       = cpatch%pa_insect%indensity(1,4)
-	    hio_MPB_L3_pa(io_pa)	       = cpatch%pa_insect%indensity(1,5)
-	    hio_MPB_L4_pa(io_pa)	       = cpatch%pa_insect%indensity(1,6)
-	    hio_MPB_P_pa(io_pa)	       	       = cpatch%pa_insect%indensity(1,7)
-	    hio_MPB_T_pa(io_pa)	               = cpatch%pa_insect%indensity(1,8)
-	    hio_MPB_A_pa(io_pa)	               = cpatch%pa_insect%indensity(1,9)
-	    hio_MPB_FA_pa(io_pa)	       = cpatch%pa_insect%indensity(1,10)
-	    hio_MPB_Bt_pa(io_pa)	       = cpatch%pa_insect%indensity(1,11)
+	    hio_MPB_Eggs_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,2)
+	    hio_MPB_L1_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,3)
+	    hio_MPB_L2_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,4)
+	    hio_MPB_L3_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,5)
+	    hio_MPB_L4_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,6)
+	    hio_MPB_P_pa(io_pa)	       	       = cpatch%cpa_insect%indensity(1,7)
+	    hio_MPB_T_pa(io_pa)	               = cpatch%cpa_insect%indensity(1,8)
+	    hio_MPB_A_pa(io_pa)	               = cpatch%cpa_insect%indensity(1,9)
+	    hio_MPB_FA_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,10)
+	    hio_MPB_Bt_pa(io_pa)	       = cpatch%cpa_insect%indensity(1,11)
 	    
             ! Update Litter Flux Variables
 
