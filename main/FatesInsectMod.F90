@@ -97,6 +97,7 @@ contains
     !
     use EDTypesMod           , only : AREA
     use FatesInsectMemMod    , only : delta1, an, bn, ab, bb		! these parameters will eventually be passed using a parameter file.
+    use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day
 
     ! !ARGUMENTS:
     type(ed_patch_type)      , intent(inout), target  :: currentPatch
