@@ -36,7 +36,7 @@ module FatesInsectMemMod
 	!insect density for different insect types and stages
 	! Note that for the mountain pine beetle densities (insect type 1--first row)
 	! are expressed as (nper 225 m^2). This does not have to be the case for other insect species.
-        real(r8) :: indensity(numberInsectTypes, maxNumStages) 	 
+        real(r8), allocatable :: indensity(:,:) 	 
 	
         ! Variables related to mountain pine beetle winter survival (these are specific to the mountain pine beetle)
         real(r8) :: PrS                         			! smallest probability of mountain pine beetle winter survival (unitless)
