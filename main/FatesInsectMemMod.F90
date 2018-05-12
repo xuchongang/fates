@@ -26,12 +26,12 @@ module FatesInsectMemMod
 
         ! Containers for the distributions of physiological age for each life stage. 
 	! The MPB_PhysAge array holds physiological age distributions for each of the relevant stages of the MPB.
-	real(kind = 8), allocatable :: MPB_PhysAge(:,:)		! array to hold physiological age for eggs, L1, L2, L3, L4, P, T
+	real(r8), allocatable :: MPB_PhysAge(:,:)		! array to hold physiological age for eggs, L1, L2, L3, L4, P, T
 	
 	! Containers for densities of insects transitioning from one stage to another for each insect type.
 	! The MPB_Tranit array holds beetles trasitionaing into the egg life stage, into L1, into L2, into L3, 
-	! into L4, into the pupal stage, into the teneral adult life stage.
-	real(r8) :: MPB_Transit(7)
+	! into L4, into the pupal stage, into the teneral adult life stage (currently 7 stages).
+	real(r8), allocatable :: MPB_Transit(:)
 	
 	!insect density for different insect types and stages
 	! Note that for the mountain pine beetle densities (insect type 1--first row)
