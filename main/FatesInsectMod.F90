@@ -121,8 +121,8 @@ contains
     ! assigning values to the input boundary conditions based on
     ! temperatures computed in the TemperatureType module.
     iofp = currentPatch%patchno 
-    bc_in%tgcm_max_pa(iofp) = temperature_type%t_ref2m_max_inst_patch(iofp)
-    bc_in%tgcm_min_pa(iofp) = temperature_type%t_ref2m_min_inst_patch(iofp)
+    bc_in%tgcm_max_pa(iofp) = t_ref2m_max_inst_patch(iofp)
+    bc_in%tgcm_min_pa(iofp) = t_ref2m_min_inst_patch(iofp)
         
   end subroutine DailyMinMaxTemp
 
