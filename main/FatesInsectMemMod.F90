@@ -67,6 +67,9 @@ module FatesInsectMemMod
 	allocate(this%MPB_PhysAge(1:DomainSize,1:7))
 	this%MPB_PhysAge(1:DomainSize, 1:7) = 0.0_r8
 	
+	allocate(this%MPB_Transit(1:7))
+	this%MPB_Transit(1:7) = 0.0_r8
+	
 	this%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
 
         this%PrS = 0.0_r8
