@@ -9,6 +9,7 @@ module FatesInsectMod
   public  :: insect_model
 
   ! !PRIVATE MEMBER FUNCTIONS:
+  private :: DailyMinMaxTemp	! computes the maximum and minimum daily air temperatures used by the beetle model
   private :: beetle_model	! calls the mountain pine beetle model
   private :: MPBSim2		! mountain pine beetle subroutine calls all of the affiliated MPB subroutines below
   private :: Ovipos		! mountain pine beetle oviposition subroutine
@@ -58,13 +59,20 @@ contains
      		currentCohort => currentCohort%shorter
 
     	end do
+	
+	!-----------------------------------------------------------------------
+	! Before calling the insect simulators I need to call a subroutine
+	! to assign minimum and maximum daily temperatures to the appropriate
+	! bc_in_type variables stored the FatesInterfaceMod.F90 script 
+	
+	call DailyMinMaxTemp(currentPatch, bc_in)
 
     	!-----------------------------------------------------------------------
     	! Calling the insect demography submodels (currently only the mountain
     	! pine beetle model is implemented). Later there will be calls to other
     	! insect models that may attack different plant functional types.
 
-    	call beetle_model(currentPatch, bc_in)
+	call beetle_model(currentPatch, bc_in)
 
     	!-----------------------------------------------------------------------
     	! Check the total insect mortality. If the proportion if insect caused mortality in the cohort for
@@ -88,6 +96,38 @@ contains
      end do	! Patch do loop
 
   end subroutine insect_model
+  
+  !========================================================================
+  subroutine DailyMinMaxTemp(currentPatch, bc_in)
+    ! This subroutine takes patch level daily maximum and minimum air
+    ! temperatures at 2m height from the host model and assigns them to 
+    ! the corresponding variables in bc_in in the FatesInterfaceMod.F90 
+    ! module so that they can later be accessed by the insect 
+    ! development subroutines.
+     	
+    use TemperatureType	     , only : temperature_type
+    
+    ! !ARGUMENTS:
+    type(ed_patch_type)      , intent(inout), target  :: currentPatch
+    type(bc_in_type)         , intent(out), target  :: bc_in
+    
+    ! patch pointer	
+    type(ed_patch_type), pointer :: currentPatch
+    
+    ! pointers to temperature variables
+    type(temperature_type), pointer :: t_ref2m_max_inst_patch
+    type(temperature_type), pointer :: t_ref2m_min_inst_patch
+    
+    ! Internal variable
+    integer :: iofp                         	! This is needed to assign temperature variables to bc_in
+    
+    ! assigning values to the input boundary conditions based on
+    ! temperatures computed in the TemperatureType module.
+    iofp = currentPatch%patchno 
+    bc_in%tgcm_max_pa(iofp) = temperature_type%t_ref2m_max_inst_patch(iofp)
+    bc_in%tgcm_min_pa(iofp) = temperature_type%t_ref2m_min_inst_patch(iofp)
+        
+  end subroutine DailyMinMaxTemp
 
   !========================================================================
   subroutine beetle_model(currentPatch, bc_in)
