@@ -352,10 +352,7 @@ module FatesInterfaceMod
       real(r8), allocatable :: tgcm_pa(:)
       
       ! maximum and minimum daily temperature at agcm reference height (Kelvin).
-      ! Although these are computed in the photosynthesis section
-      ! using the wrap_photosynthesis subroutine in the clmfates_interfaceMod.F90
-      ! script, we may want to change this later as they are used in the insect
-      ! dynamics subroutines.
+      ! These are currently used in the insect models.
       real(r8), allocatable :: tgcm_max_pa(:)
       real(r8), allocatable :: tgcm_min_pa(:)
       
