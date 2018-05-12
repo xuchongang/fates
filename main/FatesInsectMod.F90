@@ -111,9 +111,6 @@ contains
     type(ed_patch_type)      , intent(inout), target  :: currentPatch
     type(bc_in_type)         , intent(out), target  :: bc_in
     
-    ! patch pointer	
-    type(ed_patch_type), pointer :: currentPatch
-    
     ! pointers to temperature variables
     type(temperature_type), pointer :: t_ref2m_max_inst_patch
     type(temperature_type), pointer :: t_ref2m_min_inst_patch
