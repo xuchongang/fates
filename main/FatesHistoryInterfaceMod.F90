@@ -2645,6 +2645,9 @@ end subroutine flush_hvars
 	 
     ! insect density at the patch level (currently only the densities of various
     ! stages of the mountain pine beetle life cycle).
+    
+    if(hlm_use_insect.eq.itrue) then
+    
     call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
@@ -2694,6 +2697,8 @@ end subroutine flush_hvars
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
             ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_pa)
+	    
+    end if ! insect variable related statement
 
     ! patch age class variables
     call this%set_history_var(vname='PATCH_AREA_BY_AGE', units='m2/m2',             &
@@ -3306,10 +3311,14 @@ end subroutine flush_hvars
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m7_si_scpf )
 	  
     ! Insect induced mortality of plants per size class per pft
+    if(hlm_use_insect.eq.itrue) then
+    
     call this%set_history_var(vname='M8_SCPF', units = 'N/ha/yr',                  &
           long='insect mortality by pft/size',use_default='active',              &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m8_si_scpf )  
+    
+    end if ! insect related if statement
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &
