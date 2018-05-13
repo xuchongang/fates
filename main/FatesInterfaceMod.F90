@@ -676,8 +676,6 @@ contains
       !Insects
       allocate(bc_in%tgcm_max_pa(maxPatchesPerSite))
       allocate(bc_in%tgcm_min_pa(maxPatchesPerSite))
-      bc_in%tgcm_max_pa(:) = -999.0_r8
-      bc_in%tgcm_min_pa(:) = 999.0_r8
 
       ! Plant-Hydro BC's
       if (hlm_use_planthydro.eq.itrue) then
