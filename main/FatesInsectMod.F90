@@ -108,6 +108,7 @@ contains
     ! !LOCAL VARIABLES:
     !-----------------------------------------------------------------------
     type(ed_cohort_type), pointer :: currentCohort
+    type(ed_patch_insect_type), pointer :: pa_insect
     integer :: iofp                         	! index fates patch age
 
     ! Temperature variables that drive the mountain pine beetle demography model.
