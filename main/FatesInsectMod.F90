@@ -64,7 +64,7 @@ contains
     	! pine beetle model is implemented). Later there will be calls to other
     	! insect models that may attack different plant functional types.
 
-	call beetle_model(currentPatch, bc_in)
+	call beetle_model(currentSite, currentPatch, bc_in)
 
     	!-----------------------------------------------------------------------
     	! Check the total insect mortality. If the proportion if insect caused mortality in the cohort for
@@ -90,7 +90,7 @@ contains
   end subroutine insect_model
 
   !========================================================================
-  subroutine beetle_model(currentPatch, bc_in)
+  subroutine beetle_model(currentSite, currentPatch, bc_in)
     !
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
@@ -101,6 +101,7 @@ contains
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day
 
     ! !ARGUMENTS:
+    type(ed_site_type)       , intent(inout), target  :: currentSite
     type(ed_patch_type)      , intent(inout), target  :: currentPatch
     type(bc_in_type)         , intent(in)             :: bc_in
 
@@ -270,8 +271,8 @@ contains
 
     ! converting the minimum and maximum daily air temperatures
     ! from degrees K to degrees C.
-    max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8
-    min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8
+    max_airTC = bc_in(currentSite)%tgcm_max_pa(iofp) - 273.15_r8
+    min_airTC = bc_in(currentSite)%tgcm_min_pa(iofp) - 273.15_r8
 
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm168 = Nt68
