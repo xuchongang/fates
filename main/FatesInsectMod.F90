@@ -597,8 +597,8 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     ! I reset survival probability if there are no larvae.
     if(L1 + L2 + L3 + L4 < 0.001)then
-        PrS = 1.0
-        Ct = 0.0
+        PrS = 1.0_r8
+        Ct = 0.0_r8
         counter = 0
     end if
 
@@ -606,9 +606,9 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     !! Bolstad, Bentz and Logan (1997).
     !! We compute mean phloem temperature by averaging maximum and minimum phloem temperature.
     !! Here I use the average temperature differential (6.6 degrees C)
-    Tmean = 0.5*(Tmax + Tmin) + 0.9 + 6.6*(Tmax - Tmin)/(2.0*24.4)
-    Tmax2 = Tmax + 6.6*(Tmax - Tmin)/24.4
-    Tmin2 = Tmin + 1.8
+    Tmean = 0.5_r8*(Tmax + Tmin) + 0.9_r8 + 6.6_r8*(Tmax - Tmin)/(2.0_r8*24.4_r8)
+    Tmax2 = Tmax + 6.6_r8*(Tmax - Tmin)/24.4_r8
+    Tmin2 = Tmin + 1.8_r8
 
     ! Computing the median development rate for each life stage in this time step
     call RegniereFunc(Tmean, TB0, DeltaB0, TM0, DeltaM0, omega0, psi0, med0)   ! for pre-eggs
@@ -792,29 +792,30 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
     Bt = Bt + FA
 
     ! initializing the parent beetles
-    Pt68 = 0.0
-    Pt10 = 0.0
-    Pt12 = 0.0
-    Pt14 = 0.0
-    Pt16s = 0.0
+    Pt68 = 0.0_r8
+    Pt10 = 0.0_r8
+    Pt12 = 0.0_r8
+    Pt14 = 0.0_r8
+    Pt16s = 0.0_r8
 
     !---------------------------------------------------------------------------------------------
     ! Here I do the Euler integration
     do i = 1,timesteps
         ! This is the ODE for flying beetles
-        Btp1 = Bt - exp(ab + bb*6.5)*Nt68*deltat - exp(ab + bb*9.0)*Bt*Nt10*deltat - exp(ab + bb*11.0)*Bt*Nt12*deltat &
-        - exp(ab + bb*13.0)*Bt*Nt14*deltat - exp(ab + bb*15.0)*Bt*Nt16s*deltat - delta1*24.0*Bt*deltat
-        Ntp168 = Nt68 - exp(an + bn*6.5)*Bt*Nt68*deltat           ! This is the discretized ODE for 5-8 inch DBH trees
-        Ntp110 = Nt10 - exp(an + bn*9.0)*Bt*Nt10*deltat           ! This is the discretized ODE for 8-10 inch DBH trees
-        Ntp112 = Nt12 - exp(an + bn*11.0)*Bt*Nt12*deltat          ! This is the discretized ODE for 10-12 inch DBH trees
-        Ntp114 = Nt14 - exp(an + bn*13.0)*Bt*Nt14*deltat          ! This is the discretized ODE for 12-14 inch DBH trees
-        Ntp116s = Nt16s - exp(an + bn*15.0)*Bt*Nt16s*deltat       ! This is the discretized ODE for 14 inch and larger DBH trees
+        Btp1 = Bt - exp(ab + bb*6.5_r8)*Nt68*deltat - exp(ab + bb*9.0_r8)*Bt*Nt10*deltat - &
+	exp(ab + bb*11.0_r8)*Bt*Nt12*deltat - exp(ab + bb*13.0_r8)*Bt*Nt14*deltat - &
+	exp(ab + bb*15.0_r8)*Bt*Nt16s*deltat - delta1*24.0_r8*Bt*deltat
+        Ntp168 = Nt68 - exp(an + bn*6.5_r8)*Bt*Nt68*deltat           ! This is the discretized ODE for 5-8 inch DBH trees
+        Ntp110 = Nt10 - exp(an + bn*9.0_r8)*Bt*Nt10*deltat           ! This is the discretized ODE for 8-10 inch DBH trees
+        Ntp112 = Nt12 - exp(an + bn*11.0_r8)*Bt*Nt12*deltat          ! This is the discretized ODE for 10-12 inch DBH trees
+        Ntp114 = Nt14 - exp(an + bn*13.0_r8)*Bt*Nt14*deltat          ! This is the discretized ODE for 12-14 inch DBH trees
+        Ntp116s = Nt16s - exp(an + bn*15.0_r8)*Bt*Nt16s*deltat       ! This is the discretized ODE for 14 inch and larger DBH trees
 
-        Ptp168 = Pt68 + exp(ab + bb*6.5)*Bt*Nt68*deltat         ! This is the discretized ODE for parent beetles in 5-8 inch DBH trees
-        Ptp110 = Pt10 + exp(ab + bb*9.0)*Bt*Nt10*deltat         ! This is the discretized ODE for parent beetles in 8-10 inch DBH trees
-        Ptp112 = Pt12 + exp(ab + bb*11.0)*Bt*Nt12*deltat        ! This is the discretized ODE for parent beetles in 10-12 inch DBH trees
-        Ptp114 = Pt14 + exp(ab + bb*13.0)*Bt*Nt14*deltat        ! This is the discretized ODE for parent beetles in 12-14 inch DBH trees
-        Ptp116s = Pt16s + exp(ab + bb*15.0)*Bt*Nt16s*deltat     ! This is the discretized ODE for parent beetles in 14 inch + trees
+        Ptp168 = Pt68 + exp(ab + bb*6.5_r8)*Bt*Nt68*deltat         ! This is the discretized ODE for parent beetles in 5-8 inch DBH trees
+        Ptp110 = Pt10 + exp(ab + bb*9.0_r8)*Bt*Nt10*deltat         ! This is the discretized ODE for parent beetles in 8-10 inch DBH trees
+        Ptp112 = Pt12 + exp(ab + bb*11.0_r8)*Bt*Nt12*deltat        ! This is the discretized ODE for parent beetles in 10-12 inch DBH trees
+        Ptp114 = Pt14 + exp(ab + bb*13.0_r8)*Bt*Nt14*deltat        ! This is the discretized ODE for parent beetles in 12-14 inch DBH trees
+        Ptp116s = Pt16s + exp(ab + bb*15.0_r8)*Bt*Nt16s*deltat     ! This is the discretized ODE for parent beetles in 14 inch + trees
 
         ! Now I update all of the state variables
         Bt = Btp1
@@ -834,36 +835,36 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
     !------------------------------------------------------------------------------------------------
 
     ! To prevent the algorithm from returning NaNs or negative values.
-    if(isnan(Bt) .or. Bt < 0.0)then
-        Bt = 0.0
+    if(isnan(Bt) .or. Bt < 0.0_r8)then
+        Bt = 0.0_r8
     end if
 
-    if(isnan(Nt68) .or. Nt68 < 0.0)then
-        Nt68 = 0.0
+    if(isnan(Nt68) .or. Nt68 < 0.0_r8)then
+        Nt68 = 0.0_r8
     end if
 
-    if(isnan(Nt10) .or. Nt10 < 0.0)then
-        Nt10 = 0.0
+    if(isnan(Nt10) .or. Nt10 < 0.0_r8)then
+        Nt10 = 0.0_r8
     end if
 
-    if(isnan(Nt12) .or. Nt12 < 0.0)then
-        Nt12 = 0.0
+    if(isnan(Nt12) .or. Nt12 < 0.0_r8)then
+        Nt12 = 0.0_r8
     end if
 
-    if(isnan(Nt14) .or. Nt14 < 0.0)then
-        Nt14 = 0.0
+    if(isnan(Nt14) .or. Nt14 < 0.0_r8)then
+        Nt14 = 0.0_r8
     end if
 
     if(isnan(Nt16s) .or. Nt16s < 0.0)then
         Nt16s = 0.0
     end if
 
-    if(isnan(Pt68) .or. Pt68 < 0.0)then
-        Pt68 = 0.0
+    if(isnan(Pt68) .or. Pt68 < 0.0_r8)then
+        Pt68 = 0.0_r8
     end if
 
-    if(isnan(Pt10) .or. Pt10 < 0.0)then
-        Pt10 = 0.0
+    if(isnan(Pt10) .or. Pt10 < 0.0_r8)then
+        Pt10 = 0.0_r8
     end if
 
     if(isnan(Pt12) .or. Pt12 < 0.0)then
@@ -874,8 +875,8 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
         Pt14 = 0.0
     end if
 
-    if(isnan(Pt16s) .or. Pt16s < 0.0)then
-        Pt16s = 0.0
+    if(isnan(Pt16s) .or. Pt16s < 0.0_r8)then
+        Pt16s = 0.0_r8
     end if
 
     ! Now I compute the number of new parents in this one day time interval.
@@ -905,18 +906,18 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
 
     ! Aplying winter mortality to egg laying adults
      if(Tmn2 <= -18.0)then
-        Fec = 0.0
+        Fec = 0.0_r8
     end if
 
     ! Computing new eggs. Note this has to be done before updating the
     ! Fec variable below.
-    NewEggs = Fec*(1.0 - exp(-med))
+    NewEggs = Fec*(1.0_r8 - exp(-med))
 
     ! Simulating oviposition: (Fec represents the number of eggs remaining)
     ! Below I assume that half of the individuals that fly and
     ! lay eggs are females (after tree induced colonization mortality)
     ! and each female lays an initial clutch of 82 eggs.
-    Fec = 0.5*Parents*fmax + Fec*exp(-med)
+    Fec = 0.5_r8*Parents*fmax + Fec*exp(-med)
 
 end subroutine Ovipos
 
@@ -970,11 +971,11 @@ subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcur
 
     ! I use the -18 threshold to kill all eggs, pupae, or teneral
     ! adults as described in Regniere 2015.
-    if(Tmn2 <= -18.0)then
+    if(Tmn2 <= -18.0_r8)then
         OldEPT = 0.0
     end if
 
-    if(med > 0.0)then
+    if(med > 0.0_r8)then
         ! Computing the aging kernel
         call LnormPDF(avec, mu, sigma, PDF)
         PDF = PDF/sum(PDF)     ! ensuring that it sums to one
@@ -1000,12 +1001,12 @@ subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcur
             EPTcurrent = sum(real(OEPT(1:128))) + NewEPTtm1
 
             ! Computing NewNext: if no development occurs there are no new individuals
-            NewNext = 0.0
+            NewNext = 0.0_r8
         end if
 
         ! Just to make sure that silly things don't happen
         if(NewNext < 0.0 .or. isnan(NewNext))then
-            NewNext = 0.0
+            NewNext = 0.0_r8
         end if
 
 end subroutine EPTDev
@@ -1056,7 +1057,7 @@ subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext
     ! in the previous step.
     OldL = OL
 
-    if(med > 0.0)then
+    if(med > 0.0_r8)then
         ! computing the aging kernel
         call LnormPDF(avec, mu, sigma, PDF)
         PDF = PDF/sum(PDF)     ! ensuring that it sums to one
@@ -1087,7 +1088,7 @@ subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext
 
     ! Just to make sure that silly things don't happen
     if(NewNext < 0.0 .or. isnan(NewNext))then
-        NewNext = 0.0
+        NewNext = 0.0_r8
     end if
 
 end subroutine LarvDev
@@ -1126,8 +1127,8 @@ subroutine AdSR(NewA, Tmn2, Tmx2, Adtm1, FA)
 
     ! I use the -18 threshold to kill all adults as
     ! described in Regniere 2015
-    if(Tmn2 <= -18.0)then
-        Adtm1 = 0.0
+    if(Tmn2 <= -18.0_r8)then
+        Adtm1 = 0.0_r8
     end if
 
     ! If it's warm enough, beetles fly. I'm using an empirical
@@ -1168,10 +1169,10 @@ Subroutine ConvolveSR(ItemA, ItemB, AconvB)
 
     ! First I do the padding with zeros on the right hand side of the two input arrays
     PaddedItemA(1:m) = ItemA
-    PaddedItemA(m+1:Twom) = 0.0
+    PaddedItemA(m+1:Twom) = 0.0_r8
 
-    ItemBmatrix = 0.0
-    Convolved = 0.0
+    ItemBmatrix = 0.0_r8
+    Convolved = 0.0_r8
 
     ! Now I fill in the elements of the matrix.
     do i = 1,m
@@ -1250,7 +1251,7 @@ subroutine RegniereFunc(TC, TB, DeltaB, TM, DeltaM, omega, psi, DevR)
     real(r8), intent(out) :: DevR
 
     ! We start by defining it as zero in case the condition below does not hold
-    DevR = 0.0
+    DevR = 0.0_r8
 
     ! Computing the development rate
     if(TC >= TB .and. TC <= TM) then
@@ -1275,12 +1276,12 @@ subroutine FlightFunc(TC, Flying)
     real(r8), intent(out) :: Flying
 
     ! We start by defining it as zero in case the condition below does not hold
-    Flying = 0.0
+    Flying = 0.0_r8
 
     ! Computing the proportion that are flying rate
-    if(TC >= 17.53 .and. TC <= 42.00) then
-        Flying = 2.500e+01 + (-5.324e+00)*TC + (4.277e-01)*(TC**2) + (-1.633e-02)*(TC**3) + &
-        (3.014e-04)*(TC**4) + (-2.172e-06)*(TC**5)
+    if(TC >= 17.53_r8 .and. TC <= 42.00_r8) then
+        Flying = 2.500e+01_r8 + (-5.324e+00_r8)*TC + (4.277e-01_r8)*(TC**2) + (-1.633e-02_r8)*(TC**3) + &
+        (3.014e-04_r8)*(TC**4) + (-2.172e-06_r8)*(TC**5)
     end if
 
 end subroutine FlightFunc
@@ -1359,7 +1360,7 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
 
     ! Computing the max and min under-bark temperature as well as the range
     ! using the Bolstad, Bentz, and Logan (1997) model
-    T = (Tmn2 + Tmx2)/2.0 ! The mean temperature
+    T = (Tmn2 + Tmx2)/2.0_r8 ! The mean temperature
     Range1 = Tmx2 - Tmn2
 
     ! Computing the optimum gain and loss temperatures (equations 5 and 6).
@@ -1371,7 +1372,7 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
     Lt = Range1*rhoL*exp(-(T - TL)/sigmaL)/(sigmaL*(1 + exp(-(T - TL)/sigmaL))**2.0)
 
     ! Computing the amount of cold hardiness achieved in the step (equation 7)
-    if(counter <= 153 .and. Ct < 0.5)then
+    if(counter <= 153 .and. Ct < 0.5_r8)then
         CtNew = Ct + (1 - Ct)*Gt
     else
          CtNew = Ct + (1 - Ct)*Gt - Ct*Lt
@@ -1379,8 +1380,8 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
 
     ! Computing the proportion of larvae that are in each SCP stage (equation 9)
     ! This is modified from equation 9 according to advice from Jacques Regniere
-    p1 = max(0.0,min(1.0,(0.5-CtNew)/(0.5-LambdaZero)))
-    p3 = max(0.0,min(1.0,(CtNew-0.5)/(LambdaOne-0.5)))
+    p1 = max(0.0_r8,min(1.0_r8,(0.5_r8-CtNew)/(0.5_r8-LambdaZero)))
+    p3 = max(0.0_r8,min(1.0_r8,(CtNew-0.5_r8)/(LambdaOne-0.5_r8)))
     p2 = 1 - p1 - p3
 
     ! Now computing the probability of surviving in each time step
