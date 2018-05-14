@@ -378,9 +378,9 @@ contains
      currentPatch%pa_insect%MPB_Transit(2) = NewL1tm1
      currentPatch%pa_insect%MPB_Transit(3) = NewL2tm1
      currentPatch%pa_insect%MPB_Transit(4) = NewL3tm1
-     currentPatch%pa_insect%MPB_Transit(4) = NewL4tm1
-     currentPatch%pa_insect%MPB_Transit(4) = NewPtm1
-     currentPatch%pa_insect%MPB_Transit(4) = NewTtm1
+     currentPatch%pa_insect%MPB_Transit(5) = NewL4tm1
+     currentPatch%pa_insect%MPB_Transit(6) = NewPtm1
+     currentPatch%pa_insect%MPB_Transit(7) = NewTtm1
 
      ! The physiological age distributions
      currentPatch%pa_insect%MPB_PhysAge(:,1) = OE
