@@ -99,7 +99,7 @@ contains
     use EDTypesMod           , only : AREA
     use FatesInsectMemMod    , only : delta1, an, bn, ab, bb		! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_patch_insect_type
-    use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day
+    use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
 
     ! !ARGUMENTS:
     type(ed_patch_type)      , intent(inout), target  :: currentPatch
@@ -110,7 +110,6 @@ contains
     !-----------------------------------------------------------------------
     type(ed_cohort_type), pointer :: currentCohort
     type(ed_patch_insect_type), pointer :: pa_insect
-    type(bc_in_type)          , pointer :: bc_in
     integer :: iofp                         	! index fates patch age
 
     ! Temperature variables that drive the mountain pine beetle demography model.
