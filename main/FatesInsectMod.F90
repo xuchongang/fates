@@ -296,6 +296,9 @@ contains
     ! population in February so that we know that none have flown yet, but if it is exceedingly
     ! small, we re-initialize with parents on July 14 of the same year.
     InPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
+    
+    ! I assign a default value to the population in February
+    FebInPopn = 0.0_r8
 
     if(hlm_current_month == 2 .and. hlm_current_day == 1) then
         FebInPopn = InPopn
