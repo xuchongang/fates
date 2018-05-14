@@ -619,13 +619,41 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     ! The mu parameter of the lognormal distribution is given by the natural logarithm of the median
     ! development rate.
-    mu1 = log(med1*deltat)  ! for eggs
-    mu2 = log(med2*deltat)  ! for L1
-    mu3 = log(med3*deltat)  ! for L2
-    mu4 = log(med4*deltat)  ! for L3
-    mu5 = log(med5*deltat)  ! for L4
-    mu6 = log(med6*deltat)  ! for pupae
-    mu7 = log(med7*deltat)  ! for teneral adults
+    mu1 = 0.0_r8
+    mu2 = 0.0_r8
+    mu3 = 0.0_r8
+    mu4 = 0.0_r8
+    mu5 = 0.0_r8
+    mu6 = 0.0_r8
+    mu7 = 0.0_r8
+    
+    if(med1 > 0.0_r8) then
+    	mu1 = log(med1*deltat)  ! for eggs
+    end if 
+    
+    if(med2 > 0.0_r8) then
+    	mu2 = log(med2*deltat)  ! for L1
+    end if     
+    
+    if(med3 > 0.0_r8) then
+    	mu3 = log(med3*deltat)  ! for L2
+    end if 	
+
+    if(med4 > 0.0_r8) then	
+    	mu4 = log(med4*deltat)  ! for L3
+    end if 	
+	
+    if(med5 > 0.0_r8) then	
+    	mu5 = log(med5*deltat)  ! for L4
+    end if 	
+	
+    if(med6 > 0.0_r8) then
+    	mu6 = log(med6*deltat)  ! for pupae
+    end if     
+    
+    if(med7 > 0.0_r8) then
+    	mu7 = log(med7*deltat)  ! for teneral adults
+    end if 
 
     !---------------------------------------------------------------------------------------------------------
     ! Now we can simulate each of the life stages by calling the appropriate subroutines
