@@ -33,6 +33,7 @@ contains
     !  related state variables are stored at the patch level (see FatesInsectMemMod)
     !
     use EDTypesMod           , only : AREA
+    use FatesInterfaceMod    , only : bc_in_type
     ! !ARGUMENTS:
     type(ed_site_type)      , intent(inout), target  :: currentSite
     type(bc_in_type)        , intent(in)             :: bc_in
@@ -109,6 +110,7 @@ contains
     !-----------------------------------------------------------------------
     type(ed_cohort_type), pointer :: currentCohort
     type(ed_patch_insect_type), pointer :: pa_insect
+    type(bc_in_type)          , pointer :: bc_in
     integer :: iofp                         	! index fates patch age
 
     ! Temperature variables that drive the mountain pine beetle demography model.
