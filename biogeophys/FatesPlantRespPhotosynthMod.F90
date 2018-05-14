@@ -1130,11 +1130,11 @@ contains
                                         lmr_llz,     & ! in   lmr_z(1:currentCohort%nv,ft,cl)
                                         rs_llz,      & ! in   rs_z(1:currentCohort%nv,ft,cl)
                                         elai_llz,    & ! in   %elai_profile(cl,ft,1:currentCohort%nv)
-                                        c13disc_llz,  & ! in   c13disc_z(cl, ft, 1:currentCohort%nv)
+                                        c13disc_llz, & ! in   c13disc_z(cl, ft, 1:currentCohort%nv)
                                         c_area,      & ! in   currentCohort%c_area
                                         nplant,      & ! in   currentCohort%n
                                         rb,          & ! in   bc_in(s)%rb_pa(ifp)
-                                         maintresp_reduction_factor, & ! in 
+                                        maintresp_reduction_factor, & ! in 
                                         g_sb_laweight, & ! out  currentCohort%g_sb_laweight [m/s] [m2-leaf]
                                         gpp,         &   ! out  currentCohort%gpp_tstep
                                         rdark,       &   ! out  currentCohort%rdark
@@ -1160,6 +1160,7 @@ contains
     real(r8), intent(in) :: lmr_llz(nv)      ! layer dark respiration rate [umolC/m2leaf/s]
     real(r8), intent(in) :: rs_llz(nv)       ! leaf layer stomatal resistance [s/m]
     real(r8), intent(in) :: elai_llz(nv)     ! exposed LAI per layer [m2 leaf/ m2 pft footprint]
+    real(r8), intent(in) :: c13disc_llz(nv)  ! Liang Wei, c13 discrimination weighted mean 
     real(r8), intent(in) :: c_area           ! crown area m2/m2
     real(r8), intent(in) :: nplant           ! indiv/m2
     real(r8), intent(in) :: rb               ! leaf boundary layer resistance (s/m)
@@ -1214,6 +1215,9 @@ contains
        rdark = rdark + lmr_llz(il) * cohort_layer_eleaf_area
        
        
+    end do
+    
+    if (nv>1) then     
        ! Hang ZHOU, 2016-09-11
        ! Liang Wei May 2018, may not work in the new model, temp
        ! cohort%c13disc_clm as weighted mean of d13c flux at all related leave layers
@@ -1223,9 +1227,7 @@ contains
        else
           c13disc_clm = sum(c13disc_llz(1:nv-1) * psn_llz(1:nv-1) * elai_llz(1:nv-1)) / sum_weight
        end if
-       
-    end do
-
+    end if
     ! -----------------------------------------------------------------------------------
     ! We DO NOT normalize g_sb_laweight.
     ! The units that we are passing back are [m/s] * [m2 effective leaf]
