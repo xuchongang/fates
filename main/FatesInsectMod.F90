@@ -323,7 +323,7 @@ contains
         ! used in the current version of the insect mortality model.
 
         !if(FebInPopn > EndMPBPopn .and. currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then
-	if(FebInPopn > 0.0_r8 .and. currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then
+	if(currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then
             ! Here is the 5-8 inch dbh size class we use in the model.
 	    ! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 	    ! to the mortality rate on a yearly basis.
