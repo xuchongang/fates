@@ -3314,8 +3314,8 @@ end subroutine flush_hvars
     
     call this%set_history_var(vname='M8_SCPF', units = 'N/ha/yr',                  &
           long='insect mortality by pft/size',use_default='active',              &
-          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val,    &
-          upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_m8_si_scpf )  
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m8_si_scpf )  
     
     end if ! insect related if statement
 
