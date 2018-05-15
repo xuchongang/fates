@@ -199,9 +199,23 @@ contains
        ! to still diagnose and track the non-disturbance rate
        ! ------------------------------------------------------------------------------------------
     
-    
-    
-    
+       ! ------------------------------------------------------------------------------------------
+       ! For model testing and diagnostic purposes it iw useful to turn off other disturbance types. 
+       ! below I make a switch that can be disabled later that makes insects always the dominant
+       ! disturbance type
+       ! ------------------------------------------------------------------------------------------
+       if(hlm_use_insect.eq.itrue) then
+       		if(currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
+			currentPatch%disturbance_rates(dtype_ilog) = 0.0_r8
+		end if 
+		if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then
+			currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
+		end if 
+		if(currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then
+			currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
+		end if 
+       end if
+       ! ------------------------------------------------------------------------------------------
 
        if (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
              currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifire) .and. &
@@ -522,7 +536,7 @@ contains
 
                    ! In the donor patch we are left with fewer trees because the area has decreased
                    ! the plant density for large trees does not actually decrease in the donor patch
-                   ! because this is the part of the original patch where no trees have actually fallen
+                   ! because this is the part of the original patch where no trees have been killed
                    ! The diagnostic cmort,bmort and hmort rates have already been saved         
 
                    currentCohort%n = currentCohort%n * (1.0_r8 - fates_mortality_disturbance_fraction * &
@@ -650,6 +664,7 @@ contains
                    nc%bmort            = nan
                    nc%fmort            = nan
                    nc%imort            = nan
+		   nc%inmort            = nan
                    nc%lmort_logging    = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
@@ -689,6 +704,7 @@ contains
                       nc%lmort_logging    = currentCohort%lmort_logging
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
+		      nc%inmort            = currentCohort%inmort
 
                    else
                       
