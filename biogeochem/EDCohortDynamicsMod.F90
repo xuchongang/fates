@@ -442,6 +442,9 @@ contains
     currentCohort%cambial_mort       = nan ! probability that trees dies due to cambial char P&R (1986)
     currentCohort%crownfire_mort     = nan ! probability of tree post-fire mortality due to crown scorch
     currentCohort%fire_mort          = nan ! post-fire mortality from cambial and crown damage assuming two are independent
+    
+    ! Insects
+    currentCohort%inmort             = nan ! insect mortality
 
   end subroutine nan_cohort
 
@@ -497,6 +500,7 @@ contains
     currentCohort%lmort_logging      = 0._r8
     currentCohort%lmort_infra        = 0._r8
     currentCohort%lmort_collateral   = 0._r8
+    currentCohort%inmort             = 0._r8 ! insect mortality
     !    currentCohort%npp_leaf  = 0._r8
     !    currentCohort%npp_froot = 0._r8
     !    currentCohort%npp_bsw   = 0._r8
@@ -1254,6 +1258,9 @@ contains
     n%lmort_logging=o%lmort_logging
     n%lmort_collateral =o%lmort_collateral
     n%lmort_infra =o%lmort_infra
+    
+    ! Insect mortality
+    n%inmort = o%inmort
 
     ! Flags
     n%isnew = o%isnew
