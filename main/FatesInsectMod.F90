@@ -308,7 +308,8 @@ contains
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
         ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
         ! I convert this to a density of beetles per 225 m^2 (value stored in EndMPBPopn parameter).
-        Parents = EndMPBPopn
+        !Parents = EndMPBPopn
+	Parents = EndMPBPopn*100.0_r8 ! For diagnostic purposes.
     end if
 
     !----------------------------------------------------------------------------------------------------
