@@ -466,6 +466,7 @@ contains
                    nc%lmort_logging    = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
+		   nc%inmort           = nan
 
                 else
                    ! small trees 
@@ -499,6 +500,7 @@ contains
                       nc%lmort_logging    = currentCohort%lmort_logging
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
+		      nc%inmort      	  = currentCohort%inmort
 
                       ! understory trees that might potentially be knocked over in the disturbance. 
                       ! The existing (donor) patch should not have any impact mortality, it should
@@ -552,7 +554,7 @@ contains
                    nc%lmort_logging    = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
-		   nc%inmort = nan
+		   !nc%inmort = nan
 
                 else
                    ! small trees 
