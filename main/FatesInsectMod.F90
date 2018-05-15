@@ -32,7 +32,6 @@ contains
     !  Although the insect model is called at the site level, all of the insect-
     !  related state variables are stored at the patch level (see FatesInsectMemMod)
     !
-    use EDTypesMod           , only : AREA
     use FatesInterfaceMod    , only : bc_in_type
     ! !ARGUMENTS:
     type(ed_site_type)      , intent(inout), target  :: currentSite
@@ -96,7 +95,6 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use EDTypesMod           , only : AREA
     use FatesInsectMemMod    , only : delta1, an, bn, ab, bb		! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_patch_insect_type
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
@@ -240,27 +238,27 @@ contains
 
           ! Here is the 5-8 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
-              Nt68 = Nt68 + currentCohort%n/AREA*225.0_r8
+              Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is the 8-10 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
-              Nt10 = Nt10 + currentCohort%n/AREA*225.0_r8
+              Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is 10-12 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
-              Nt12 = Nt12 + currentCohort%n/AREA*225.0_r8
+              Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is 12-14 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
-              Nt14 = Nt14 + currentCohort%n/AREA*225.0_r8
+              Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is 14 inch dbh size class and larger we use in the model.
           if(currentCohort%dbh >= 35.56_r8)then
-              Nt16s = Nt16s + currentCohort%n/AREA*225.0_r8
+              Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
         endif
