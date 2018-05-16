@@ -44,45 +44,17 @@ contains
     
     ! For each site we cycle through the patches from oldest to youngest  
     currentPatch => currentSite%oldest_patch	! starting with the oldest 
+    
     do while (associated(currentPatch))
 
     	!-----------------------------------------------------------------------
-    	! zero out the insect mortality for the current day
-
-    	currentCohort => currentPatch%tallest
-
-    	do while(associated(currentCohort))
-
-     		currentCohort%inmort = 0.0_r8
-
-     		currentCohort => currentCohort%shorter
-
-    	end do
-
-    	!-----------------------------------------------------------------------
-    	! Calling the insect demography submodels (currently only the mountain
+	! calling the insect demography submodels (currently only the mountain
     	! pine beetle model is implemented). Later there will be calls to other
     	! insect models that may attack different plant functional types.
-
+	!-----------------------------------------------------------------------
+	
 	call beetle_model(currentPatch, bc_in)
 
-    	!-----------------------------------------------------------------------
-    	! Check the total insect mortality. If the proportion if insect caused mortality in the cohort for
-    	! the day is larger than one, we reset it to one (one corresponds to 365.0_r8 for a 365 day long year)
-    	! as mortality is expressed on a per year basis but implemented on a daily basis.
-
-    	currentCohort => currentPatch%tallest
-
-    	do while(associated(currentCohort))
-
-     		if(currentCohort%inmort*hlm_freq_day > 1.0_r8) then
-     			currentCohort%inmort = 1.0_r8/hlm_freq_day
-     		end if
-
-     		currentCohort => currentCohort%shorter
-
-    	end do ! Cohort do loop
-	
 	currentPatch => currentPatch%younger
 	
      end do	! Patch do loop
