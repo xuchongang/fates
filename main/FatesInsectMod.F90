@@ -39,8 +39,7 @@ contains
 
     ! patch pointer	
     type (ed_patch_type), pointer :: currentPatch
-    ! cohort pointer
-    type (ed_cohort_type), pointer :: currentCohort  
+
     
     ! For each site we cycle through the patches from oldest to youngest  
     currentPatch => currentSite%oldest_patch	! starting with the oldest 
