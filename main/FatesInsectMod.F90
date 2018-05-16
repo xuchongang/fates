@@ -340,7 +340,7 @@ contains
             end if
 
             ! Here is 10-12 inch dbh size class we use in the model.
-            if(currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8))then
+            if(currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8)then
                 currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
 		else
 			currentCohort%inmort = 0.0_r8
