@@ -208,9 +208,9 @@ contains
        		if(currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
 			currentPatch%disturbance_rates(dtype_ilog) = 0.0_r8
 		end if 
-		if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then
-			currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
-		end if 
+		!if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then
+		!	currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
+		!end if 
 		if(currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then
 			currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
 		end if 
