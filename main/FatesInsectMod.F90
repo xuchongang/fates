@@ -9,7 +9,6 @@ module FatesInsectMod
   public  :: insect_model
 
   ! !PRIVATE MEMBER FUNCTIONS:
-  private :: Cohort_Dens_Read	! Reads cohort stem count and outputs a real number
   private :: beetle_model	! calls the mountain pine beetle model
   private :: MPBSim2		! mountain pine beetle subroutine calls all of the affiliated MPB subroutines below
   private :: Ovipos		! mountain pine beetle oviposition subroutine
@@ -40,12 +39,17 @@ contains
 
     ! patch pointer	
     type (ed_patch_type), pointer :: currentPatch
+    ! cohort pointer	
+    type (ed_cohort_type), pointer :: currentCohort
 
     
     ! For each site we cycle through the patches from oldest to youngest  
     currentPatch => currentSite%oldest_patch	! starting with the oldest 
     
     do while (associated(currentPatch))
+    
+    	! reset the cohort pointer for each patch iteration
+        currentCohort => currentPatch%tallest
 
     	!-----------------------------------------------------------------------
 	! calling the insect demography submodels (currently only the mountain
@@ -53,7 +57,7 @@ contains
     	! insect models that may attack different plant functional types.
 	!-----------------------------------------------------------------------
 	
-	call beetle_model(currentPatch, bc_in)
+	call beetle_model(currentPatch, currentCohort, bc_in)
 
 	currentPatch => currentPatch%younger
 	
@@ -62,7 +66,7 @@ contains
   end subroutine insect_model
 
   !========================================================================
-  subroutine beetle_model(currentPatch, bc_in)
+  subroutine beetle_model(currentPatch, currentCohort, bc_in)
     !
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
@@ -73,12 +77,12 @@ contains
 
     ! !ARGUMENTS:
     type(ed_patch_type)      , intent(inout), target  :: currentPatch
+    type(ed_cohort_type)     , intent(inout), target  :: currentCohort
     type(bc_in_type)         , intent(in)             :: bc_in
 
     !
     ! !LOCAL VARIABLES:
     !-----------------------------------------------------------------------
-    type(ed_cohort_type), pointer :: currentCohort
     type(ed_patch_insect_type), pointer :: pa_insect
     integer :: iofp                         	! index fates patch age
 
@@ -130,7 +134,6 @@ contains
     real(r8) :: Nt12              		! initial susceptible host trees in the 10 to 12 inch dbh size class
     real(r8) :: Nt14              		! initial susceptible host trees in the 12 to 14 inch dbh size class
     real(r8) :: Nt16s             		! initial susceptible host trees in the  14 inch or larger dbh size class
-    real(r8) :: StemCount             		! container variable for the cohort level stem count.
 
     ! I also make the equivalent container for the density of hosts prior to insect attack so that we can compute
     ! the proportion that died in the current step (daily time step).
@@ -211,37 +214,27 @@ contains
 
           ! Here is the 5-8 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
-              !Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
-	      call Cohort_Dens_Read(currentCohort, StemCount)
-	      Nt68 = Nt68 + StemCount/currentPatch%area*225.0_r8
+              Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is the 8-10 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
-              !Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
-	      call Cohort_Dens_Read(currentCohort, StemCount)
-	      Nt10 = Nt10 + StemCount/currentPatch%area*225.0_r8
+              Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is 10-12 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
-              !Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
-	      call Cohort_Dens_Read(currentCohort, StemCount)
-	      Nt12 = Nt12 + StemCount/currentPatch%area*225.0_r8
+              Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is 12-14 inch dbh size class we use in the model.
           if(currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
-              !Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
-	      call Cohort_Dens_Read(currentCohort, StemCount)
-	      Nt14 = Nt14 + StemCount/currentPatch%area*225.0_r8
+              Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
           ! Here is 14 inch dbh size class and larger we use in the model.
           if(currentCohort%dbh >= 35.56_r8)then
-              !Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
-	      call Cohort_Dens_Read(currentCohort, StemCount)
-	      Nt162 = Nt16s + StemCount/currentPatch%area*225.0_r8
+              Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
           end if
 
         endif
@@ -390,20 +383,6 @@ contains
     currentPatch%pa_insect%counter = counter
 
 end subroutine beetle_model
-
-!========================================================================
-subroutine Cohort_Dens_Read(currentCohort, StCt)
-    !
-    ! !DESCRIPTION:
-    ! Reads the cohort stem count into the StemCount variable (StCt)
-    !
-    ! !ARGUMENTS:
-    type(ed_cohort_type), intent(inout), target  :: currentCohort
-    real(r8)        	, intent(inout)          :: StCt
-    
-    StemCount = currentCohort%n
-    
-end subroutine Cohort_Dens_Read
 
 !==================================================================================================
 Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
