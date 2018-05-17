@@ -78,16 +78,14 @@ contains
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
 
     ! !ARGUMENTS:
-    type(ed_patch_type)      , intent(inout), target  :: currentPatch
-    type(ed_cohort_type)     , intent(inout), target  :: currentCohort
-    type(bc_in_type)         , intent(in)             :: bc_in
+    type(ed_patch_type)      , intent(inout)	:: currentPatch
+    type(ed_cohort_type)     , intent(inout)	:: currentCohort
+    type(bc_in_type)         , intent(in)       :: bc_in
 
     !
     ! !LOCAL VARIABLES:
     !-----------------------------------------------------------------------
     type(ed_patch_insect_type), pointer :: pa_insect
-    type (ed_patch_type), pointer :: currentPatch	! patch pointer		
-    type (ed_cohort_type), pointer :: currentCohort	! cohort pointer
     integer :: iofp                         		! index fates patch age
 
     ! Temperature variables that drive the mountain pine beetle demography model.
