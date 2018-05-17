@@ -204,17 +204,17 @@ contains
        ! below I make a switch that can be disabled later that makes insects always the dominant
        ! disturbance type
        ! ------------------------------------------------------------------------------------------
-       if(hlm_use_insect.eq.itrue) then
-       		if(currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
-			currentPatch%disturbance_rates(dtype_ilog) = 0.0_r8
-		end if 
-		!if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then
-		!	currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
-		!end if 
-		if(currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then
-			currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
-		end if 
-       end if
+       !if(hlm_use_insect.eq.itrue) then
+       !       		if(currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
+       !			currentPatch%disturbance_rates(dtype_ilog) = 0.0_r8
+       !		end if 
+       !		if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then
+       !			currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
+       !		end if 
+       !		if(currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then
+       !			currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
+       !		end if 
+       !end if
        ! ------------------------------------------------------------------------------------------
 
        if (currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_ifall) .and. &
