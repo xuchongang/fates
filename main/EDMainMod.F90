@@ -562,10 +562,10 @@ contains
        write(fates_log(),*) 'lat lon',currentSite%lat,currentSite%lon
 
        ! If this is the first day of simulation, carbon balance reports but does not end the run
-       if( int(hlm_current_year*10000 + hlm_current_month*100 + hlm_current_day).ne.hlm_reference_date ) then
-          write(fates_log(),*) 'aborting on date:',hlm_current_year,hlm_current_month,hlm_current_day
-          call endrun(msg=errMsg(sourcefile, __LINE__))
-       end if
+       !if( int(hlm_current_year*10000 + hlm_current_month*100 + hlm_current_day).ne.hlm_reference_date ) then
+       !   write(fates_log(),*) 'aborting on date:',hlm_current_year,hlm_current_month,hlm_current_day
+       !   call endrun(msg=errMsg(sourcefile, __LINE__))
+       !end if
 
     endif
 
