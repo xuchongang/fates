@@ -208,38 +208,33 @@ contains
 
     do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
 
-	! The first row of the InsectPFTPref array corresponds to insect type. The one specifies that
-	! this submodel is for the mountain pine beetle.
-        if(currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then  ! only attacks pfts preferred by mountain pine beetle
-          ! Below I compute the tree density per 225 m^2 in each of the size classes
-          ! used in the current version of the insect mortality model.
+        ! Below I compute the tree density per 225 m^2 in each of the size classes
+        ! used in the current version of the insect mortality model.
 
-          ! Here is the 5-8 inch dbh size class we use in the model.
-          if(currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
-              Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
-          end if
+        ! Here is the 5-8 inch dbh size class we use in the model.
+        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
+        	Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
+        end if
 
-          ! Here is the 8-10 inch dbh size class we use in the model.
-          if(currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
-              Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
-          end if
+        ! Here is the 8-10 inch dbh size class we use in the model.
+        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
+        	Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
+        end if
 
-          ! Here is 10-12 inch dbh size class we use in the model.
-          if(currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
-              Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
-          end if
+        ! Here is 10-12 inch dbh size class we use in the model.
+        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
+        	Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
+        end if
 
-          ! Here is 12-14 inch dbh size class we use in the model.
-          if(currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
-              Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
-          end if
+        ! Here is 12-14 inch dbh size class we use in the model.
+        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
+        	Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
+        end if
 
-          ! Here is 14 inch dbh size class and larger we use in the model.
-          if(currentCohort%dbh >= 35.56_r8)then
-              Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
-          end if
-
-        endif
+        ! Here is 14 inch dbh size class and larger we use in the model.
+        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 35.56_r8)then
+        	Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
+        end if
 
         currentCohort => currentCohort%shorter
 
