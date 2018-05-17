@@ -279,8 +279,7 @@ contains
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
         ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
         ! I convert this to a density of beetles per 225 m^2 (value stored in EndMPBPopn parameter).
-        !Parents = EndMPBPopn
-	Parents = EndMPBPopn*100.0_r8 ! For diagnostic purposes.
+        Parents = EndMPBPopn
     end if
 
     !----------------------------------------------------------------------------------------------------
@@ -293,52 +292,53 @@ contains
     do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
         ! Below I compute the tree density per 225 m^2 in each of the size classes
         ! used in the current version of the insect mortality model.
-
-        !if(FebInPopn > EndMPBPopn .and. currentPatch%pa_insect%InsectPFTPref(1,currentCohort%pft) == 1) then
 	
-            ! Here is the 5-8 inch dbh size class we use in the model.
-	    ! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
-	    ! to the mortality rate on a yearly basis.
-            if(currentCohort%pft == 1 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8)then
+        ! Here is the 5-8 inch dbh size class we use in the model.
+	! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
+	! to the mortality rate on a yearly basis.
+        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8		
 		else
 			currentCohort%inmort = 0.0_r8
-            end if
+        end if
 
-            ! Here is the 8-10 inch dbh size class we use in the model.
-            if(currentCohort%pft == 1 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8)then
+        ! Here is the 8-10 inch dbh size class we use in the model.
+        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
 		else
 			currentCohort%inmort = 0.0_r8
-            end if
+        end if
 
-            ! Here is 10-12 inch dbh size class we use in the model.
-            if(currentCohort%pft == 1 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8)then
+        ! Here is 10-12 inch dbh size class we use in the model.
+        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+	    	25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
 		else
 			currentCohort%inmort = 0.0_r8
-            end if
+        end if
 
-            ! Here is 12-14 inch dbh size class we use in the model.
-            if(currentCohort%pft == 1 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8)then
+        ! Here is 12-14 inch dbh size class we use in the model.
+        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+	    	30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt14/Ntm114)*365.0_r8
 		else
 			currentCohort%inmort = 0.0_r8
-            end if
+        end if
 
-            ! Here is 14 inch dbh size class and larger we use in the model.
-            if(currentCohort%pft == 1 .and. currentCohort%dbh >= 35.56_r8 .and. Ntm116s > 0.0_r8)then
+        ! Here is 14 inch dbh size class and larger we use in the model.
+        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+	    	35.56_r8 .and. Ntm116s > 0.0_r8)then
 	    
                 currentCohort%inmort = (1.0_r8 - Nt16s/Ntm116s)*365.0_r8
 		else
 			currentCohort%inmort = 0.0_r8
-            end if
-
-        !end if
+        end if
 
         currentCohort => currentCohort%shorter
 
