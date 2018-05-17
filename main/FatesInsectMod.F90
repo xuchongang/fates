@@ -36,7 +36,7 @@ contains
     use EDtypesMod           , only : ed_site_type, ed_patch_type, ed_cohort_type
     ! !ARGUMENTS:
     type(ed_site_type)      , intent(inout), target  :: currentSite
-    type(bc_in_type)        , intent(in), pointer    :: bc_in
+    type(bc_in_type)        , intent(in)	     :: bc_in
 
     ! patch pointer	
     type (ed_patch_type), pointer :: currentPatch
@@ -80,7 +80,7 @@ contains
     ! !ARGUMENTS:
     type(ed_patch_type)      , intent(inout), pointer	:: currentPatch
     type(ed_cohort_type)     , intent(inout), pointer	:: currentCohort
-    type(bc_in_type)         , intent(in)   , pointer   :: bc_in
+    type(bc_in_type)         , intent(in)		:: bc_in
 
     !
     ! !LOCAL VARIABLES:
