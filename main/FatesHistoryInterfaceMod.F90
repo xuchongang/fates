@@ -3828,11 +3828,6 @@ end subroutine flush_hvars
           avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_seed_prod_canopy_si_scls )
 
-    call this%set_history_var(vname='DBALIVEDT_CANOPY_SCLS', units = 'kg C / ha / yr',               &
-          long='DBALIVEDT for canopy plants by size class', use_default='inactive',   &
-          avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
-          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_dbalivedt_canopy_si_scls )
-
     call this%set_history_var(vname='DBDEADDT_CANOPY_SCLS', units = 'kg C / ha / yr',               &
           long='DBDEADDT for canopy plants by size class', use_default='inactive',   &
           avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
