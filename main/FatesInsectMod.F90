@@ -86,7 +86,9 @@ contains
     ! !LOCAL VARIABLES:
     !-----------------------------------------------------------------------
     type(ed_patch_insect_type), pointer :: pa_insect
-    integer :: iofp                         	! index fates patch age
+    type (ed_patch_type), pointer :: currentPatch	! patch pointer		
+    type (ed_cohort_type), pointer :: currentCohort	! cohort pointer
+    integer :: iofp                         		! index fates patch age
 
     ! Temperature variables that drive the mountain pine beetle demography model.
     real(r8) :: max_airTC                   	! maximum daily air temperature (degrees C) in the patch at reference height
