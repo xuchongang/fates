@@ -78,9 +78,9 @@ contains
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
 
     ! !ARGUMENTS:
-    type(ed_patch_type)      , intent(inout)	:: currentPatch
-    type(ed_cohort_type)     , intent(inout)	:: currentCohort
-    type(bc_in_type)         , intent(in)       :: bc_in
+    type(ed_patch_type)      , intent(inout), pointer	:: currentPatch
+    type(ed_cohort_type)     , intent(inout), pointer	:: currentCohort
+    type(bc_in_type)         , intent(in)   , pointer   :: bc_in
 
     !
     ! !LOCAL VARIABLES:
