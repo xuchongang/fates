@@ -33,6 +33,7 @@ contains
     !  related state variables are stored at the patch level (see FatesInsectMemMod)
     !
     use FatesInterfaceMod    , only : bc_in_type
+    use EDtypesMod           , only : ed_site_type, ed_patch_type, ed_cohort_type
     ! !ARGUMENTS:
     type(ed_site_type)      , intent(inout), target  :: currentSite
     type(bc_in_type)        , intent(in)             :: bc_in
@@ -74,6 +75,7 @@ contains
     use FatesInsectMemMod    , only : delta1, an, bn, ab, bb		! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_patch_insect_type
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
+    use EDtypesMod           , only : ed_patch_type, ed_cohort_type
 
     ! !ARGUMENTS:
     type(ed_patch_type)      , intent(inout), target  :: currentPatch
