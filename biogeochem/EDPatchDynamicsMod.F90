@@ -1150,6 +1150,12 @@ contains
              !the disturbance calculations are done with the previous n, c_area and d_mort. So it's probably &
              !not right to recalcualte dmort here.
              canopy_dead = currentCohort%n * min(1.0_r8,currentCohort%dmort * hlm_freq_day)
+	     
+	     ! If the insect model is turned on, we need to account for insect-killed trees going to litter.
+	     if(hlm_use_insect.eq.itrue)then
+	     	canopy_dead = currentCohort%n * &
+			min(1.0_r8,(currentCohort%dmort + currentCohort%inmort) * hlm_freq_day)
+	     end if
 
              canopy_mortality_woody_litter   = canopy_mortality_woody_litter  + &
                   canopy_dead*(currentCohort%bdead+currentCohort%bsw)
