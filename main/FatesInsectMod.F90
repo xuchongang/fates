@@ -587,7 +587,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     !--------------------------------------------------------------------------------------------------
 
     ! I reset survival probability if there are no larvae.
-    if(L1 + L2 + L3 + L4 < 0.001)then
+    if((L1 + L2 + L3 + L4)/(L1 + L2 + L3 + L4 + P + Te + A) < 0.001)then
         PrS = 1.0_r8
         Ct = 0.0_r8
     end if
