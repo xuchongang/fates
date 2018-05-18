@@ -383,6 +383,10 @@ contains
     currentPatch%pa_insect%PrS = PrS
     currentPatch%pa_insect%Ct = Ct
     currentPatch%pa_insect%counter = counter
+    
+    ! Daily maximum and minimum temperatures for diagnostic purposes
+    currentPatch%pa_insect%MaxDailyT = max_airTC
+    currentPatch%pa_insect%MinDailyT = min_airTC
 
 end subroutine beetle_model
 
