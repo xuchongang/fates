@@ -41,7 +41,6 @@ module FatesInsectMemMod
         ! Variables related to mountain pine beetle winter survival (these are specific to the mountain pine beetle)
         real(r8) :: PrS                         			! smallest probability of mountain pine beetle winter survival (unitless)
         real(r8) :: Ct                          			! The level of mountain pine beetle larval cold tolerance in the population (unitless).
-        integer :: counter                      			! duration of mountain pine beetle cold hardening in the RBMortsim subroutine (measured in days)
 	
 	! Maximum and minimum daily temperatures in degree C
 	real(r8) :: MaxDailyT                         			
@@ -79,7 +78,6 @@ module FatesInsectMemMod
 
         this%PrS = 0.0_r8
         this%Ct = 0.0_r8
-        this%counter = 0
 	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
