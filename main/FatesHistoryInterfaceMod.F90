@@ -2672,7 +2672,8 @@ end subroutine flush_hvars
     call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_pa)				
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_pa)	
+	    			
     call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
