@@ -2657,61 +2657,61 @@ end subroutine flush_hvars
     call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_pa)
 
     call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_pa)		
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_pa)		
 
     call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_pa)	
 
     call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_pa)				
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_pa)				
     call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_pa)	
 
     call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_pa)
 
     call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_pa)	
 
     call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_pa)
 
     call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_pa)
 
     call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_pa)
 	    
     call this%set_history_var(vname='Max_Daily_T',  units='C', &
             long='maximum daily temp', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_max_t_pa)	 
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_max_t_pa)	 
 	    
     call this%set_history_var(vname='Min_Daily_T',  units='C', &
             long='minimum daily temp', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_min_t_pa)   	    
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_min_t_pa)   	    
 	    
     end if ! insect variable related statement
 
