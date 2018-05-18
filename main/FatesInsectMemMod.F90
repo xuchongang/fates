@@ -43,6 +43,10 @@ module FatesInsectMemMod
         real(r8) :: Ct                          			! The level of mountain pine beetle larval cold tolerance in the population (unitless).
         integer :: counter                      			! duration of mountain pine beetle cold hardening in the RBMortsim subroutine (measured in days)
 	
+	! Maximum and minimum daily temperatures in degree C
+	real(r8) :: MaxDailyT                         			
+        real(r8) :: MinDailyT                          			
+	
 	contains
      
            procedure :: InitInsectPatch
@@ -76,6 +80,11 @@ module FatesInsectMemMod
         this%PrS = 0.0_r8
         this%Ct = 0.0_r8
         this%counter = 0
+	
+	! As model runs typically start January 1, 
+	! I have decided to initialize with non-reactive temperatures for insects.
+	this%MaxDailyT = 0.0
+	this%MinDailyT = 0.0
 
     end subroutine InitInsectPatch
        
