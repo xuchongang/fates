@@ -1026,14 +1026,14 @@ subroutine LarvDev(n, avec, med, mu, sigma, NewL, NewLtm1, OL, Lcurrent, NewNext
     implicit none
 
     ! Here are the input and output variables
-    integer(kind = 4), intent(in) :: n              ! size of aging domain
+    integer(kind = 4), intent(in) :: n        ! size of aging domain
     real(r8), intent(in) :: avec(n)           ! The aging domain
     real(r8), intent(in) :: med               ! median development rate
     real(r8), intent(in) :: mu                ! mean of the log transformed random development rate
     real(r8), intent(in) :: sigma             ! scale parameter of the log-normally distributed rate
     real(r8), intent(in) :: NewL              ! New larvae (just developed from the previous stage)
     real(r8), intent(inout) :: NewLtm1        ! New larvae from the previous time step
-    real(r8), intent(inout) :: OL(n)       ! Distribution of physiological age
+    real(r8), intent(inout) :: OL(n)          ! Distribution of physiological age
     real(r8), intent(out) :: Lcurrent         ! Number of larvae
     real(r8), intent(out) :: NewNext          ! New individuals in the next stage (just developed out of current stage)
 
