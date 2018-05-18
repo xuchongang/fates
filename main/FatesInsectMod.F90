@@ -1360,7 +1360,7 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct)
     Lt = Range1*rhoL*exp(-(T - TL)/sigmaL)/(sigmaL*(1 + exp(-(T - TL)/sigmaL))**2.0)
 
     ! Computing the amount of cold hardiness achieved in the step (equation 7)
-    if(hlm_current_month < 5 .and. Ct < 0.5_r8)then
+    if(hlm_current_month > 8 .and. Ct < 0.5_r8)then
         CtNew = Ct + (1 - Ct)*Gt
     else
          CtNew = Ct + (1 - Ct)*Gt - Ct*Lt
