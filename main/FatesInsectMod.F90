@@ -128,7 +128,6 @@ contains
     ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
     real(r8) :: PrS                       	! probability of winter survival
     real(r8) :: Ct                        	! The level of larval cold tolerance in the population.
-    integer :: counter				! duration of cold hardening in the RBMortsim subroutine
 
     ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
     real(r8) :: Nt68				! initial susceptible host trees in the 5 to 8 inch dbh size class
@@ -192,7 +191,6 @@ contains
 
     PrS = currentPatch%pa_insect%PrS
     Ct = currentPatch%pa_insect%Ct
-    counter = currentPatch%pa_insect%counter
 
     !----------------------------------------------------------------------------------------------------
     ! Calculate the density trees in each of the size classes that we use in the mountain pine beetle model
@@ -261,7 +259,7 @@ contains
     call MPBSim2(max_airTC, min_airTC, Parents, FA, OE, OL1, OL2, &
         OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
         NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-        Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, counter, &
+        Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
         Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, &
         an, bn, ab, bb, delta1)
 
@@ -385,7 +383,6 @@ contains
     ! The winter survival parameters
     currentPatch%pa_insect%PrS = PrS
     currentPatch%pa_insect%Ct = Ct
-    currentPatch%pa_insect%counter = counter
     
     ! Daily maximum and minimum temperatures for diagnostic purposes
     currentPatch%pa_insect%MaxDailyT = max_airTC
@@ -397,7 +394,7 @@ end subroutine beetle_model
 Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, counter, &
+            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
             Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, &
             an, bn, ab, bb, delta1)
     ! This subroutine simulates the demographic processes
@@ -443,7 +440,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
     real(r8), intent(inout) :: PrS
     real(r8), intent(inout) :: Ct             ! The level of larval cold tolerance in the population.
-    integer(kind = 4), intent(inout) :: counter     ! the duration of cold tolerance accumulation
 
     ! input and output variables
     real(r8), intent(inout) :: Nt68                   ! initial susceptible host trees in the 5 to 8 inch dbh size class
@@ -594,7 +590,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     if(L1 + L2 + L3 + L4 < 0.001)then
         PrS = 1.0_r8
         Ct = 0.0_r8
-        counter = 0
     end if
 
     !! We need to compute the mean phloem temperature according to the model of
@@ -696,7 +691,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! Applying larval mortality. Calling this subroutine
     ! produces a new minimum survival probability estimate and a
     ! new estimate of the current level of cold-hardiness.
-    call RBMortSim(Tmin2, Tmax2, PrSurvNew, Ct, counter)
+    call RBMortSim(Tmin2, Tmax2, PrSurvNew, Ct)
     ! Updating the minimum survival probability estimate
     PrS = min(PrS, PrSurvNew)
     ! larval mortality is only applied as individuals exit the
@@ -1282,7 +1277,7 @@ subroutine FlightFunc(TC, Flying)
 end subroutine FlightFunc
 
 !===============================================================================
-Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
+Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! The RBMortSim subroutine implements the Regniere and Bentz (2007)
     ! larval mortality simulation model.
@@ -1294,8 +1289,6 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
     real(r8), intent(in) :: Tmn2              ! Daily minimum under bark temperature
     real(r8), intent(out) :: PrSurv           ! Lowest temperature to date.
     real(r8), intent(inout) :: Ct             ! current accumulated level of cold hardiness
-    integer(kind = 4), intent(inout) :: counter     ! steps up by one every time the function is called
-                                                    ! as long as there are larvae present.
 
     ! below are internal variables and parameters
     real(r8) :: CtNew                         ! The new level of cold hardiness
@@ -1367,7 +1360,7 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
     Lt = Range1*rhoL*exp(-(T - TL)/sigmaL)/(sigmaL*(1 + exp(-(T - TL)/sigmaL))**2.0)
 
     ! Computing the amount of cold hardiness achieved in the step (equation 7)
-    if(counter <= 153 .and. Ct < 0.5_r8)then
+    if(hlm_current_month < 5 .and. Ct < 0.5_r8)then
         CtNew = Ct + (1 - Ct)*Gt
     else
          CtNew = Ct + (1 - Ct)*Gt - Ct*Lt
@@ -1389,9 +1382,6 @@ Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct, counter)
 
     ! Now I update the cold tolerance level
     Ct = CtNew
-
-    ! now I update the counter
-    counter = counter + 1
 
 End Subroutine RBMortSim
 
