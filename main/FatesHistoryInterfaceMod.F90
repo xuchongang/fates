@@ -94,6 +94,8 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_MPB_A_pa			! insect (mountain pine beetle variables)
   integer, private :: ih_MPB_FA_pa			! insect (mountain pine beetle variables)
   integer, private :: ih_MPB_Bt_pa 			! insect (mountain pine beetle variables)
+  integer, private :: ih_max_t_pa			! insect (mountain pine beetle variables)
+  integer, private :: ih_min_t_pa 			! insect (mountain pine beetle variables)
   
   ! Indices to site by size-class by pft variables
   integer, private :: ih_nplant_si_scag
@@ -1240,7 +1242,9 @@ end subroutine flush_hvars
 	       hio_MPB_T_pa	       => this%hvars(ih_MPB_T_pa)%r81d, &
 	       hio_MPB_A_pa	       => this%hvars(ih_MPB_A_pa)%r81d, &
 	       hio_MPB_FA_pa	       => this%hvars(ih_MPB_FA_pa)%r81d, &
-	       hio_MPB_Bt_pa	       => this%hvars(ih_MPB_Bt_pa)%r81d, &            
+	       hio_MPB_Bt_pa	       => this%hvars(ih_MPB_Bt_pa)%r81d, &  
+	       hio_max_t_pa	       => this%hvars(ih_max_t_pa)%r81d, &
+	       hio_min_t_pa	       => this%hvars(ih_min_t_pa)%r81d, &            
 
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_nplant_canopy_si_scls         => this%hvars(ih_nplant_canopy_si_scls)%r82d, &
@@ -1758,6 +1762,8 @@ end subroutine flush_hvars
 	    hio_MPB_A_pa(io_pa)	               = cpatch%pa_insect%indensity(1,9)
 	    hio_MPB_FA_pa(io_pa)	       = cpatch%pa_insect%indensity(1,10)
 	    hio_MPB_Bt_pa(io_pa)	       = cpatch%pa_insect%indensity(1,11)
+	    hio_max_t_pa(io_pa)		       = cpatch%pa_insect%MaxDailyT
+	    hio_min_t_pa(io_pa)	               = cpatch%pa_insect%MinDailyT
 	    
             ! Update Litter Flux Variables
 
@@ -2696,6 +2702,16 @@ end subroutine flush_hvars
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_pa)
+	    
+    call this%set_history_var(vname='Max_Daily_T',  units='C', &
+            long='maximum daily temp', use_default='active',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_max_t_pa)	 
+	    
+    call this%set_history_var(vname='Min_Daily_T',  units='C', &
+            long='minimum daily temp', use_default='active',       &
+            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+	    upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_min_t_pa)   	    
 	    
     end if ! insect variable related statement
 
