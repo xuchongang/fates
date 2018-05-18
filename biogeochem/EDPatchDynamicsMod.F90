@@ -1453,7 +1453,6 @@ contains
     currentPatch%pa_insect%MPB_Transit(1:7) = 0.0_r8
     currentPatch%pa_insect%PrS = 0.0_r8
     currentPatch%pa_insect%Ct = 0.0_r8
-    currentPatch%pa_insect%counter = 0
 
   end subroutine zero_patch
 
@@ -1827,7 +1826,6 @@ contains
       	rp%pa_insect%MPB_PhysAge = dp%pa_insect%MPB_PhysAge
       	rp%pa_insect%indensity = dp%pa_insect%indensity
 	rp%pa_insect%MPB_Transit = dp%pa_insect%MPB_Transit
-      	rp%pa_insect%counter = dp%pa_insect%counter
       end if
       
   end subroutine Fuse_2_Insect_Patches
