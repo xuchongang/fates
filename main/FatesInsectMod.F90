@@ -691,13 +691,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! Applying larval mortality. Calling this subroutine
     ! produces a new minimum survival probability estimate and a
     ! new estimate of the current level of cold-hardiness.
-    call RBMortSim(Tmin2, Tmax2, PrSurvNew, Ct)
+    !call RBMortSim(Tmin2, Tmax2, PrSurvNew, Ct)
     ! Updating the minimum survival probability estimate
-    PrS = min(PrS, PrSurvNew)
+    !PrS = min(PrS, PrSurvNew)
     ! larval mortality is only applied as individuals exit the
     ! larval stage because it depends on the minimum survival
     ! probability they experienced over their larval career.
-    NewP = NewP*PrS
+    !NewP = NewP*PrS
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
