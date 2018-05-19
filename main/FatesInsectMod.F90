@@ -240,11 +240,11 @@ contains
 
     ! converting the minimum and maximum daily air temperatures
     ! from degrees K to degrees C.
-    !max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8
-    !min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8
+    max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8
+    min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8
     ! Here I correct for bias in the earth system air temperature dataset compared to weather station data
-    max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8
-    min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8
+    !max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8
+    !min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8
 
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm168 = Nt68
