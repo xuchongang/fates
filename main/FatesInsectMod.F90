@@ -586,7 +586,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     !--------------------------------------------------------------------------------------------------
 
-    ! I reset survival probability if there are no larvae.
+    ! I reset winter survival probability and cold-hardiness accumulation in mid-summer. 
     if(hlm_current_month == 8 .and. hlm_current_day == 1)then
         PrS = 1.0_r8
         Ct = 0.0_r8
