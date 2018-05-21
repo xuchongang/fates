@@ -345,6 +345,7 @@ contains
     ! !LOCAL VARIABLES:
     type (ed_patch_type) , pointer :: new_patch
     type (ed_patch_type) , pointer :: currentPatch
+    type (ed_patch_insect_type), pointer :: pa_insect
     type (ed_cohort_type), pointer :: currentCohort
     type (ed_cohort_type), pointer :: nc
     type (ed_cohort_type), pointer :: storesmallcohort
@@ -423,6 +424,11 @@ contains
 	     ! This may need to be corrected later.
 	     
           endif
+	  
+	  ! For the insect patches all insects in the disturbed patch move to the new patch
+	  if(hlm_use_insect.eq.itrue) then
+	  	new_patch%pa_insect = currentPatch%pa_insect
+	  end if
 
           !INSERT SURVIVORS FROM DISTURBANCE INTO NEW PATCH 
           currentCohort => currentPatch%shortest
