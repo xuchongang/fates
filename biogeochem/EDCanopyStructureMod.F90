@@ -136,10 +136,10 @@ contains
          ! ------------------------------------------------------------------------------
          ! Perform numerical checks on some cohort and patch structures
          ! ------------------------------------------------------------------------------
-
+ 
          call val_check_ed_vars(currentPatch,'co_n:co_dbh:pa_area',return_code)
-         ! No need to make error message, already generated in math_check_ed_vars
-         if(return_code>0) call endrun(msg=errMsg(sourcefile, __LINE__))
+        ! No need to make error message, already generated in math_check_ed_vars
+        if(return_code>0) call endrun(msg=errMsg(sourcefile, __LINE__))
 
          ! canopy layer has a special bounds check
          currentCohort => currentPatch%tallest
@@ -987,8 +987,8 @@ contains
           
           if ( currentPatch%total_canopy_area-currentPatch%area > 0.000001_r8 ) then
              if ( currentPatch%total_canopy_area-currentPatch%area > 0.001_r8 ) then
-                write(fates_log(),*) 'FATES: canopy area bigger than area', &
-                     currentPatch%total_canopy_area ,currentPatch%area
+               write(fates_log(),*) 'FATES: canopy area bigger than area', &
+                    currentPatch%total_canopy_area ,currentPatch%area
                 call endrun(msg=errMsg(sourcefile, __LINE__))
              end if
              currentPatch%total_canopy_area = currentPatch%area

@@ -122,12 +122,14 @@ contains
           ! Mortality for trees in the understorey.
           currentCohort%patchptr => currentPatch
 
-          !call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort)
-	  !call mortality_rates(currentCohort, cmort, hmort, bmort, d13cmort) ! Hang ZHOU
-	  call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort,d13cmort)
-          currentCohort%dmort  = cmort+hmort+bmort+frmort
-
-	  !currentCohort%dmort  = 0 !Jan18 2018 testing drought mortality by keeping stand density Liang Wei
+          !FATES original:Liang Wei 
+	  !call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort)
+	  !Liang Wei, Temp change May18_2018, will let mortality calculate
+	  call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort,d13cmort) 
+          
+	  !FATES original:Liang Wei 
+	  !currentCohort%dmort  = cmort+hmort+bmort+frmort
+	  currentCohort%dmort  = 0 !Liang Wei, Temp change May18_2018, will let mortality calculate but kill no tree
 
           call carea_allom(currentCohort%dbh,currentCohort%n,site_in%spread,currentCohort%pft, &
                currentCohort%c_area)

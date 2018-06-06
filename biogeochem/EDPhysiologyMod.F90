@@ -1199,7 +1199,7 @@ contains
     !        Use an adaptive euler integration. If the error is not nominal,
     !        the carbon balance sub-step (deltaC) will be halved and tried again
     ! -----------------------------------------------------------------------------------
-    
+    !carbon_balance = 0.0_r8 !Liang wei, turn off the new tissue production
     if( carbon_balance<cbal_prec) return
 
 

@@ -60,11 +60,6 @@ contains
     real(r8):: n_perm2
 
     !Liang Wei 12/21/2017 for d13C estimation
-    ! type(ed_cohort_type), pointer    :: currentcohort
-    ! real(r8) :: gpp_tstep   !formerly gpp_clm (kgC/indiv/timestep)
-    ! real(r8) :: gpp_acc
-    ! real(r8) :: c13disc_acc
-    ! real(r8) :: c13disc_clm
 
     real(r8) :: d13cmort = 0.0_r8                    ! d13c related drought induced mortality, Hang ZHOU
     real(r8), parameter :: d13c_critical = -20.0_r8  ! -20 Liang Wei, threshold
@@ -134,7 +129,8 @@ contains
                 else
                   d13c_background = -6.429_r8 - 0.0060_r8 * exp(0.0217_r8 * (yr - 1740))
                 endif
-                if((d13c_background - ccohort%c13disc_acc) >= d13c_critical .and. ccohort%c13disc_acc /= 0)then
+                if(((d13c_background - ccohort%c13disc_acc) / (1 + ccohort%c13disc_acc/1000)) >= d13c_critical &
+		     .and. ccohort%c13disc_acc /= 0)then
                    d13cmort = d13c_mortrate
                 else
                    d13cmort = 0.0_r8

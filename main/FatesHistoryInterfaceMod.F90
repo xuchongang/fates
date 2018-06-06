@@ -31,6 +31,9 @@ module FatesHistoryInterfaceMod
   use FatesConstantsMod        , only : sec_per_day
   use FatesConstantsMod        , only : days_per_year
   use FatesConstantsMod        , only : years_per_day
+  
+  ! Liang Wei, atomospheric d13C, used for calculating d13C from disc_13C
+  !use EDAccumulateFluxesMod    , only : d13c_background 
 
   implicit none
 
@@ -173,8 +176,8 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_c13disc_si_scpf
   ! d13c related mortality rate
   integer, private :: ih_md13crate_si_scpf
-    !! d13c
-  ! integer, private :: ih_d13c_si_scpf
+  !! d13c
+  !integer, private :: ih_d13c_si_scpf
 
   integer, private :: ih_ar_si_scpf
   integer, private :: ih_ar_grow_si_scpf
@@ -1276,7 +1279,7 @@ end subroutine flush_hvars
                hio_md13c_si_scpf       => this%hvars(ih_md13c_si_scpf)%r82d, &
                hio_c13disc_si_scpf     => this%hvars(ih_c13disc_si_scpf)%r82d, &
                hio_md13crate_si_scpf   => this%hvars(ih_md13crate_si_scpf)%r82d, &
-               ! hio_d13c_si_scpf        => this%hvars(ih_d13c_si_scpf)%r82d, &
+               !hio_d13c_si_scpf        => this%hvars(ih_d13c_si_scpf)%r82d, &
 
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_agb_si_scls          => this%hvars(ih_agb_si_scls)%r82d, &
@@ -1525,19 +1528,20 @@ end subroutine flush_hvars
                     hio_npp_stor_si_scpf(io_si,scpf) = hio_npp_stor_si_scpf(io_si,scpf) + &
                                                        ccohort%npp_stor*n_perm2
 
-                    npp_partition_error = abs(ccohort%npp_acc_hold-(ccohort%npp_leaf+ccohort%npp_fnrt+ &
-                          ccohort%npp_sapw+ccohort%npp_dead+ &
-                          ccohort%npp_seed+ccohort%npp_stor))
-                    if( npp_partition_error > 100.0_r8*calloc_abs_error )  then
-                       write(fates_log(),*) 'NPP Partitions are not balancing'
-                       write(fates_log(),*) 'Absolute Error [kgC/day]: ',npp_partition_error
-                       write(fates_log(),*) 'Fractional Error: ', abs(npp_partition_error/ccohort%npp_acc_hold)
-                       write(fates_log(),*) 'Terms: ',ccohort%npp_acc_hold,ccohort%npp_leaf,ccohort%npp_fnrt, &
-                             ccohort%npp_sapw,ccohort%npp_dead, &
-                             ccohort%npp_seed,ccohort%npp_stor
-                       write(fates_log(),*) ' NPP components during FATES-HLM linking does not balance '
-                       call endrun(msg=errMsg(__FILE__, __LINE__))
-                    end if
+                    ! Liang Wei May 21,2018 temp turn off this for zero growth
+		    !npp_partition_error = abs(ccohort%npp_acc_hold-(ccohort%npp_leaf+ccohort%npp_fnrt+ &
+                     !     ccohort%npp_sapw+ccohort%npp_dead+ &
+                      !    ccohort%npp_seed+ccohort%npp_stor))
+                    !if( npp_partition_error > 100.0_r8*calloc_abs_error )  then
+                     !  write(fates_log(),*) 'NPP Partitions are not balancing'
+                      ! write(fates_log(),*) 'Absolute Error [kgC/day]: ',npp_partition_error
+                       !write(fates_log(),*) 'Fractional Error: ', abs(npp_partition_error/ccohort%npp_acc_hold)
+                       !write(fates_log(),*) 'Terms: ',ccohort%npp_acc_hold,ccohort%npp_leaf,ccohort%npp_fnrt, &
+                        !     ccohort%npp_sapw,ccohort%npp_dead, &
+                         !    ccohort%npp_seed,ccohort%npp_stor
+                       !write(fates_log(),*) ' NPP components during FATES-HLM linking does not balance '
+                       !call endrun(msg=errMsg(__FILE__, __LINE__))
+                    !end if
 
                     ! Woody State Variables (basal area and number density and mortality)
                     if (EDPftvarcon_inst%woody(ft) == 1) then
@@ -1566,12 +1570,16 @@ end subroutine flush_hvars
                        if(gpp_cached + ccohort%gpp_acc_hold>0._r8)then
                            hio_c13disc_si_scpf(io_si,scpf) = ((hio_c13disc_si_scpf(io_si,scpf) * gpp_cached) + &
 			     (ccohort%c13disc_acc * ccohort%gpp_acc_hold)) / (gpp_cached + ccohort%gpp_acc_hold)
+			   !hio_d13c_si_scpf(io_si,scpf) = (d13c_background - hio_c13disc_si_scpf(io_si,scpf)) / &
+			   !  (1 + hio_c13disc_si_scpf(io_si,scpf)/1000)
 		       else
 		           hio_c13disc_si_scpf(io_si,scpf) = -999.0_r8
+			   !hio_d13c_si_scpf(io_si,scpf) = -999.0_r8
 		       endif
                        hio_md13crate_si_scpf(io_si, scpf) = (hio_md13crate_si_scpf(io_si, scpf) * &
 		             hio_nplant_si_scpf(io_si,scpf) + ccohort%d13cmort * ccohort%n) / (hio_nplant_si_scpf(io_si,scpf) + ccohort%n)
-                       !hio_d13c_si_scpf(io_si,scpf) = ((hio_d13c_si_scpf(io_si,scpf) * hio_gpp_si_scpf(io_si, scpf)) + (ccohort%d13c * ccohort%gpp_acc)) / (hio_gpp_si_scpf(io_si, scpf) + ccohort%gpp_acc)
+                       !hio_d13c_si_scpf(io_si,scpf) = ((hio_d13c_si_scpf(io_si,scpf) * hio_gpp_si_scpf(io_si, scpf)) + &
+		       !      (ccohort%d13c * ccohort%gpp_acc)) / (hio_gpp_si_scpf(io_si, scpf) + ccohort%gpp_acc)
 
 
 
@@ -1767,10 +1775,11 @@ end subroutine flush_hvars
                             ccohort%seed_prod * ccohort%n
                        hio_dbdeaddt_understory_si_scls(io_si,scls) = hio_dbdeaddt_understory_si_scls(io_si,scls) + &
                             ccohort%dbdeaddt * ccohort%n
-                       hio_dbstoredt_understory_si_scls(io_si,scls) = hio_dbstoredt_understory_si_scls(io_si,scls) + &
-                            ccohort%dbstoredt * ccohort%n
-                       hio_storage_flux_understory_si_scls(io_si,scls) = hio_storage_flux_understory_si_scls(io_si,scls) + &
-                             ccohort%npp_stor * ccohort%n
+                       !temp Liang Wei
+		       !hio_dbstoredt_understory_si_scls(io_si,scls) = hio_dbstoredt_understory_si_scls(io_si,scls) + &
+                       !     ccohort%dbstoredt * ccohort%n
+                       !hio_storage_flux_understory_si_scls(io_si,scls) = hio_storage_flux_understory_si_scls(io_si,scls) + &
+                       !     ccohort%npp_stor * ccohort%n
 
                        hio_npp_leaf_understory_si_scls(io_si,scls) = hio_npp_leaf_understory_si_scls(io_si,scls) + &
                             ccohort%npp_leaf * ccohort%n
@@ -3513,11 +3522,11 @@ end subroutine flush_hvars
          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_md13crate_si_scpf )
 
-    ! !d13c Hang ZHOU Liang Wei
-    ! call this%set_history_var(vname='d13c_SCPF', units = 'per mil',               &
-    !      long='d13c by pft/size',use_default='inactive',           &
-    !      avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
-    !      upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_d13c_si_scpf )
+    !!d13c Hang ZHOU Liang Wei
+     !call this%set_history_var(vname='d13c_SCPF', units = 'per mil',               &
+      !     long='d13c by pft/size',use_default='inactive',           &
+      !    avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+      !    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_d13c_si_scpf )
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &

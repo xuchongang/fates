@@ -140,7 +140,7 @@ contains
                                    ! curve (C4 plants)
 
     ! Hang ZHOU, Liang Wei
-    real(r8) :: c13disc_z(nclmax,maxpft,nlevleaf) ! carbon 13 in new synthesized flux at leaf level , not "nlevcan_ed"
+    real(r8) :: c13disc_z(nclmax,maxpft,nlevleaf) ! carbon 13 in new synthesized flux at leaf level 
 
     real(r8) :: mm_kco2            ! Michaelis-Menten constant for CO2 (Pa)
     real(r8) :: mm_ko2             ! Michaelis-Menten constant for O2 (Pa)
@@ -1057,15 +1057,17 @@ contains
 
               gs = gs_mol / cf
 
-              ! Hang ZHOU
+              ! Hang ZHOU, Liang Wei
               ! estimate carbon 13 discrimination in leaf level carbon flux, based on
               ! doi:10.1111/pce.12346, using the simplified model:
               ! $\Delta ^{13} C = \alpha_s + (b - \alpha_s) \cdot \frac{C_i}{C_a}$
               ! just hard code b and \alpha_s for now, might move to parameter set in future
               ! b = 27.0 alpha_s = 4.4
               ! TODO, not considering C4 right now, need to address this
-              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * co2_intra_c / can_co2_ppress     !not ceair, Liang Wei
+	      ! note co2_intra_c is intracelluar CO2, not intercelluar 
+              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * max (co2_intra_c, 0._r8) / can_co2_ppress 
 
+	      
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 737 ', psn_out
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 738 ', agross
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 739 ', f_sun_lsl
@@ -1160,7 +1162,7 @@ contains
     real(r8), intent(in) :: lmr_llz(nv)      ! layer dark respiration rate [umolC/m2leaf/s]
     real(r8), intent(in) :: rs_llz(nv)       ! leaf layer stomatal resistance [s/m]
     real(r8), intent(in) :: elai_llz(nv)     ! exposed LAI per layer [m2 leaf/ m2 pft footprint]
-    real(r8), intent(in) :: c13disc_llz(nv)  ! Liang Wei, c13 discrimination weighted mean 
+    real(r8), intent(in) :: c13disc_llz(nv)  ! Liang Wei, leaf layer c13 discrimination, weighted mean
     real(r8), intent(in) :: c_area           ! crown area m2/m2
     real(r8), intent(in) :: nplant           ! indiv/m2
     real(r8), intent(in) :: rb               ! leaf boundary layer resistance (s/m)
@@ -1218,8 +1220,7 @@ contains
     end do
     
     if (nv>1) then     
-       ! Hang ZHOU, 2016-09-11
-       ! Liang Wei May 2018, may not work in the new model, temp
+       ! Hang ZHOU, 2016-09-11 Liang Wei May 2018
        ! cohort%c13disc_clm as weighted mean of d13c flux at all related leave layers
        sum_weight = sum(psn_llz(1:nv-1) * elai_llz(1:nv-1))
        if (sum_weight .eq. 0.0_r8) then
@@ -1228,6 +1229,7 @@ contains
           c13disc_clm = sum(c13disc_llz(1:nv-1) * psn_llz(1:nv-1) * elai_llz(1:nv-1)) / sum_weight
        end if
     end if
+    
     ! -----------------------------------------------------------------------------------
     ! We DO NOT normalize g_sb_laweight.
     ! The units that we are passing back are [m/s] * [m2 effective leaf]

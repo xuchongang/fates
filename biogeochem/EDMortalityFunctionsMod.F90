@@ -139,6 +139,7 @@ contains
     ! and when the static mode is not used, `mortality_rates` can still access the calculated d13cmort via the cohort data-structure
     
     d13cmort = cohort_in%d13cmort
+    
     !Liang Wei, temp: output to log file to test
     !if (DEBUG_growth) write(fates_log(), *) 'MORTALITY I, c13disc_acc', cohort_in%c13disc_acc
     !if (DEBUG_growth) write(fates_log(), *) 'MORTALITY II, d13cmort', d13cmort
