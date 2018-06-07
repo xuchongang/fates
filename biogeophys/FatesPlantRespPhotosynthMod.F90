@@ -1065,7 +1065,7 @@ contains
               ! b = 27.0 alpha_s = 4.4
               ! TODO, not considering C4 right now, need to address this
 	      ! note co2_intra_c is intracelluar CO2, not intercelluar 
-              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * max (co2_intra_c, 0._r8) / can_co2_ppress 
+              c13disc_z = 4.4_r8 + (27.0_r8 - 4.4_r8) * min (can_co2_ppress, max (co2_intra_c, 0._r8)) / can_co2_ppress 
 
 	      
 !              if ( DEBUG ) write(fates_log(),*) 'EDPhoto 737 ', psn_out
