@@ -225,11 +225,14 @@ contains
        dndt_logging = (currentCohort%lmort_direct     + &
                        currentCohort%lmort_collateral + &
                        currentCohort%lmort_infra)/hlm_freq_day
-
-       currentCohort%dndt = -1.0_r8 * (cmort+hmort+bmort+frmort+dndt_logging) * currentCohort%n
+       ! Liang Wei do not kill trees 
+       currentCohort%dndt = 0.0_r8
+       !currentCohort%dndt = -1.0_r8 * (cmort+hmort+bmort+frmort+dndt_logging) * currentCohort%n
     else
        currentCohort%dndt = -(1.0_r8 - fates_mortality_disturbance_fraction) &
             * (cmort+hmort+bmort+frmort) * currentCohort%n
+        ! Liang Wei do not kill trees 
+       currentCohort%dndt = 0.0_r8  
     endif
 
     return

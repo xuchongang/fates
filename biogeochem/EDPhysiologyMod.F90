@@ -1316,55 +1316,67 @@ contains
           bdead_flux              = bdead_flux*flux_adj
           brepro_flux             = brepro_flux*flux_adj
  
-          carbon_balance          = carbon_balance - bl_flux
-          currentCohort%bl        = currentCohort%bl + bl_flux
+          !Liang Wei Keep leaf and storage dynamic but other C pools static
+	  carbon_balance          = carbon_balance - bl_flux
+	  currentCohort%bl        = currentCohort%bl + bl_flux
           currentCohort%npp_leaf  = currentCohort%npp_leaf + bl_flux / hlm_freq_day
           
           carbon_balance          = carbon_balance - br_flux
+	  br_flux = 0.0_r8                                   !Liang Wei add 1 line
           currentCohort%br        = currentCohort%br +  br_flux
           currentCohort%npp_fnrt  = currentCohort%npp_fnrt + br_flux / hlm_freq_day
           
           carbon_balance          = carbon_balance - bsw_flux
+	  bsw_flux = 0.0_r8                                                                 !Liang Wei add 1 line
           currentCohort%bsw       = currentCohort%bsw +  bsw_flux
           currentCohort%npp_sapw  = currentCohort%npp_sapw + bsw_flux / hlm_freq_day
           
           carbon_balance          = carbon_balance - bstore_flux
-          currentCohort%bstore    = currentCohort%bstore +  bstore_flux
+	  currentCohort%bstore    = currentCohort%bstore +  bstore_flux
           currentCohort%npp_stor  = currentCohort%npp_stor + bstore_flux / hlm_freq_day
           
           carbon_balance          = carbon_balance - bdead_flux
+	  bdead_flux = 0.0_r8                                                                !Liang Wei add 1 line
           currentCohort%bdead     = currentCohort%bdead +  bdead_flux
           currentCohort%npp_dead  = currentCohort%npp_dead + bdead_flux / hlm_freq_day
           
           carbon_balance          = carbon_balance - brepro_flux
+	  brepro_flux = 0.0_r8                                                              !Liang Wei add 1 line
           currentCohort%npp_seed  = currentCohort%npp_seed + brepro_flux / hlm_freq_day
           currentCohort%seed_prod = currentCohort%seed_prod + brepro_flux / hlm_freq_day
           
-          dbh_sub                 = c_pool(i_dbh)
-          call h_allom(dbh_sub,ipft,h_sub)
+          !dbh_sub                 = c_pool(i_dbh)
+          !call h_allom(dbh_sub,ipft,h_sub)  !Liang Wei. turn off 
           
           ! Set derivatives used as diagnostics
-          currentCohort%dhdt      = (h_sub-currentCohort%hite)/hlm_freq_day
-          currentCohort%dbdeaddt  = bdead_flux/hlm_freq_day
-          currentCohort%dbstoredt = bstore_flux/hlm_freq_day
-          currentCohort%ddbhdt    = (dbh_sub-currentCohort%dbh)/hlm_freq_day
+	! Liang Wei off 6 lines
+       !    currentCohort%dhdt      = (h_sub-currentCohort%hite)/hlm_freq_day
+       !    currentCohort%dbdeaddt  = bdead_flux/hlm_freq_day
+        !   currentCohort%dbstoredt = bstore_flux/hlm_freq_day
+       !    currentCohort%ddbhdt    = (dbh_sub-currentCohort%dbh)/hlm_freq_day
           
-          currentCohort%dbh       = dbh_sub
-          currentCohort%hite      = h_sub
+       !    currentCohort%dbh       = dbh_sub
+        !   currentCohort%hite      = h_sub
+	  
+	  
+	  
+	  
 
-          if( abs(carbon_balance)>calloc_abs_error ) then
-             write(fates_log(),*) 'carbon conservation error while integrating pools'
-             write(fates_log(),*) 'along alometric curve'
-             write(fates_log(),*) 'carbon_balance = ',carbon_balance,totalC
-             write(fates_log(),*) 'exiting'
-             call endrun(msg=errMsg(sourcefile, __LINE__))
-          end if
+          !Liang Wei June 2018, turn of error check for manual static mode
+	  !if( abs(carbon_balance)>calloc_abs_error ) then
+          !   write(fates_log(),*) 'carbon conservation error while integrating pools'
+          !   write(fates_log(),*) 'along alometric curve'
+          !   write(fates_log(),*) 'carbon_balance = ',carbon_balance,totalC
+          !   write(fates_log(),*) 'exiting'
+          !   call endrun(msg=errMsg(sourcefile, __LINE__))
+          !end if
 
        end if
     end do
     
     return
  end subroutine PlantGrowth
+!Liang Wei, Hang ZHOU
 
  ! ======================================================================================
 

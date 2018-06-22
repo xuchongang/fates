@@ -136,10 +136,10 @@ contains
          ! ------------------------------------------------------------------------------
          ! Perform numerical checks on some cohort and patch structures
          ! ------------------------------------------------------------------------------
- 
-         call val_check_ed_vars(currentPatch,'co_n:co_dbh:pa_area',return_code)
+ 	!Liang Wei, temp turn off June22,2018
+         !call val_check_ed_vars(currentPatch,'co_n:co_dbh:pa_area',return_code)
         ! No need to make error message, already generated in math_check_ed_vars
-        if(return_code>0) call endrun(msg=errMsg(sourcefile, __LINE__))
+        !if(return_code>0) call endrun(msg=errMsg(sourcefile, __LINE__))
 
          ! canopy layer has a special bounds check
          currentCohort => currentPatch%tallest
