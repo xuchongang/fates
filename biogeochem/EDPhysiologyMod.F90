@@ -888,7 +888,8 @@ contains
     real(r8) :: tempST2_dbh 
     real(r8) :: tempST2_br  
     real(r8) :: tempST2_bsw 
-    real(r8) :: tempST2_bdead 
+    real(r8) :: tempST2_bdead
+    real(r8) :: tempST2_hite 
 
 
     ! Woody turnover timescale [years]
@@ -1001,7 +1002,7 @@ contains
     tempST2_br    = currentCohort%br
     tempST2_bsw   = currentCohort%bsw
     tempST2_bdead = currentCohort%bdead
-    
+    tempST2_hite  = currentCohort%hite
     ! -----------------------------------------------------------------------------------
     ! III(b). Calculate the maintenance turnover demands 
     ! NOTE(RGK): If branches are falling all year, even on deciduous trees, we should
@@ -1388,6 +1389,19 @@ contains
     currentCohort%br    = tempST2_br   
     currentCohort%bsw   = tempST2_bsw 
     currentCohort%bdead = tempST2_bdead
+    currentCohort%hite  = tempST2_hite
+    
+    !Liang Wei, set fluxes to 0
+    currentCohort%npp_fnrt   = 0.0_r8
+    currentCohort%npp_sapw   = 0.0_r8
+    currentCohort%npp_dead   = 0.0_r8
+    currentCohort%seed_prod  = 0.0_r8
+     
+    currentCohort%leaf_md   = 0.0_r8
+    currentCohort%bsw_md    = 0.0_r8
+    currentCohort%bdead_md  = 0.0_r8
+    currentCohort%bstore_md = 0.0_r8
+    currentCohort%root_md   = 0.0_r8
    
     return
  end subroutine PlantGrowth
