@@ -916,6 +916,8 @@ contains
     currentCohort%dbdeaddt  = 0.0_r8
     currentCohort%dbstoredt = 0.0_r8
     currentCohort%ddbhdt    = 0.0_r8
+    
+
 
     ! If the cohort has grown, it is not new
     currentCohort%isnew=.false.
@@ -980,6 +982,8 @@ contains
 
     ! Target storage carbon [kgC,kgC/cm]
     call bstore_allom(currentCohort%dbh,ipft,currentCohort%canopy_trim,bt_store,dbt_store_dd)
+    
+
 
     ! ------------------------------------------------------------------------------------
     ! If structure is larger than target, then we need to correct some integration errors
@@ -992,7 +996,12 @@ contains
              currentCohort%canopy_trim, currentCohort%dbh, currentCohort%hite )
     end if
 
-
+   !Liang Wei, store values for static pools
+    tempST2_dbh   = currentCohort%dbh
+    tempST2_br    = currentCohort%br
+    tempST2_bsw   = currentCohort%bsw
+    tempST2_bdead = currentCohort%bdead
+    
     ! -----------------------------------------------------------------------------------
     ! III(b). Calculate the maintenance turnover demands 
     ! NOTE(RGK): If branches are falling all year, even on deciduous trees, we should
@@ -1246,12 +1255,7 @@ contains
     c_mask(i_cstore) = grow_store
     c_mask(i_cdead)  = .true.                ! Always increment dead on growth step
     c_mask(i_crepro) = .true.                ! Always calculate reproduction on growth
-    !Liang Wei, store values for static pools
-    tempST2_dbh   = currentCohort%dbh
-    tempST2_br    = currentCohort%br
-    tempST2_bsw   = currentCohort%bsw
-    tempST2_bdead = currentCohort%bdead
-    
+   
     
     if(ODESolve == 2) then
        currentCohort%ode_opt_step = totalC

@@ -149,42 +149,42 @@ contains
     !******************************************************************************
     ! Liang Wei mannualy turn off for mortality testing May 2018
 
-    if(hlm_use_ed_st3.eq.ifalse) then 
-      currentPatch => currentSite%oldest_patch
-     do while (associated(currentPatch))                 
+    !if(hlm_use_ed_st3.eq.ifalse) then 
+    !  currentPatch => currentSite%oldest_patch
+    ! do while (associated(currentPatch))                 
         
           ! adds small cohort of each PFT
-         call recruitment(currentSite, currentPatch, bc_in)
+    !     call recruitment(currentSite, currentPatch, bc_in)
         
-          currentPatch => currentPatch%younger
-       enddo
-    end if
+    !      currentPatch => currentPatch%younger
+    !   enddo
+    !end if
     
        
-    call ed_total_balance_check(currentSite,1)
+    !call ed_total_balance_check(currentSite,1)
 
-    if( hlm_use_ed_st3.eq.ifalse ) then 
-       currentPatch => currentSite%oldest_patch
-       do while (associated(currentPatch))
+    !if( hlm_use_ed_st3.eq.ifalse ) then 
+    !   currentPatch => currentSite%oldest_patch
+    !   do while (associated(currentPatch))
          
-         ! puts cohorts in right order
-         call sort_cohorts(currentPatch)            
+     !    ! puts cohorts in right order
+     !    call sort_cohorts(currentPatch)            
 
          ! kills cohorts that are too few
-          call terminate_cohorts(currentSite, currentPatch, 1)
+     !     call terminate_cohorts(currentSite, currentPatch, 1)
     
          ! fuses similar cohorts
-          call fuse_cohorts(currentSite,currentPatch, bc_in )
+     !    call fuse_cohorts(currentSite,currentPatch, bc_in )
          
           ! kills cohorts for various other reasons
-         call terminate_cohorts(currentSite, currentPatch, 2)
+     !    call terminate_cohorts(currentSite, currentPatch, 2)
           
           
-          currentPatch => currentPatch%younger
-      enddo
-    end if
+     !    currentPatch => currentPatch%younger
+     ! enddo
+    !end if
        
-    call ed_total_balance_check(currentSite,2)
+    !call ed_total_balance_check(currentSite,2)
 
     !*********************************************************************************
     ! Patch dynamics sub-routines: fusion, new patch creation (spwaning), termination.
@@ -195,34 +195,34 @@ contains
     !  call spawn_patches(currentSite, bc_in)
     !end if
    
-    call ed_total_balance_check(currentSite,3)
+    !call ed_total_balance_check(currentSite,3)
 
     ! fuse on the spawned patches.
-    if ( hlm_use_ed_st3.eq.ifalse ) then
+    !if ( hlm_use_ed_st3.eq.ifalse ) then
       call fuse_patches(currentSite, bc_in )        
      
        ! If using BC FATES hydraulics, update the rhizosphere geometry
        ! based on the new cohort-patch structure
        ! 'rhizosphere geometry' (column-level root biomass + rootfr --> root length 
        ! density --> node radii and volumes)
-       if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
-          call updateSizeDepRhizHydProps(currentSite, bc_in)
+    !   if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
+    !      call updateSizeDepRhizHydProps(currentSite, bc_in)
           !       call updateSizeDepRhizHydStates(currentSite, bc_in)
           !       if(nshell > 1) then  (THIS BEING CHECKED INSIDE OF the update)
           !          call updateSizeDepRhizHydStates(currentSite, c, soilstate_inst, &
           !                waterstate_inst)
           !       end if
-       end if
-    end if
+    !   end if
+    !end if
 
-    call ed_total_balance_check(currentSite,4)
+    !call ed_total_balance_check(currentSite,4)
 
     ! kill patches that are too small
     !if ( hlm_use_ed_st3.eq.ifalse ) then
     !   call terminate_patches(currentSite)   
     !end if
    
-    call ed_total_balance_check(currentSite,5)
+    !call ed_total_balance_check(currentSite,5)
 
   end subroutine ed_ecosystem_dynamics
 
@@ -293,10 +293,10 @@ contains
           ! BOC...update tree 'hydraulic geometry' 
           ! (size --> heights of elements --> hydraulic path lengths --> 
           ! maximum node-to-node conductances
-          if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
-            call updateSizeDepTreeHydProps(currentCohort, bc_in)
-           call updateSizeDepTreeHydStates(currentCohort)
-          end if
+       !   if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
+       !    call updateSizeDepTreeHydProps(currentCohort, bc_in)
+       !    call updateSizeDepTreeHydStates(currentCohort)
+       !   end if
   
           currentCohort => currentCohort%taller
 
@@ -358,17 +358,19 @@ contains
     enddo
 
     ! at the site level, update the seed bank mass
-    do ft = 1,numpft
-       currentSite%seed_bank(ft) = currentSite%seed_bank(ft) + currentSite%dseed_dt(ft)*hlm_freq_day
-    enddo
+    !Liang Wei turned off
+    
+    !do ft = 1,numpft
+    !   currentSite%seed_bank(ft) = currentSite%seed_bank(ft) + currentSite%dseed_dt(ft)*hlm_freq_day
+    !enddo
 
     ! Check for negative values. Write out warning to show carbon balance. 
-    do ft = 1,numpft
-       if(currentSite%seed_bank(ft)<small_no)then
-          write(fates_log(),*) 'negative seedbank', currentSite%seed_bank(ft)
-          currentSite%seed_bank(ft) = small_no
-       endif
-    enddo
+    !do ft = 1,numpft
+    !   if(currentSite%seed_bank(ft)<small_no)then
+    !      write(fates_log(),*) 'negative seedbank', currentSite%seed_bank(ft)
+    !      currentSite%seed_bank(ft) = small_no
+    !   endif
+    !enddo
 
   end subroutine ed_integrate_state_variables
 
@@ -397,14 +399,14 @@ contains
      !Liang Wei, Temp change May18_2018, off next next 4 lines for balance check
     call canopy_spread(currentSite)  !Liang Wei, off temp
   
-    call ed_total_balance_check(currentSite,6)
-    !call ed_total_balance_check(currentSite,2)
+    !call ed_total_balance_check(currentSite,6)
+    call ed_total_balance_check(currentSite,2)
 
     !liang wei
     call canopy_structure(currentSite, bc_in)  
 
-    call ed_total_balance_check(currentSite,7)  !Liang Wei, off
-    !call ed_total_balance_check(currentSite,3)
+    !call ed_total_balance_check(currentSite,7)  !Liang Wei, off
+    call ed_total_balance_check(currentSite,3)
 
     
     !Liang Wei  off
