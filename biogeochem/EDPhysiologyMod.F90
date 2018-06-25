@@ -1369,10 +1369,8 @@ contains
            currentCohort%ddbhdt    = (dbh_sub-currentCohort%dbh)/hlm_freq_day
           
            currentCohort%dbh       = dbh_sub
-           currentCohort%hite      = h_sub
-	  	  
-
-          !Liang Wei June 2018, turn of error check for manual static mode
+           currentCohort%hite      = h_sub 	  
+         
 	  if( abs(carbon_balance)>calloc_abs_error ) then
              write(fates_log(),*) 'carbon conservation error while integrating pools'
              write(fates_log(),*) 'along alometric curve'
@@ -1396,16 +1394,16 @@ contains
     currentCohort%npp_sapw   = 0.0_r8
     currentCohort%npp_dead   = 0.0_r8
     currentCohort%seed_prod  = 0.0_r8
-     
-    currentCohort%leaf_md   = 0.0_r8
-    currentCohort%bsw_md    = 0.0_r8
-    currentCohort%bdead_md  = 0.0_r8
-    currentCohort%bstore_md = 0.0_r8
-    currentCohort%root_md   = 0.0_r8
-   
+    currentCohort%npp_seed  = 0.0_r8 
+
+    ! Initialize rates of change
+    currentCohort%dhdt      = 0.0_r8
+    currentCohort%dbdeaddt  = 0.0_r8
+    currentCohort%ddbhdt    = 0.0_r8
+
     return
  end subroutine PlantGrowth
-!Liang Wei, Hang ZHOU
+
 
  ! ======================================================================================
 
