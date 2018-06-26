@@ -1097,6 +1097,28 @@ contains
        currentCohort%bstore   = currentCohort%bstore + bstore_flux
        currentCohort%npp_stor = currentCohort%npp_stor + bstore_flux / hlm_freq_day
        ! We have pushed to net-zero carbon, the rest of this routine can be ignored
+       
+      !Liang Wei  put original pool values back     --->
+      currentCohort%dbh   = tempST2_dbh   
+      currentCohort%br    = tempST2_br   
+      currentCohort%bsw   = tempST2_bsw 
+      currentCohort%bdead = tempST2_bdead
+      currentCohort%hite  = tempST2_hite
+    
+    !Liang Wei, set fluxes to 0
+      currentCohort%npp_fnrt   = 0.0_r8
+      currentCohort%npp_sapw   = 0.0_r8
+      currentCohort%npp_dead   = 0.0_r8
+      currentCohort%seed_prod  = 0.0_r8
+      currentCohort%npp_seed  = 0.0_r8 
+
+    ! Initialize rates of change
+      currentCohort%dhdt      = 0.0_r8
+      currentCohort%dbdeaddt  = 0.0_r8
+      currentCohort%ddbhdt    = 0.0_r8
+  
+       !<---
+       
        return
 
     else
@@ -1146,8 +1168,33 @@ contains
     !        to generate some pools above allometric target, don't reduce the pool,
     !        just ignore it until the rest of the plant grows to meet it.
     ! -----------------------------------------------------------------------------------
+! if( carbon_balance<cbal_prec) return  !original Liang Wei
+    
+    if( carbon_balance<cbal_prec) then
+    
+          !Liang Wei  put original pool values back     --->
+      currentCohort%dbh   = tempST2_dbh   
+      currentCohort%br    = tempST2_br   
+      currentCohort%bsw   = tempST2_bsw 
+      currentCohort%bdead = tempST2_bdead
+      currentCohort%hite  = tempST2_hite
+    
+    !Liang Wei, set fluxes to 0
+      currentCohort%npp_fnrt   = 0.0_r8
+      currentCohort%npp_sapw   = 0.0_r8
+      currentCohort%npp_dead   = 0.0_r8
+      currentCohort%seed_prod  = 0.0_r8
+      currentCohort%npp_seed  = 0.0_r8 
 
-    if( carbon_balance<cbal_prec) return
+    ! Initialize rates of change
+      currentCohort%dhdt      = 0.0_r8
+      currentCohort%dbdeaddt  = 0.0_r8
+      currentCohort%ddbhdt    = 0.0_r8
+  
+       !<---
+        
+    return
+    end if
 
     leaf_below_target  = max(bt_leaf - currentCohort%bl,0.0_r8)
     froot_below_target = max(bt_fineroot - currentCohort%br,0.0_r8)
@@ -1193,7 +1240,30 @@ contains
     !           back on allometry
     ! -----------------------------------------------------------------------------------
 
-    if( carbon_balance<cbal_prec) return
+    if( carbon_balance<cbal_prec) then
+    
+          !Liang Wei  put original pool values back     --->
+      currentCohort%dbh   = tempST2_dbh   
+      currentCohort%br    = tempST2_br   
+      currentCohort%bsw   = tempST2_bsw 
+      currentCohort%bdead = tempST2_bdead
+      currentCohort%hite  = tempST2_hite
+    
+    !Liang Wei, set fluxes to 0
+      currentCohort%npp_fnrt   = 0.0_r8
+      currentCohort%npp_sapw   = 0.0_r8
+      currentCohort%npp_dead   = 0.0_r8
+      currentCohort%seed_prod  = 0.0_r8
+      currentCohort%npp_seed  = 0.0_r8 
+
+    ! Initialize rates of change
+      currentCohort%dhdt      = 0.0_r8
+      currentCohort%dbdeaddt  = 0.0_r8
+      currentCohort%ddbhdt    = 0.0_r8
+  
+       !<---
+    return
+    end if 
 
     dead_below_target  = max(bt_dead - currentCohort%bdead,0.0_r8)
     
@@ -1216,8 +1286,30 @@ contains
     !        Use an adaptive euler integration. If the error is not nominal,
     !        the carbon balance sub-step (deltaC) will be halved and tried again
     ! -----------------------------------------------------------------------------------
-    !carbon_balance = 0.0_r8 !Liang wei, turn off the new tissue production
-    if( carbon_balance<cbal_prec) return
+    !Liang wei 
+    !if( carbon_balance<cbal_prec) return !original
+    
+    if( carbon_balance<cbal_prec) then
+      !Liang Wei  put original pool values back     
+      currentCohort%dbh   = tempST2_dbh   
+      currentCohort%br    = tempST2_br   
+      currentCohort%bsw   = tempST2_bsw 
+      currentCohort%bdead = tempST2_bdead
+      currentCohort%hite  = tempST2_hite
+    
+    !Liang Wei, set fluxes to 0
+      currentCohort%npp_fnrt   = 0.0_r8
+      currentCohort%npp_sapw   = 0.0_r8
+      currentCohort%npp_dead   = 0.0_r8
+      currentCohort%seed_prod  = 0.0_r8
+      currentCohort%npp_seed  = 0.0_r8 
+
+    ! Initialize rates of change
+      currentCohort%dhdt      = 0.0_r8
+      currentCohort%dbdeaddt  = 0.0_r8
+      currentCohort%ddbhdt    = 0.0_r8
+      return
+    end if
 
 
     ! This routine checks that actual carbon is not below that targets. It does
