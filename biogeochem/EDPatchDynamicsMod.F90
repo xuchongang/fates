@@ -538,12 +538,12 @@ contains
                       currentCohort%n = currentCohort%n * (1._r8 - patch_site_areadis/currentPatch%area)
 
                       nc%fmort            = 0.0_r8
-                      nc%imort            = 0.0_r8
+                      !nc%imort            = 0.0_r8
                       nc%cmort            = currentCohort%cmort
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
                       nc%dmort            = currentCohort%dmort
-                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_direct    = currentCohort%lmort_direct
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
                       
@@ -571,8 +571,8 @@ contains
                    nc%hmort = nan
                    nc%bmort = nan
                    nc%fmort = nan
-                   nc%imort = nan
-                   nc%lmort_logging    = nan
+                   !nc%imort = nan
+                   nc%lmort_direct    = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
 		   !nc%inmort = nan
