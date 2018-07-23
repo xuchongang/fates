@@ -7,7 +7,8 @@ module EDPatchDynamicsMod
   use FatesInterfaceMod    , only : hlm_freq_day
   use EDPftvarcon          , only : EDPftvarcon_inst
   use EDCohortDynamicsMod  , only : fuse_cohorts, sort_cohorts, insert_cohort
-  use EDtypesMod           , only : ncwd, n_dbh_bins, ntol, area, dbhmax
+  use EDtypesMod           , only : ncwd, n_dbh_bins, area, patchfusion_dbhbin_loweredges
+  use EDtypesMod           , only : force_patchfuse_min_biomass
   use EDTypesMod           , only : maxPatchesPerSite
   use EDTypesMod           , only : ed_site_type, ed_patch_type, ed_cohort_type
   use EDTypesMod           , only : min_patch_area
@@ -21,8 +22,6 @@ module EDPatchDynamicsMod
   use FatesInsectMemMod	   , only : DomainSize, numberInsectTypes, maxNumStages
   use FatesInterfaceMod    , only : hlm_use_planthydro
   use FatesInterfaceMod	   , only : hlm_use_insect
-  use FatesInterfaceMod    , only : hlm_numlevgrnd
-  use FatesInterfaceMod    , only : hlm_numlevsoil
   use FatesInterfaceMod    , only : hlm_numSWb
   use FatesInterfaceMod    , only : bc_in_type
   use FatesInterfaceMod    , only : hlm_days_per_year
@@ -31,10 +30,16 @@ module EDPatchDynamicsMod
   use FatesConstantsMod    , only : r8 => fates_r8
   use FatesConstantsMod    , only : itrue
   use FatesPlantHydraulicsMod, only : InitHydrCohort
+  use FatesPlantHydraulicsMod, only : AccumulateMortalityWaterStorage
   use FatesPlantHydraulicsMod, only : DeallocateHydrCohort
   use EDLoggingMortalityMod, only : logging_litter_fluxes 
   use EDLoggingMortalityMod, only : logging_time
   use EDParamsMod          , only : fates_mortality_disturbance_fraction
+  use FatesAllometryMod    , only : carea_allom
+  use FatesConstantsMod    , only : g_per_kg
+  use FatesConstantsMod    , only : ha_per_m2
+  use FatesConstantsMod    , only : days_per_sec
+  use FatesConstantsMod    , only : years_per_day
 
 
   ! CIME globals
@@ -54,11 +59,12 @@ module EDPatchDynamicsMod
   public :: disturbance_rates
   public :: check_patch_area
   public :: set_patchno
-  public :: set_root_fraction
   private:: fuse_2_patches
 
   character(len=*), parameter, private :: sourcefile = &
         __FILE__
+
+  logical, parameter :: debug = .false.
 
   ! 10/30/09: Created by Rosie Fisher
   ! ============================================================================
@@ -66,7 +72,7 @@ module EDPatchDynamicsMod
 contains
 
   ! ============================================================================
-  subroutine disturbance_rates( site_in)
+  subroutine disturbance_rates( site_in, bc_in)
     !
     ! !DESCRIPTION:
     ! Calculates the fire and mortality related disturbance rates for each patch,
@@ -74,19 +80,21 @@ contains
     ! be one disturbance type for each timestep.  
     ! all disturbance rates here are per daily timestep. 
     
-	! 2016-2017
-	! Modify to add logging disturbance
-	
-	! Feb. 24, 2018: modified to add insect mortality.
-	
+
+    ! 2016-2017
+    ! Modify to add logging disturbance
+    
+    ! Feb. 24, 2018: modified to add insect mortality.
+
     ! !USES:
-    use EDGrowthFunctionsMod , only : c_area, mortality_rates
+    use EDMortalityFunctionsMod , only : mortality_rates
     ! loging flux
     use EDLoggingMortalityMod , only : LoggingMortality_frac
 
   
     ! !ARGUMENTS:
     type(ed_site_type) , intent(inout), target :: site_in
+    type(bc_in_type) , intent(in) :: bc_in
     !
     ! !LOCAL VARIABLES:
     type (ed_patch_type) , pointer :: currentPatch
@@ -95,12 +103,13 @@ contains
     real(r8) :: cmort
     real(r8) :: bmort
     real(r8) :: hmort
+    real(r8) :: frmort
 
-    real(r8) :: lmort_logging
+    real(r8) :: lmort_direct
     real(r8) :: lmort_collateral
     real(r8) :: lmort_infra
 
-    integer :: threshold_sizeclass
+    integer  :: threshold_sizeclass
 
     !----------------------------------------------------------------------------------------------
     ! Calculate Mortality Rates (these were previously calculated during growth derivatives)
@@ -115,21 +124,22 @@ contains
           ! Mortality for trees in the understorey.
           currentCohort%patchptr => currentPatch
 
-          call mortality_rates(currentCohort,cmort,hmort,bmort)
-          currentCohort%dmort  = cmort+hmort+bmort
-          currentCohort%c_area = c_area(currentCohort)
+          call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort)
+          currentCohort%dmort  = cmort+hmort+bmort+frmort
+          call carea_allom(currentCohort%dbh,currentCohort%n,site_in%spread,currentCohort%pft, &
+               currentCohort%c_area)
 
           ! Initialize diagnostic mortality rates
           currentCohort%cmort = cmort
           currentCohort%bmort = bmort
           currentCohort%hmort = hmort
-          currentCohort%imort = 0.0_r8 ! Impact mortality is always zero except in new patches
+          currentCohort%frmort = frmort
           currentCohort%fmort = 0.0_r8 ! Fire mortality is initialized as zero, but may be changed
 
           call LoggingMortality_frac(currentCohort%pft, currentCohort%dbh, &
-                lmort_logging,lmort_collateral,lmort_infra )
+                lmort_direct,lmort_collateral,lmort_infra )
          
-          currentCohort%lmort_logging    = lmort_logging
+          currentCohort%lmort_direct    = lmort_direct
           currentCohort%lmort_collateral = lmort_collateral
           currentCohort%lmort_infra      = lmort_infra
 
@@ -151,7 +161,9 @@ contains
        
        currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
        currentPatch%disturbance_rates(dtype_ilog)  = 0.0_r8
-       currentPatch%disturbance_rates(dtype_inmort)  = 0.0_r8
+       currentPatch%disturbance_rates(dtype_inmort)= 0.0_r8
+       currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
+       
 
        currentCohort => currentPatch%shortest
        do while(associated(currentCohort))   
@@ -165,7 +177,7 @@ contains
 
              ! Logging Disturbance Rate
              currentPatch%disturbance_rates(dtype_ilog) = currentPatch%disturbance_rates(dtype_ilog) + &
-                   min(1.0_r8, currentCohort%lmort_logging +                         & 
+                   min(1.0_r8, currentCohort%lmort_direct +                         & 
                                currentCohort%lmort_collateral +                      &
                                currentCohort%lmort_infra ) *                         &
                                currentCohort%c_area/currentPatch%area
@@ -233,7 +245,7 @@ contains
                 currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
 		currentCohort%inmort = currentCohort%inmort*(1.0_r8 - fates_mortality_disturbance_fraction)
-                ! currentCohort%imort will likely exist with logging
+                currentCohort%frmort = currentCohort%frmort*(1.0_r8 - fates_mortality_disturbance_fraction)
              end if
              currentCohort => currentCohort%taller
           enddo !currentCohort
@@ -254,7 +266,8 @@ contains
                 currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
 		currentCohort%inmort = currentCohort%inmort*(1.0_r8 - fates_mortality_disturbance_fraction)
-                currentCohort%lmort_logging    = 0.0_r8
+                currentCohort%frmort = currentCohort%frmort*(1.0_r8 - fates_mortality_disturbance_fraction)
+                currentCohort%lmort_direct    = 0.0_r8
                 currentCohort%lmort_collateral = 0.0_r8
                 currentCohort%lmort_infra      = 0.0_r8
              end if
@@ -298,7 +311,7 @@ contains
           currentCohort => currentPatch%shortest
           do while(associated(currentCohort))
              if(currentCohort%canopy_layer == 1)then
-                currentCohort%lmort_logging    = 0.0_r8
+                currentCohort%lmort_direct    = 0.0_r8
                 currentCohort%lmort_collateral = 0.0_r8
                 currentCohort%lmort_infra      = 0.0_r8
                 currentCohort%fmort            = 0.0_r8
@@ -334,7 +347,7 @@ contains
     !
     ! !USES:
     
-    use EDParamsMod         , only : ED_val_understorey_death
+    use EDParamsMod         , only : ED_val_understorey_death, logging_coll_under_frac
     use EDCohortDynamicsMod , only : zero_cohort, copy_cohort, terminate_cohorts 
 
     !
@@ -391,7 +404,7 @@ contains
        allocate(new_patch)
        call create_patch(currentSite, new_patch, age, site_areadis, &
             cwd_ag_local, cwd_bg_local, leaf_litter_local, &
-            root_litter_local)
+            root_litter_local, bc_in%nlevsoil)
 
        new_patch%tallest  => null()
        new_patch%shortest => null()
@@ -435,7 +448,7 @@ contains
           do while(associated(currentCohort))       
 
              allocate(nc)             
-             if(hlm_use_planthydro.eq.itrue) call InitHydrCohort(nc)
+             if(hlm_use_planthydro.eq.itrue) call InitHydrCohort(CurrentSite,nc)
              call zero_cohort(nc)
 
              ! nc is the new cohort that goes in the disturbed patch (new_patch)... currentCohort
@@ -457,7 +470,7 @@ contains
                    ! In the donor patch we are left with fewer trees because the area has decreased
                    ! the plant density for large trees does not actually decrease in the donor patch
                    ! because this is the part of the original patch where no trees have actually fallen
-                   ! The diagnostic cmort,bmort and hmort rates have already been saved         
+                   ! The diagnostic cmort,bmort,hmort, and frmort  rates have already been saved         
 
                    currentCohort%n = currentCohort%n * (1.0_r8 - fates_mortality_disturbance_fraction * &
                         min(1.0_r8,currentCohort%dmort * hlm_freq_day))
@@ -468,8 +481,8 @@ contains
                    nc%hmort = nan
                    nc%bmort = nan
                    nc%fmort = nan
-                   nc%imort = nan
-                   nc%lmort_logging    = nan
+                   nc%frmort = nan
+                   nc%lmort_direct     = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
 		   nc%inmort           = nan
@@ -572,6 +585,17 @@ contains
                       !          The number density per square are doesn't change, but since the patch is smaller
                       !          and cohort counts are absolute, reduce this number.
                       nc%n = currentCohort%n * patch_site_areadis/currentPatch%area
+
+                      ! because the mortality rate due to impact for the cohorts which had been in the understory and are now in the newly-
+                      ! disturbed patch is very high, passing the imort directly to history results in large numerical errors, on account
+                      ! of the sharply reduced number densities.  so instead pass this info via a site-level diagnostic variable before reducing 
+                      ! the number density.
+                      currentSite%imort_rate(currentCohort%size_class, currentCohort%pft) = &
+                           currentSite%imort_rate(currentCohort%size_class, currentCohort%pft) + &
+                           nc%n * ED_val_understorey_death / hlm_freq_day
+                      currentSite%imort_carbonflux = currentSite%imort_carbonflux + &
+                           (nc%n * ED_val_understorey_death / hlm_freq_day ) * &
+                           currentCohort%b_total() * g_per_kg * days_per_sec * years_per_day * ha_per_m2
                       
                       ! Step 2:  Apply survivor ship function based on the understory death fraction
                       ! remaining of understory plants of those that are knocked over by the overstorey trees dying...  
@@ -586,12 +610,12 @@ contains
                       ! so with the number density must come the effective mortality rates.
 
                       nc%fmort            = 0.0_r8               ! Should had also been zero in the donor
-                      nc%imort            = ED_val_understorey_death/hlm_freq_day  ! This was zero in the donor
                       nc%cmort            = currentCohort%cmort
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
+                      nc%frmort           = currentCohort%frmort
                       nc%dmort            = currentCohort%dmort
-                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_direct     = currentCohort%lmort_direct
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
 		      nc%inmort           = currentCohort%inmort
@@ -602,6 +626,7 @@ contains
                       ! Besides, the current and newly created patch sum to unity                      
 
                       currentCohort%n = currentCohort%n * (1._r8 -  patch_site_areadis/currentPatch%area)
+                      
                    else 
                       ! grass is not killed by mortality disturbance events. Just move it into the new patch area. 
                       ! Just split the grass into the existing and new patch structures
@@ -611,12 +636,12 @@ contains
                       currentCohort%n = currentCohort%n * (1._r8 - patch_site_areadis/currentPatch%area)
 
                       nc%fmort            = 0.0_r8
-                      nc%imort            = 0.0_r8
                       nc%cmort            = currentCohort%cmort
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
+                      nc%frmort           = currentCohort%frmort
                       nc%dmort            = currentCohort%dmort
-                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_direct    = currentCohort%lmort_direct
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
 		      nc%inmort           = currentCohort%inmort
@@ -639,13 +664,13 @@ contains
                 nc%n = nc%n * (1.0_r8 - currentCohort%fire_mort) 
 
                 nc%fmort            = currentCohort%fire_mort/hlm_freq_day
-                nc%imort            = 0.0_r8
                 
                 nc%cmort            = currentCohort%cmort
                 nc%hmort            = currentCohort%hmort
                 nc%bmort            = currentCohort%bmort
+                nc%frmort           = currentCohort%frmort
                 nc%dmort            = currentCohort%dmort
-                nc%lmort_logging    = currentCohort%lmort_logging
+                nc%lmort_direct     = currentCohort%lmort_direct
                 nc%lmort_collateral = currentCohort%lmort_collateral
                 nc%lmort_infra      = currentCohort%lmort_infra
 		nc%inmort           = currentCohort%inmort
@@ -662,7 +687,7 @@ contains
                    nc%n            = 0.0_r8 
 
                    ! Reduce counts in the existing/donor patch according to the logging rate
-                   currentCohort%n = currentCohort%n * (1.0_r8 - min(1.0_r8,(currentCohort%lmort_logging +    &
+                   currentCohort%n = currentCohort%n * (1.0_r8 - min(1.0_r8,(currentCohort%lmort_direct +    &
                                                                              currentCohort%lmort_collateral + &
                                                                              currentCohort%lmort_infra)))
 
@@ -670,10 +695,10 @@ contains
                    nc%cmort            = nan
                    nc%hmort            = nan
                    nc%bmort            = nan
+                   nc%frmort           = nan
                    nc%fmort            = nan
-                   nc%imort            = nan
-		   nc%inmort            = nan
-                   nc%lmort_logging    = nan
+		   nc%inmort           = nan
+                   nc%lmort_direct     = nan
                    nc%lmort_collateral = nan
                    nc%lmort_infra      = nan
 
@@ -690,26 +715,37 @@ contains
                       !          The number density per square are doesn't change, but since the patch is smaller
                       !          and cohort counts are absolute, reduce this number.
                       nc%n = currentCohort%n * patch_site_areadis/currentPatch%area
+
+                      ! because the mortality rate due to impact for the cohorts which had been in the understory and are now in the newly-
+                      ! disturbed patch is very high, passing the imort directly to history results in large numerical errors, on account
+                      ! of the sharply reduced number densities.  so instead pass this info via a site-level diagnostic variable before reducing 
+                      ! the number density.
+                      currentSite%imort_rate(currentCohort%size_class, currentCohort%pft) = &
+                           currentSite%imort_rate(currentCohort%size_class, currentCohort%pft) + &
+                           nc%n * logging_coll_under_frac / hlm_freq_day
+                      currentSite%imort_carbonflux = currentSite%imort_carbonflux + &
+                           (nc%n * logging_coll_under_frac/ hlm_freq_day ) * &
+                           currentCohort%b_total() * g_per_kg * days_per_sec * years_per_day * ha_per_m2
+
                       
                       ! Step 2:  Apply survivor ship function based on the understory death fraction
                      
                       ! remaining of understory plants of those that are knocked over by the overstorey trees dying...  
-                      ! CURRENTLY ASSUMING THAT LOGGING SURVIVORSHIP OF UNDERSTORY PLANTS IS SAME AS NATURAL
-                      ! TREEFALL (STILL BEING DISCUSSED)
-                      nc%n = nc%n * (1.0_r8 - ED_val_understorey_death)
+                      ! LOGGING SURVIVORSHIP OF UNDERSTORY PLANTS IS SET AS A NEW PARAMETER in the fatesparameter files 
+                      nc%n = nc%n * (1.0_r8 - logging_coll_under_frac)
 
                       ! Step 3: Reduce the number count of cohorts in the original/donor/non-disturbed patch 
                       !         to reflect the area change
                       currentCohort%n = currentCohort%n * (1._r8 -  patch_site_areadis/currentPatch%area)
 
 
-                      nc%fmort = 0.0_r8
-                      nc%imort = ED_val_understorey_death/hlm_freq_day
+                      nc%fmort            = 0.0_r8
                       nc%cmort            = currentCohort%cmort
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
+                      nc%frmort           = currentCohort%frmort
                       nc%dmort            = currentCohort%dmort
-                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_direct     = currentCohort%lmort_direct
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
 		      nc%inmort            = currentCohort%inmort
@@ -725,12 +761,12 @@ contains
 
                       ! No grass impact mortality imposed on the newly created patch
                       nc%fmort            = 0.0_r8
-                      nc%imort            = 0.0_r8
                       nc%cmort            = currentCohort%cmort
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
+                      nc%frmort           = currentCohort%frmort
                       nc%dmort            = currentCohort%dmort
-                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_direct    = currentCohort%lmort_direct
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
                       
@@ -784,7 +820,7 @@ contains
           ! the second call removes for all other reasons (sparse culling must happen
           ! before fusion)
           call terminate_cohorts(currentSite, currentPatch, 1)
-          call fuse_cohorts(currentPatch, bc_in)
+          call fuse_cohorts(currentSite,currentPatch, bc_in)
           call terminate_cohorts(currentSite, currentPatch, 2)
           call sort_cohorts(currentPatch)
 
@@ -807,7 +843,7 @@ contains
        ! the second call removes for all other reasons (sparse culling must happen
        ! before fusion)
        call terminate_cohorts(currentSite, new_patch, 1)
-       call fuse_cohorts(new_patch, bc_in)
+       call fuse_cohorts(currentSite,new_patch, bc_in)
        call terminate_cohorts(currentSite, new_patch, 2)
        call sort_cohorts(new_patch)
 
@@ -899,15 +935,19 @@ contains
     enddo
 
     do p = 1,numpft !move litter pool en mass into the new patch
-       newPatch%root_litter(p) = newPatch%root_litter(p) + currentPatch%root_litter(p) * patch_site_areadis/newPatch%area
-       newPatch%leaf_litter(p) = newPatch%leaf_litter(p) + currentPatch%leaf_litter(p) * patch_site_areadis/newPatch%area
+       newPatch%root_litter(p) = newPatch%root_litter(p) + &
+             currentPatch%root_litter(p) * patch_site_areadis/newPatch%area
+       newPatch%leaf_litter(p) = newPatch%leaf_litter(p) + &
+             currentPatch%leaf_litter(p) * patch_site_areadis/newPatch%area
 
        ! The fragmentation/decomposition flux from donor patches has already occured in existing patches.  However
        ! some of their area has been carved out for this new patches which is receiving donations.
        ! Lets maintain conservation on that pre-existing mass flux in these newly disturbed patches
        
-       newPatch%root_litter_out(p) = newPatch%root_litter_out(p) + currentPatch%root_litter_out(p) * patch_site_areadis/newPatch%area
-       newPatch%leaf_litter_out(p) = newPatch%leaf_litter_out(p) + currentPatch%leaf_litter_out(p) * patch_site_areadis/newPatch%area
+       newPatch%root_litter_out(p) = newPatch%root_litter_out(p) + &
+             currentPatch%root_litter_out(p) * patch_site_areadis/newPatch%area
+       newPatch%leaf_litter_out(p) = newPatch%leaf_litter_out(p) + &
+             currentPatch%leaf_litter_out(p) * patch_site_areadis/newPatch%area
 
     enddo
 
@@ -924,7 +964,6 @@ contains
     !
     ! !USES:
     use SFParamsMod,          only : SF_VAL_CWD_FRAC
-    use EDGrowthFunctionsMod, only : c_area
     use EDtypesMod          , only : dl_sf
     !
     ! !ARGUMENTS:
@@ -956,17 +995,21 @@ contains
        !PART 1)  Burn the fractions of existing litter in the new patch that were consumed by the fire. 
        !************************************/ 
        do c = 1,ncwd
-          burned_litter = new_patch%cwd_ag(c) * patch_site_areadis/new_patch%area * currentPatch%burnt_frac_litter(c+1) !kG/m2/day
+          burned_litter = new_patch%cwd_ag(c) * patch_site_areadis/new_patch%area * &
+                currentPatch%burnt_frac_litter(c+1) !kG/m2/day
           new_patch%cwd_ag(c) = new_patch%cwd_ag(c) - burned_litter
           currentSite%flux_out = currentSite%flux_out + burned_litter * new_patch%area !kG/site/day
-          currentSite%total_burn_flux_to_atm = currentSite%total_burn_flux_to_atm + burned_litter * new_patch%area !kG/site/day
+          currentSite%total_burn_flux_to_atm = currentSite%total_burn_flux_to_atm + &
+                burned_litter * new_patch%area !kG/site/day
        enddo
 
        do p = 1,numpft
-          burned_litter = new_patch%leaf_litter(p) * patch_site_areadis/new_patch%area * currentPatch%burnt_frac_litter(dl_sf)
+          burned_litter = new_patch%leaf_litter(p) * patch_site_areadis/new_patch%area * &
+                currentPatch%burnt_frac_litter(dl_sf)
           new_patch%leaf_litter(p) = new_patch%leaf_litter(p) - burned_litter
           currentSite%flux_out = currentSite%flux_out + burned_litter * new_patch%area !kG/site/day
-          currentSite%total_burn_flux_to_atm = currentSite%total_burn_flux_to_atm + burned_litter * new_patch%area !kG/site/day
+          currentSite%total_burn_flux_to_atm = currentSite%total_burn_flux_to_atm + &
+                burned_litter * new_patch%area !kG/site/day
       enddo
 
        !************************************/     
@@ -988,6 +1031,10 @@ contains
              bcroot = (currentCohort%bsw + currentCohort%bdead) * (1.0_r8 - EDPftvarcon_inst%allom_agb_frac(p) )
              ! density of dead trees per m2. 
              dead_tree_density  = (currentCohort%fire_mort * currentCohort%n*patch_site_areadis/currentPatch%area) / AREA  
+             
+             if( hlm_use_planthydro == itrue ) then
+                call AccumulateMortalityWaterStorage(currentSite,currentCohort,dead_tree_density*AREA)
+             end if
 
              ! Unburned parts of dead tree pool. 
              ! Unburned leaves and roots    
@@ -1082,16 +1129,16 @@ contains
        currentCohort => new_patch%shortest
        do while(associated(currentCohort))
 
-          currentCohort%c_area = c_area(currentCohort) 
+          call carea_allom(currentCohort%dbh,currentCohort%n,currentSite%spread,currentCohort%pft,currentCohort%c_area)
           if(EDPftvarcon_inst%woody(currentCohort%pft) == 1)then
-             burned_leaves = (currentCohort%bl+currentCohort%bsw) * currentCohort%cfa
+             burned_leaves = min(currentCohort%bl, (currentCohort%bl+currentCohort%bsw) * currentCohort%cfa)
           else
-             burned_leaves = (currentCohort%bl+currentCohort%bsw) * currentPatch%burnt_frac_litter(6)
+             burned_leaves = min(currentCohort%bl, (currentCohort%bl+currentCohort%bsw) * currentPatch%burnt_frac_litter(6))
           endif
           if (burned_leaves > 0.0_r8) then
 
-             currentCohort%balive = max(currentCohort%br,currentCohort%balive - burned_leaves)
-             currentCohort%bl     = max(0.00001_r8,   currentCohort%bl - burned_leaves)
+             currentCohort%bl     = currentCohort%bl - burned_leaves
+
              !KgC/gridcell/day
              currentSite%flux_out = currentSite%flux_out + burned_leaves * currentCohort%n * &
                   patch_site_areadis/currentPatch%area * AREA 
@@ -1135,15 +1182,14 @@ contains
     real(r8) :: canopy_dead       !Number of individual dead from the understorey layer /day
     real(r8) :: np_mult           !Fraction of the new patch which came from the current patch (and so needs the same litter) 
     integer :: p,c
-    real(r8) :: canopy_mortality_woody_litter               ! flux of wood litter in to litter pool: KgC/m2/day
+    real(r8) :: canopy_mortality_woody_litter(maxpft)    ! flux of wood litter in to litter pool: KgC/m2/day
     real(r8) :: canopy_mortality_leaf_litter(maxpft)     ! flux in to  leaf litter from tree death: KgC/m2/day
     real(r8) :: canopy_mortality_root_litter(maxpft)     ! flux in to froot litter  from tree death: KgC/m2/day
-    real(r8) :: mean_agb_frac                               ! mean fraction of AGB to total woody biomass (stand mean)
     !---------------------------------------------------------------------
 
     currentPatch => cp_target
     new_patch => new_patch_target
-    canopy_mortality_woody_litter    = 0.0_r8 ! mortality generated litter. KgC/m2/day
+    canopy_mortality_woody_litter(:) = 0.0_r8 ! mortality generated litter. KgC/m2/day
     canopy_mortality_leaf_litter(:)  = 0.0_r8
     canopy_mortality_root_litter(:)  = 0.0_r8
 
@@ -1155,31 +1201,38 @@ contains
              !currentCohort%dmort = mortality_rates(currentCohort) 
              !the disturbance calculations are done with the previous n, c_area and d_mort. So it's probably &
              !not right to recalcualte dmort here.
-             canopy_dead = currentCohort%n * min(1.0_r8,currentCohort%dmort * hlm_freq_day)
-	     
+             canopy_dead = currentCohort%n * min(1.0_r8,currentCohort%dmort * hlm_freq_day * fates_mortality_disturbance_fraction)
 	     ! If the insect model is turned on, we need to account for insect-killed trees going to litter.
 	     if(hlm_use_insect.eq.itrue)then
 	     	canopy_dead = currentCohort%n * &
 			min(1.0_r8,(currentCohort%dmort + currentCohort%inmort) * hlm_freq_day)
-	     end if
+	     end if	     
 
-             canopy_mortality_woody_litter   = canopy_mortality_woody_litter  + &
+             canopy_mortality_woody_litter(p)= canopy_mortality_woody_litter(p) + &
                   canopy_dead*(currentCohort%bdead+currentCohort%bsw)
-             canopy_mortality_leaf_litter(p) = canopy_mortality_leaf_litter(p)+ &
+             canopy_mortality_leaf_litter(p) = canopy_mortality_leaf_litter(p) + &
                   canopy_dead*(currentCohort%bl)
-             canopy_mortality_root_litter(p) = canopy_mortality_root_litter(p)+ &
+             canopy_mortality_root_litter(p) = canopy_mortality_root_litter(p) + &
                   canopy_dead*(currentCohort%br+currentCohort%bstore)
+
+             if( hlm_use_planthydro == itrue ) then
+                call AccumulateMortalityWaterStorage(currentSite,currentCohort, canopy_dead)
+             end if
 
          else 
              if(EDPftvarcon_inst%woody(currentCohort%pft) == 1)then
 
                 understorey_dead = ED_val_understorey_death * currentCohort%n * (patch_site_areadis/currentPatch%area)  !kgC/site/day
-                canopy_mortality_woody_litter  = canopy_mortality_woody_litter  + &
+                canopy_mortality_woody_litter(p) = canopy_mortality_woody_litter(p)  + &
                      understorey_dead*(currentCohort%bdead+currentCohort%bsw)  
                 canopy_mortality_leaf_litter(p)= canopy_mortality_leaf_litter(p)+ &
                      understorey_dead* currentCohort%bl 
                 canopy_mortality_root_litter(p)= canopy_mortality_root_litter(p)+ &
                       understorey_dead*(currentCohort%br+currentCohort%bstore)
+                
+                if( hlm_use_planthydro == itrue ) then
+                   call AccumulateMortalityWaterStorage(currentSite,currentCohort, understorey_dead)
+                end if
 
              ! FIX(SPM,040114) - clarify this comment
              ! grass is not killed by canopy mortality disturbance events.
@@ -1188,6 +1241,9 @@ contains
                 ! no-op
              endif
           endif
+
+          
+
        
 
        currentCohort => currentCohort%taller      
@@ -1209,26 +1265,27 @@ contains
     ! For the new patch, only some fraction of its land area (patch_areadis/np%area) is derived from the current patch
     ! so we need to multiply by patch_areadis/np%area
 
-    mean_agb_frac = sum(EDPftvarcon_inst%allom_agb_frac(1:numpft))/dble(numpft)
-
-    do c = 1,ncwd
-    
-       cwd_litter_density = SF_val_CWD_frac(c) * canopy_mortality_woody_litter / litter_area
-       
-       new_patch%cwd_ag(c)    = new_patch%cwd_ag(c)    + mean_agb_frac * cwd_litter_density * np_mult
-       currentPatch%cwd_ag(c) = currentPatch%cwd_ag(c) + mean_agb_frac * cwd_litter_density
-       new_patch%cwd_bg(c)    = new_patch%cwd_bg(c)    + (1._r8-mean_agb_frac) * cwd_litter_density * np_mult 
-       currentPatch%cwd_bg(c) = currentPatch%cwd_bg(c) + (1._r8-mean_agb_frac) * cwd_litter_density 
-       
-       ! track as diagnostic fluxes
-       currentSite%CWD_AG_diagnostic_input_carbonflux(c) = currentSite%CWD_AG_diagnostic_input_carbonflux(c) + &
-            SF_val_CWD_frac(c) * canopy_mortality_woody_litter * hlm_days_per_year * mean_agb_frac/ AREA 
-       currentSite%CWD_BG_diagnostic_input_carbonflux(c) = currentSite%CWD_BG_diagnostic_input_carbonflux(c) + &
-            SF_val_CWD_frac(c) * canopy_mortality_woody_litter * hlm_days_per_year * (1.0_r8 - mean_agb_frac) / AREA
-    enddo 
-
     do p = 1,numpft
     
+       do c = 1,ncwd
+          
+          cwd_litter_density = SF_val_CWD_frac(c) * canopy_mortality_woody_litter(p) / litter_area
+          
+          new_patch%cwd_ag(c)    = new_patch%cwd_ag(c)    + EDPftvarcon_inst%allom_agb_frac(p) * cwd_litter_density * np_mult
+          currentPatch%cwd_ag(c) = currentPatch%cwd_ag(c) + EDPftvarcon_inst%allom_agb_frac(p) * cwd_litter_density
+          new_patch%cwd_bg(c)    = new_patch%cwd_bg(c)    + (1._r8-EDPftvarcon_inst%allom_agb_frac(p)) * cwd_litter_density &
+                                                            * np_mult 
+          currentPatch%cwd_bg(c) = currentPatch%cwd_bg(c) + (1._r8-EDPftvarcon_inst%allom_agb_frac(p)) * cwd_litter_density 
+          
+          ! track as diagnostic fluxes
+          currentSite%CWD_AG_diagnostic_input_carbonflux(c) = currentSite%CWD_AG_diagnostic_input_carbonflux(c) + &
+                SF_val_CWD_frac(c) * canopy_mortality_woody_litter(p) * hlm_days_per_year * EDPftvarcon_inst%allom_agb_frac(p) &
+                / AREA 
+          currentSite%CWD_BG_diagnostic_input_carbonflux(c) = currentSite%CWD_BG_diagnostic_input_carbonflux(c) + &
+                SF_val_CWD_frac(c) * canopy_mortality_woody_litter(p) * hlm_days_per_year * (1.0_r8 &
+                - EDPftvarcon_inst%allom_agb_frac(p)) / AREA
+       enddo
+
        new_patch%leaf_litter(p) = new_patch%leaf_litter(p) + canopy_mortality_leaf_litter(p) / litter_area * np_mult
        new_patch%root_litter(p) = new_patch%root_litter(p) + canopy_mortality_root_litter(p) / litter_area * np_mult 
 
@@ -1247,7 +1304,7 @@ contains
 
   ! ============================================================================
   subroutine create_patch(currentSite, new_patch, age, areap,cwd_ag_local,cwd_bg_local, &
-       leaf_litter_local,root_litter_local)
+       leaf_litter_local,root_litter_local,nlevsoil)
     !
     ! !DESCRIPTION:
     !  Set default values for creating a new patch
@@ -1257,12 +1314,13 @@ contains
     ! !ARGUMENTS:
     type(ed_site_type) , intent(inout), target :: currentSite
     type(ed_patch_type), intent(inout), target :: new_patch
-    real(r8), intent(in) :: age                 ! notional age of this patch in years
-    real(r8), intent(in) :: areap               ! initial area of this patch in m2. 
-    real(r8), intent(in) :: cwd_ag_local(:)     ! initial value of above ground coarse woody debris. KgC/m2
-    real(r8), intent(in) :: cwd_bg_local(:)     ! initial value of below ground coarse woody debris. KgC/m2
-    real(r8), intent(in) :: root_litter_local(:)! initial value of root litter. KgC/m2
-    real(r8), intent(in) :: leaf_litter_local(:)! initial value of leaf litter. KgC/m2
+    real(r8), intent(in) :: age                  ! notional age of this patch in years
+    real(r8), intent(in) :: areap                ! initial area of this patch in m2. 
+    real(r8), intent(in) :: cwd_ag_local(:)      ! initial value of above ground coarse woody debris. KgC/m2
+    real(r8), intent(in) :: cwd_bg_local(:)      ! initial value of below ground coarse woody debris. KgC/m2
+    real(r8), intent(in) :: root_litter_local(:) ! initial value of root litter. KgC/m2
+    real(r8), intent(in) :: leaf_litter_local(:) ! initial value of leaf litter. KgC/m2
+    integer, intent(in)  :: nlevsoil             ! number of soil layers
     !
     ! !LOCAL VARIABLES:
     !---------------------------------------------------------------------
@@ -1275,8 +1333,8 @@ contains
     allocate(new_patch%fabi(hlm_numSWb))
     allocate(new_patch%sabs_dir(hlm_numSWb))
     allocate(new_patch%sabs_dif(hlm_numSWb))
-    allocate(new_patch%rootfr_ft(numpft,hlm_numlevgrnd))
-    allocate(new_patch%rootr_ft(numpft,hlm_numlevgrnd)) 
+    allocate(new_patch%rootfr_ft(numpft,nlevsoil))
+    allocate(new_patch%rootr_ft(numpft,nlevsoil))
     
     if(hlm_use_insect)then
        allocate(new_patch%pa_insect)
@@ -1289,11 +1347,9 @@ contains
     new_patch%shortest => null() ! pointer to patch's shortest cohort   
     new_patch%older    => null() ! pointer to next older patch   
     new_patch%younger  => null() ! pointer to next shorter patch      
-    new_patch%siteptr  => null() ! pointer to the site that the patch is in
 
     ! assign known patch attributes 
 
-    new_patch%siteptr            => currentSite 
     new_patch%age                = age   
     new_patch%age_class          = 1
     new_patch%area               = areap 
@@ -1351,16 +1407,14 @@ contains
     currentPatch%shortest => null()         
     currentPatch%older    => null()               
     currentPatch%younger  => null()           
-    currentPatch%siteptr  => null()             
 
     currentPatch%patchno  = 999                            
 
     currentPatch%age                        = nan                          
     currentPatch%age_class                  = 1
     currentPatch%area                       = nan                                           
-    currentPatch%canopy_layer_lai(:)        = nan               
+    currentPatch%canopy_layer_tai(:)        = nan               
     currentPatch%total_canopy_area          = nan
-    currentPatch%canopy_area                = nan                                 
     currentPatch%bare_frac_area             = nan                             
 
     currentPatch%tlai_profile(:,:,:)        = nan 
@@ -1387,10 +1441,9 @@ contains
     currentPatch%fabd(:)                    = nan    ! fraction of incoming direct  radiation that is absorbed by the canopy
     currentPatch%fabi(:)                    = nan    ! fraction of incoming diffuse radiation that is absorbed by the canopy
 
-    currentPatch%present(:,:)               = 999    ! is there any of this pft in this layer?
+    currentPatch%canopy_mask(:,:)           = 999    ! is there any of this pft in this layer?
     currentPatch%nrad(:,:)                  = 999    ! number of exposed leaf layers for each canopy layer and pft
     currentPatch%ncan(:,:)                  = 999    ! number of total leaf layers for each canopy layer and pft
-    currentPatch%lai                        = nan    ! leaf area index of patch
     currentPatch%pft_agb_profile(:,:)       = nan    
 
     ! DISTURBANCE 
@@ -1441,7 +1494,7 @@ contains
     currentPatch%burnt_frac_litter(:)       = 0.0_r8 
     currentPatch%btran_ft(:)                = 0.0_r8
 
-    currentPatch%canopy_layer_lai(:)        = 0.0_r8
+    currentPatch%canopy_layer_tai(:)        = 0.0_r8
 
     currentPatch%seeds_in(:)                = 0.0_r8
     currentPatch%seed_decay(:)              = 0.0_r8
@@ -1459,6 +1512,9 @@ contains
     currentPatch%pa_insect%MPB_Transit(1:7) = 0.0_r8
     currentPatch%pa_insect%PrS = 0.0_r8
     currentPatch%pa_insect%Ct = 0.0_r8
+    
+    currentPatch%c_stomata                  = 0.0_r8 ! This is calculated immediately before use
+    currentPatch%c_lblayer                  = 0.0_r8
 
   end subroutine zero_patch
 
@@ -1470,6 +1526,8 @@ contains
     !
     ! !USES:
     use EDParamsMod , only : ED_val_patch_fusion_tol
+    use EDTypesMod , only : patch_fusion_tolerance_relaxation_increment
+    use EDTypesMod , only : max_age_of_second_oldest_patch
     !
     ! !ARGUMENTS:
     type(ed_site_type), intent(inout), target  :: csite
@@ -1481,14 +1539,11 @@ contains
     integer  :: ft,z        !counters for pft and height class
     real(r8) :: norm        !normalized difference between biomass profiles
     real(r8) :: profiletol  !tolerance of patch fusion routine. Starts off high and is reduced if there are too many patches.
-    integer  :: maxpatch    !maximum number of allowed patches. FIX-RF. These should be namelist variables. 
     integer  :: nopatches   !number of patches presently in gridcell
     integer  :: iterate     !switch of patch reduction iteration scheme. 1 to keep going, 0 to stop
     integer  :: fuse_flag   !do patches get fused (1) or not (0). 
+    !
     !---------------------------------------------------------------------
-
-    !maxpatch = 4  
-    maxpatch = maxPatchesPerSite
 
     currentSite => csite 
 
@@ -1506,7 +1561,7 @@ contains
     iterate = 1
 
     !---------------------------------------------------------------------!
-    !  Keep doing this until nopatches >= maxpatch                         !
+    !  Keep doing this until nopatches >= maxPatchesPerSite                         !
     !---------------------------------------------------------------------!
 
     do while(iterate == 1)
@@ -1532,41 +1587,85 @@ contains
              endif
 
              if(associated(tpp).and.associated(currentPatch))then
-                fuse_flag = 1 !the default is to fuse the patches
+
+                !--------------------------------------------------------------------------------------------
+                ! The default is to fuse the patches, unless some criteria is met which keeps them separated.
+                ! there are multiple criteria which all need to be met to keep them distinct:
+                ! (a) one of them is younger than the max age at which we force fusion;
+                ! (b) there is more than a threshold (tiny) amount of biomass in at least one of the patches;
+                ! (c) for at least one pft x size class, where there is biomass in that class in at least one patch,
+                ! and the normalized difference between the patches exceeds a threshold.
+                !--------------------------------------------------------------------------------------------
+                
+                fuse_flag = 1
                 if(currentPatch%patchno /= tpp%patchno) then   !these should be the same patch
 
-                   !---------------------------------------------------------------------!
-                   ! Calculate the difference criteria for each pft and dbh class        !
-                   !---------------------------------------------------------------------!   
-                   do ft = 1,numpft        ! loop over pfts
-                      do z = 1,n_dbh_bins      ! loop over hgt bins 
-                         !is there biomass in this category?
-                         if(currentPatch%pft_agb_profile(ft,z)  > 0.0_r8.or.tpp%pft_agb_profile(ft,z) > 0.0_r8)then 
-                            norm = abs(currentPatch%pft_agb_profile(ft,z) - tpp%pft_agb_profile(ft,z))/(0.5_r8*&
-                                 &(currentPatch%pft_agb_profile(ft,z) + tpp%pft_agb_profile(ft,z)))
-                            !---------------------------------------------------------------------!
-                            ! Look for differences in profile biomass, above the minimum biomass  !
-                            !---------------------------------------------------------------------!
+                   !-----------------------------------------------------------------------------------
+                   ! check to see if both patches are older than the age at which we force them to fuse
+                   !-----------------------------------------------------------------------------------
+                   
+                   if ( tpp%age .le. max_age_of_second_oldest_patch .or. &
+                      currentPatch%age .le. max_age_of_second_oldest_patch ) then
 
-                            if(norm  > profiletol)then
-                               !looking for differences between profile density.                   
-                               if(currentPatch%pft_agb_profile(ft,z) > NTOL.or.tpp%pft_agb_profile(ft,z) > NTOL)then
-                                  fuse_flag = 0 !do not fuse  - keep apart. 
-                               endif
-                            endif ! profile tol           
-                         endif ! NTOL 
-                      enddo !ht bins
-                   enddo ! PFT
+                      
+                      !---------------------------------------------------------------------------------------------------------
+                      ! the next bit of logic forces fusion of two patches which both have tiny biomass densities. without this,
+                      ! fates gives a bunch of really young patches which all have almost no biomass and so don't need to be 
+                      ! distinguished from each other. but if force_patchfuse_min_biomass is too big, it takes too long for the 
+                      ! youngest patch to build up enough biomass to be its own distinct entity, which leads to large oscillations 
+                      ! in the patch dynamics and dependent variables.
+                      !---------------------------------------------------------------------------------------------------------
+                      
+                      if(sum(currentPatch%pft_agb_profile(:,:)) > force_patchfuse_min_biomass .or. &
+                           sum(tpp%pft_agb_profile(:,:)) > force_patchfuse_min_biomass ) then
 
-                   !---------------------------------------------------------------------!
-                   ! Call the patch fusion routine if there is a meaningful difference   !
-                   ! any of the pft x height categories                                  !
-                   !---------------------------------------------------------------------!
+                         !---------------------------------------------------------------------!
+                         ! Calculate the difference criteria for each pft and dbh class        !
+                         !---------------------------------------------------------------------!   
+
+                         do ft = 1,numpft        ! loop over pfts
+                            do z = 1,n_dbh_bins      ! loop over hgt bins 
+
+                               !----------------------------------
+                               !is there biomass in this category?
+                               !----------------------------------
+
+                               if(currentPatch%pft_agb_profile(ft,z)  > 0.0_r8 .or.  &
+                                    tpp%pft_agb_profile(ft,z) > 0.0_r8)then 
+
+                                  !-------------------------------------------------------------------------------------
+                                  ! what is the relative difference in biomass i nthis category between the two patches?
+                                  !-------------------------------------------------------------------------------------
+
+                                  norm = abs(currentPatch%pft_agb_profile(ft,z) - &
+                                       tpp%pft_agb_profile(ft,z))/(0.5_r8 * &
+                                       &(currentPatch%pft_agb_profile(ft,z) + tpp%pft_agb_profile(ft,z)))
+
+                                  !---------------------------------------------------------------------!
+                                  ! Look for differences in profile biomass, above the minimum biomass  !
+                                  !---------------------------------------------------------------------!
+
+                                  if(norm  > profiletol)then
+
+                                     fuse_flag = 0 !do not fuse  - keep apart. 
+
+                                  endif ! profile tol           
+                               endif ! biomass(ft,z) .gt. 0
+                            enddo !ht bins
+                         enddo ! PFT
+                      endif ! sum(biomass(:,:) .gt. force_patchfuse_min_biomass 
+                   endif ! maxage
+
+                   !-------------------------------------------------------------------------!
+                   ! Call the patch fusion routine if there is not a meaningful difference   !
+                   ! any of the pft x height categories                                      !
+                   ! or both are older than forced fusion age                                !
+                   !-------------------------------------------------------------------------!
 
                    if(fuse_flag  ==  1)then 
                       tmpptr => currentPatch%older       
-                      call fuse_2_patches(currentPatch, tpp)
-                      call fuse_cohorts(tpp, bc_in)
+                      call fuse_2_patches(csite, currentPatch, tpp)
+                      call fuse_cohorts(csite,tpp, bc_in)
                       call sort_cohorts(tpp)
                       currentPatch => tmpptr
                    else
@@ -1595,9 +1694,9 @@ contains
           currentPatch => currentPatch%older
        enddo
 
-       if(nopatches > maxpatch)then
+       if(nopatches > maxPatchesPerSite)then
           iterate = 1
-          profiletol = profiletol * 1.1_r8
+          profiletol = profiletol * patch_fusion_tolerance_relaxation_increment
 
           !---------------------------------------------------------------------!
           ! Making profile tolerance larger means that more fusion will happen  !
@@ -1606,13 +1705,13 @@ contains
           iterate = 0
        endif
 
-    enddo !do while nopatches>maxpatch
+    enddo !do while nopatches>maxPatchesPerSite
  
   end subroutine fuse_patches
 
   ! ============================================================================
 
-  subroutine fuse_2_patches(dp, rp)
+  subroutine fuse_2_patches(csite, dp, rp)
     !
     ! !DESCRIPTION:
     ! This function fuses the two patches specified in the argument.
@@ -1625,8 +1724,10 @@ contains
     use FatesInterfaceMod	  , only: hlm_use_insect
     !
     ! !ARGUMENTS:
-    type (ed_patch_type) , intent(inout), pointer :: dp ! Donor Patch
-    type (ed_patch_type) , intent(inout), pointer :: rp ! Recipient Patch
+    type (ed_site_type), intent(inout),target :: csite  ! Current site 
+    type (ed_patch_type) , pointer :: dp                ! Donor Patch
+    type (ed_patch_type) , target, intent(inout) :: rp  ! Recipient Patch
+
     !
     ! !LOCAL VARIABLES:
     type (ed_cohort_type), pointer :: currentCohort ! Current Cohort
@@ -1637,7 +1738,6 @@ contains
     integer                        :: tnull,snull  ! are the tallest and shortest cohorts associated?
     type(ed_patch_type), pointer   :: youngerp     ! pointer to the patch younger than donor
     type(ed_patch_type), pointer   :: olderp       ! pointer to the patch older than donor
-    type(ed_site_type),  pointer   :: csite        ! pointer to the donor patch's site
     real(r8)                       :: inv_sum_area ! Inverse of the sum of the two patches areas
     !-----------------------------------------------------------------------------------------------
 
@@ -1694,7 +1794,9 @@ contains
     rp%burnt_frac_litter(:) = (dp%burnt_frac_litter(:)*dp%area + rp%burnt_frac_litter(:)*rp%area) * inv_sum_area
     rp%btran_ft(:)          = (dp%btran_ft(:)*dp%area + rp%btran_ft(:)*rp%area) * inv_sum_area
     rp%zstar                = (dp%zstar*dp%area + rp%zstar*rp%area) * inv_sum_area
-
+    rp%c_stomata            = (dp%c_stomata*dp%area + rp%c_stomata*rp%area) * inv_sum_area
+    rp%c_lblayer            = (dp%c_lblayer*dp%area + rp%c_lblayer*rp%area) * inv_sum_area
+    
     rp%area = rp%area + dp%area !THIS MUST COME AT THE END!
 
     ! INSECTS: fuse insect patches
@@ -1738,7 +1840,6 @@ contains
           rp%shortest => storesmallcohort    
 
           currentCohort%patchptr => rp
-          currentCohort%siteptr  => rp%siteptr
 
           currentCohort => nextc
 
@@ -1756,7 +1857,6 @@ contains
     ! Define some aliases for the donor patches younger and older neighbors
     ! which may or may not exist.  After we set them, we will remove the donor
     ! And then we will go about re-setting the map.
-    csite => dp%siteptr
     if(associated(dp%older))then
        olderp => dp%older
     else
@@ -1781,6 +1881,7 @@ contains
        ! to be set, and it is set as the patch older than dp.  That patch
        ! already knows it's older patch (so no need to set or change it)
        csite%youngest_patch => olderp
+       olderp%younger       => null()
     end if
 
     
@@ -1792,6 +1893,7 @@ contains
        ! to be set, and it is set as the patch younger than dp.  That patch already
        ! knows it's younger patch, no need to set
        csite%oldest_patch => youngerp
+       youngerp%older     => null()
     end if
 
 
@@ -1837,54 +1939,69 @@ contains
   end subroutine Fuse_2_Insect_Patches
   
   ! ============================================================================
-  subroutine terminate_patches(cs_pnt)
+
+  subroutine terminate_patches(currentSite)
     !
     ! !DESCRIPTION:
     !  Terminate Patches if they  are too small                          
     !
-    ! !USES:
     !
     ! !ARGUMENTS:
-    type(ed_site_type), target, intent(in) :: cs_pnt
+    type(ed_site_type), target, intent(inout) :: currentSite
     !
     ! !LOCAL VARIABLES:
-    type(ed_site_type),  pointer :: currentSite
-    type(ed_patch_type), pointer :: currentPatch, tmpptr
+    type(ed_patch_type), pointer :: currentPatch
+    type(ed_patch_type), pointer :: olderPatch
+    type(ed_patch_type), pointer :: youngerPatch
+
     real(r8) areatot ! variable for checking whether the total patch area is wrong. 
     !---------------------------------------------------------------------
  
-    currentSite => cs_pnt
-
-    currentPatch => currentSite%oldest_patch
-    
-    !fuse patches if one of them is very small.... 
     currentPatch => currentSite%youngest_patch
     do while(associated(currentPatch)) 
+       
        if(currentPatch%area <= min_patch_area)then
-          if ( currentPatch%patchno /= currentSite%youngest_patch%patchno) then
-            ! Do not force the fusion of the youngest patch to its neighbour. 
-            ! This is only really meant for very old patches. 
+          
+          if ( .not.associated(currentPatch,currentSite%youngest_patch) ) then
+             
              if(associated(currentPatch%older) )then
-                write(fates_log(),*) 'fusing to older patch because this one is too small',&
-                     currentPatch%area, currentPatch%lai, &
-                     currentPatch%older%area,currentPatch%older%lai
-                call fuse_2_patches(currentPatch%older, currentPatch)
-                write(fates_log(),*) 'after fusion to older patch',currentPatch%area
-             else
-                write(fates_log(),*) 'fusing to younger patch because oldest one is too small',&
-                     currentPatch%area, currentPatch%lai
-                tmpptr => currentPatch%younger
-                call fuse_2_patches(currentPatch, currentPatch%younger)
-                write(fates_log(),*) 'after fusion to younger patch'
-                currentPatch => tmpptr
+                
+                if(debug) &
+                     write(fates_log(),*) 'fusing to older patch because this one is too small',&
+                     currentPatch%area, &
+                     currentPatch%older%area
+                
+                ! We set a pointer to this patch, because
+                ! it will be returned by the subroutine as de-referenced
+                
+                olderPatch => currentPatch%older
+                call fuse_2_patches(currentSite, olderPatch, currentPatch)
+                
+                ! The fusion process has updated the "older" pointer on currentPatch
+                ! for us.
+                
+                ! This logic checks to make sure that the younger patch is not the youngest
+                ! patch. As mentioned earlier, we try not to fuse it.
+                
+             elseif( .not. associated(currentPatch%younger,currentSite%youngest_patch) ) then
+                
+                if(debug) &
+                      write(fates_log(),*) 'fusing to younger patch because oldest one is too small', &
+                      currentPatch%area
+                
+                youngerPatch => currentPatch%younger
+                call fuse_2_patches(currentSite, youngerPatch, currentPatch)
+                
+                ! The fusion process has updated the "younger" pointer on currentPatch
+                
              endif
           endif
        endif
-
+          
        currentPatch => currentPatch%older
-
+       
     enddo
-
+    
     !check area is not exceeded
     areatot = 0._r8
     currentPatch => currentSite%oldest_patch
@@ -1970,20 +2087,15 @@ contains
 
     currentPatch => cp_pnt
 
-    delta_dbh = (DBHMAX/N_DBH_BINS)
-
     currentPatch%pft_agb_profile(:,:) = 0.0_r8
 
     do j = 1,N_DBH_BINS   
-        if (j == 1) then
-           mind(j) = 0.0_r8
-           maxd(j) = delta_dbh
-        else if (j == N_DBH_BINS) then
-           mind(j) = (j-1) * delta_dbh
+        if (j == N_DBH_BINS) then
+           mind(j) = patchfusion_dbhbin_loweredges(j)
            maxd(j) = gigantictrees
         else 
-           mind(j) = (j-1) * delta_dbh
-           maxd(j) = (j)*delta_dbh
+           mind(j) = patchfusion_dbhbin_loweredges(j)
+           maxd(j) = patchfusion_dbhbin_loweredges(j+1)
         endif
     enddo
 
@@ -2035,39 +2147,5 @@ contains
     enddo
 
    end function countPatches
-
-   ! ====================================================================================
-
-  subroutine set_root_fraction( cpatch , zi )
-    !
-    ! !DESCRIPTION:
-    !  Calculates the fractions of the root biomass in each layer for each pft. 
-    !
-    ! !USES:
-
-    !
-    ! !ARGUMENTS
-    type(ed_patch_type),intent(inout), target :: cpatch
-    real(r8),intent(in)  :: zi(0:hlm_numlevsoil)
-    !
-    ! !LOCAL VARIABLES:
-    integer :: lev,p,c,ft
-    !----------------------------------------------------------------------
-    
-    do ft = 1,numpft
-       do lev = 1, hlm_numlevgrnd
-          cpatch%rootfr_ft(ft,lev) = 0._r8
-       enddo
-
-       do lev = 1, hlm_numlevsoil-1
-          cpatch%rootfr_ft(ft,lev) = .5_r8*( &
-                 exp(-EDPftvarcon_inst%roota_par(ft) * zi(lev-1))  &
-               + exp(-EDPftvarcon_inst%rootb_par(ft) * zi(lev-1))  &
-               - exp(-EDPftvarcon_inst%roota_par(ft) * zi(lev))    &
-               - exp(-EDPftvarcon_inst%rootb_par(ft) * zi(lev)))
-       end do
-    end do
-
-  end subroutine set_root_fraction
 
  end module EDPatchDynamicsMod
