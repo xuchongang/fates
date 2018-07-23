@@ -513,12 +513,12 @@ contains
                       ! so with the number density must come the effective mortality rates.
 
                       nc%fmort            = 0.0_r8               ! Should had also been zero in the donor
-                      nc%imort            = ED_val_understorey_death/hlm_freq_day  ! This was zero in the donor
+                      !nc%imort            = ED_val_understorey_death/hlm_freq_day  ! This was zero in the donor
                       nc%cmort            = currentCohort%cmort
                       nc%hmort            = currentCohort%hmort
                       nc%bmort            = currentCohort%bmort
                       nc%dmort            = currentCohort%dmort
-                      nc%lmort_logging    = currentCohort%lmort_logging
+                      nc%lmort_direct     = currentCohort%lmort_direct
                       nc%lmort_collateral = currentCohort%lmort_collateral
                       nc%lmort_infra      = currentCohort%lmort_infra
 		      nc%inmort      	  = currentCohort%inmort
