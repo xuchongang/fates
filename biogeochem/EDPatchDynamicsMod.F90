@@ -124,7 +124,7 @@ contains
           ! Mortality for trees in the understorey.
           currentCohort%patchptr => currentPatch
 
-          call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort)
+          call mortality_rates(currentCohort,bc_in,cmort,hmort,bmort,frmort,inmort)
           currentCohort%dmort  = cmort+hmort+bmort+frmort
           call carea_allom(currentCohort%dbh,currentCohort%n,site_in%spread,currentCohort%pft, &
                currentCohort%c_area)
@@ -135,6 +135,7 @@ contains
           currentCohort%hmort = hmort
           currentCohort%frmort = frmort
           currentCohort%fmort = 0.0_r8 ! Fire mortality is initialized as zero, but may be changed
+	  currentCohort%frmort = inmort
 
           call LoggingMortality_frac(currentCohort%pft, currentCohort%dbh, &
                 lmort_direct,lmort_collateral,lmort_infra )
