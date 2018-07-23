@@ -104,6 +104,7 @@ contains
     real(r8) :: bmort
     real(r8) :: hmort
     real(r8) :: frmort
+    real(r8) :: inmort
 
     real(r8) :: lmort_direct
     real(r8) :: lmort_collateral
