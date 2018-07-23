@@ -1923,8 +1923,11 @@ contains
     ! subroutine before the donor patch, or its pointer at least, is deallocated. 
     
     ! !ARGUMENTS:
-      type (ed_patch_type) , intent(inout), pointer :: dp               ! Donor Patch
-      type (ed_patch_type) , intent(inout), pointer :: rp               ! Recipient Patch
+      !type (ed_patch_type) , intent(inout), pointer :: dp               ! Donor Patch
+      !type (ed_patch_type) , intent(inout), pointer :: rp               ! Recipient Patch
+      
+      type (ed_patch_type) , pointer :: dp                ! Donor Patch
+      type (ed_patch_type) , target, intent(inout) :: rp  ! Recipient Patch
       
       ! These variables do not depend on the patch history or characteristics.
       rp%pa_insect%InsectPFTPref = 0 
