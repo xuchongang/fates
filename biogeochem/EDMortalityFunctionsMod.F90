@@ -116,7 +116,7 @@ contains
 
     ! Assigning a value to the local variable for insect mortality
     if(hlm_use_insect.eq.itrue)then
-    	inmort = currentCohort%inmort
+    	inmort = cohort_in%inmort
 	else
 	  inmort = 0.0_r8
     end if
