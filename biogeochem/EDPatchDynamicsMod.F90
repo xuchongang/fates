@@ -296,7 +296,7 @@ contains
                 		currentCohort%hmort = currentCohort%hmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 		currentCohort%bmort = currentCohort%bmort*(1.0_r8 - fates_mortality_disturbance_fraction)
                 		currentCohort%dmort = currentCohort%dmort*(1.0_r8 - fates_mortality_disturbance_fraction)
-                		currentCohort%lmort_logging    = 0.0_r8
+                		currentCohort%lmort_direct    = 0.0_r8
                 		currentCohort%lmort_collateral = 0.0_r8
                 		currentCohort%lmort_infra      = 0.0_r8
             	 	end if
