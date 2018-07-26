@@ -14,7 +14,7 @@ module FatesInsectMemMod
     integer,  parameter :: DomainSize = 2**8                      	! domain size 256 categories for physiological ages
     integer,  parameter :: numberInsectTypes = 1                  	! number of insect types (currently only one-mountain pine beetle)
     integer,  parameter :: maxNumStages   = 20                    	! maximum number of stages for insect development
-    integer,  parameter :: maxpft = 13					! maximum number of plant pfts (I've manually entered the current number, which is inelegant...)
+    integer,  parameter :: maxpft = 14					! maximum number of plant pfts (I've manually entered the current number, which is inelegant...)
     
     !-------------------------------------------------------------------------------------------------------------------------------
     ! Defining a patch-level type from which to obtain variables. The insect module runs at the patch within site level.
@@ -65,7 +65,7 @@ module FatesInsectMemMod
 	! initialize the preference, but will move to the parameter file later
 	allocate(this%InsectPFTPref(1:numberInsectTypes, 1:maxpft))
 	this%InsectPFTPref = 0 
-        this%InsectPFTPref(1,1)= 1					! This is currently initialized only for mountain pine beetle
+        this%InsectPFTPref(1,2)= 1					! This is currently initialized only for mountain pine beetle
 
 	allocate(this%MPB_PhysAge(1:DomainSize,1:7))
 	this%MPB_PhysAge(1:DomainSize, 1:7) = 0.0_r8
