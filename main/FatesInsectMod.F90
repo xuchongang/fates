@@ -210,27 +210,27 @@ contains
         ! used in the current version of the insect mortality model.
 
         ! Here is the 5-8 inch dbh size class we use in the model.
-        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
+        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
         	Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
         end if
 
         ! Here is the 8-10 inch dbh size class we use in the model.
-        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
+        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
         	Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
         end if
 
         ! Here is 10-12 inch dbh size class we use in the model.
-        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
+        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
         	Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
         end if
 
         ! Here is 12-14 inch dbh size class we use in the model.
-        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
+        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
         	Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
         end if
 
         ! Here is 14 inch dbh size class and larger we use in the model.
-        if(currentCohort%pft == 1 .and. currentCohort%dbh >= 35.56_r8)then
+        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 35.56_r8)then
         	Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
         end if
 
@@ -297,7 +297,7 @@ contains
         ! Here is the 5-8 inch dbh size class we use in the model.
 	! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 	! to the mortality rate on a yearly basis.
-        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
@@ -306,7 +306,7 @@ contains
         end if
 
         ! Here is the 8-10 inch dbh size class we use in the model.
-        if(InPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+        if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
@@ -315,7 +315,7 @@ contains
         end if
 
         ! Here is 10-12 inch dbh size class we use in the model.
-        if(InPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+        if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
@@ -324,7 +324,7 @@ contains
         end if
 
         ! Here is 12-14 inch dbh size class we use in the model.
-        if(InPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+        if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt14/Ntm114)*365.0_r8
@@ -333,7 +333,7 @@ contains
         end if
 
         ! Here is 14 inch dbh size class and larger we use in the model.
-        if(InPopn > EndMPBPopn .and. currentCohort%pft == 1 .and. currentCohort%dbh >= &
+        if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	35.56_r8 .and. Ntm116s > 0.0_r8)then
 	    
                 currentCohort%inmort = (1.0_r8 - Nt16s/Ntm116s)*365.0_r8
