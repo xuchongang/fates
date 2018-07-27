@@ -201,7 +201,13 @@ contains
                 currentPatch%disturbance_rates(dtype_ifire),currentPatch%frac_burnt
        endif
 
-
+       ! To validate the insect outbreak model we turn off other forms of disturbance so patch 
+       ! disturbance (canopy tree death) can be compared to aerially surveyed damage levels.
+       if(hlm_use_insect.eq.itrue)then
+            	currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
+       		currentPatch%disturbance_rates(dtype_ilog)  = 0.0_r8
+       		currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
+       endif
 
        ! ------------------------------------------------------------------------------------------
        ! Determine which disturbance is dominant, and force mortality diagnostics in the upper 
