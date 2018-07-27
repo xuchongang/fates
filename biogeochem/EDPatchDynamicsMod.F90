@@ -136,7 +136,7 @@ contains
           currentCohort%hmort = hmort
           currentCohort%frmort = frmort
           currentCohort%fmort = 0.0_r8 ! Fire mortality is initialized as zero, but may be changed
-	  currentCohort%frmort = inmort
+	  currentCohort%inmort = inmort
 
           call LoggingMortality_frac(currentCohort%pft, currentCohort%dbh, &
                 lmort_direct,lmort_collateral,lmort_infra )
@@ -150,9 +150,6 @@ contains
        end do
        currentPatch => currentPatch%younger
     end do
-
-    ! For insect mortality, I believe it is unnecessary to recalculate inmort as this is already stored
-    ! at the cohort level when the insect_model subroutine is called in EDMainMod.F90.
     
     ! ---------------------------------------------------------------------------------------------
     ! Calculate Disturbance Rates based on the mortality rates just calculated
