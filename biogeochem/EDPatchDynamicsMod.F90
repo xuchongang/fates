@@ -222,15 +222,9 @@ contains
        ! disturbance type
        ! ------------------------------------------------------------------------------------------
        if(hlm_use_insect.eq.itrue) then
-       		if(currentPatch%disturbance_rates(dtype_ilog) > currentPatch%disturbance_rates(dtype_inmort)) then
-			currentPatch%disturbance_rates(dtype_ilog) = 0.0_r8
-		end if 
-		if(currentPatch%disturbance_rates(dtype_ifall) > currentPatch%disturbance_rates(dtype_inmort)) then
-			currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
-		end if 
-		if(currentPatch%disturbance_rates(dtype_ifire) > currentPatch%disturbance_rates(dtype_inmort)) then
-			currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
-		end if 
+       		currentPatch%disturbance_rates(dtype_ilog) = 0.0_r8
+		currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
+		currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
        end if
        ! ------------------------------------------------------------------------------------------
 
@@ -1934,7 +1928,7 @@ contains
       
       ! These variables do not depend on the patch history or characteristics.
       rp%pa_insect%InsectPFTPref = 0 
-      rp%pa_insect%InsectPFTPref(1,1)= 1						! This is currently initialized only for mountain pine beetle
+      this%InsectPFTPref(1,2)= 1						! This is currently initialized only for mountain pine beetle
       
       if(dp%area >= rp%area)then
       	rp%pa_insect%PrS = dp%pa_insect%PrS
