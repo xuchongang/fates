@@ -1928,7 +1928,7 @@ contains
       
       ! These variables do not depend on the patch history or characteristics.
       rp%pa_insect%InsectPFTPref = 0 
-      this%InsectPFTPref(1,2)= 1						! This is currently initialized only for mountain pine beetle
+      rp%pa_insect%InsectPFTPref(1,2)= 1				! This is currently initialized only for mountain pine beetle
       
       if(dp%area >= rp%area)then
       	rp%pa_insect%PrS = dp%pa_insect%PrS
