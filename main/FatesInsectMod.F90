@@ -4,7 +4,7 @@ module FatesInsectMod
   use FatesInterfaceMod         , only : hlm_current_month, hlm_current_day, hlm_freq_day
   use EDtypesMod                , only : ed_site_type, ed_patch_type, ed_cohort_type
   use FatesInsectMemMod         , only : ed_patch_insect_type, numberInsectTypes
-  use EDParamsMod               , only : insect_an
+  !use EDParamsMod               , only : insect_an
 
   ! !PUBLIC MEMBER FUNCTIONS:
   public  :: insect_model
