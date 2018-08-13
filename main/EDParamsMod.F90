@@ -89,8 +89,8 @@ module EDParamsMod
    
    !---------------------------------------------------------------------------------------------- 
    !insect control parameters (ONLY RELEVANT WHEN USE_FATES_INSECT = TRUE)
-   real(r8),protected :: insect_an         !  maximum conducitivity for unit root surface (kg water/m2 root area/Mpa/s)
-   character(len=param_string_length),parameter :: insect_name_an = "fates_insect_an" 
+   !real(r8),protected :: insect_an         !  maximum conducitivity for unit root surface (kg water/m2 root area/Mpa/s)
+   !character(len=param_string_length),parameter :: insect_name_an = "fates_insect_an" 
 
    ! Logging Control Parameters (ONLY RELEVANT WHEN USE_FATES_LOGGING = TRUE)
    ! ----------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ contains
     hydr_psi0                             = nan
     hydr_psicap                           = nan
     
-    insect_an                             = nan
+    !insect_an                             = nan
 
     logging_dbhmin                        = nan
     logging_collateral_frac               = nan
@@ -385,8 +385,8 @@ contains
     call fates_params%RetreiveParameter(name=hydr_name_psicap, &
           data=hydr_psicap)
 	  
-    call fates_params%RetreiveParameter(name=insect_name_an, &
-          data=insect_an)	  
+    !call fates_params%RetreiveParameter(name=insect_name_an, &
+    !      data=insect_an)	  
 
     call fates_params%RetreiveParameter(name=logging_name_dbhmin, &
           data=logging_dbhmin)
@@ -459,7 +459,7 @@ contains
 	write(fates_log(),fmt0) 'hydr_kmax_rsurf = ',hydr_kmax_rsurf  
         write(fates_log(),fmt0) 'hydr_psi0 = ',hydr_psi0
         write(fates_log(),fmt0) 'hydr_psicap = ',hydr_psicap
-        write(fates_log(),fmt0) 'insect_an = ',insect_an
+        !write(fates_log(),fmt0) 'insect_an = ',insect_an
         write(fates_log(),fmt0) 'logging_dbhmin = ',logging_dbhmin
         write(fates_log(),fmt0) 'logging_collateral_frac = ',logging_collateral_frac
         write(fates_log(),fmt0) 'logging_coll_under_frac = ',logging_coll_under_frac
