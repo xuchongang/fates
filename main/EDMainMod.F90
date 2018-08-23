@@ -149,10 +149,8 @@ contains
     !******************************************************************************
     ! Reproduction, Recruitment and Cohort Dynamics : controls cohort organisation 
     !******************************************************************************
-    ! Lodgepole pine forest dynamics are not well represented by the current recruitment function so
-    ! it is turned off when use insect is switched on because the insect model currently 
-    ! simulates mountain pine beetles attacking pine trees.
-    if(hlm_use_ed_st3.eq.ifalse .and. hlm_use_insect.eq.ifalse) then 
+
+    if(hlm_use_ed_st3.eq.ifalse) then 
        currentPatch => currentSite%oldest_patch
        do while (associated(currentPatch))                 
           
@@ -281,11 +279,7 @@ contains
 
 
           ! Apply growth to potentially all carbon pools
-	  ! Because temperate tree growth dynamics are now well represented,
-	  ! we turn this off when simulating insect outbreaks in North America.
-	  if(hlm_use_insect.eq.ifalse) then 
-		call PlantGrowth( currentSite, currentCohort, bc_in )
-    	  end if
+	  call PlantGrowth( currentSite, currentCohort, bc_in )
 
           ! Carbon assimilate has been spent at this point
           ! and can now be safely zero'd
@@ -362,13 +356,9 @@ contains
     enddo
 
     ! at the site level, update the seed bank mass
-    ! Only do this if use insect is turned off as the seed germination model
-    ! doesn't accurately represent North American forests.
-    if(hlm_use_insect.eq.ifalse) then 
-    	do ft = 1,numpft
-       		currentSite%seed_bank(ft) = currentSite%seed_bank(ft) + currentSite%dseed_dt(ft)*hlm_freq_day
-    	enddo
-    endif
+    do ft = 1,numpft
+       currentSite%seed_bank(ft) = currentSite%seed_bank(ft) + currentSite%dseed_dt(ft)*hlm_freq_day
+    enddo
 
     ! Check for negative values. Write out warning to show carbon balance. 
     do ft = 1,numpft
