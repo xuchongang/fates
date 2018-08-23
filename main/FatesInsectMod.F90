@@ -299,7 +299,8 @@ contains
 	! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 	! to the mortality rate on a yearly basis.
         if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8)then
+		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
+		Nt12 + Nt14 + Nt16s > 1.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
 		else
