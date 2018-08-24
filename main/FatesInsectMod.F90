@@ -292,7 +292,7 @@ contains
     ! larger than the endemic beetle population. Otherwise beetles only colonize trees
     ! that were already killed by other mortality causes so insect mortality is effectively zero.
     do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
-        ! Below I compute the tree density per 225 m^2 in each of the size classes
+        ! Below I compute the tree mortality rate (n/ha/year) in each of the size classes
         ! used in the current version of the insect mortality model.
 	
         ! Here is the 5-8 inch dbh size class we use in the model.
@@ -300,7 +300,7 @@ contains
 	! to the mortality rate on a yearly basis.
         if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
-		Nt12 + Nt14 + Nt16s > 1.0_r8)then
+		Ntm168 > Nt68 .and. Nt12 + Nt14 + Nt16s > 1.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
 		else
@@ -309,7 +309,8 @@ contains
 
         ! Here is the 8-10 inch dbh size class we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8)then
+	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8 .and. &
+		Ntm110 > Nt10 .and. Nt12 + Nt14 + Nt16s > 1.0_r8)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
 		else
@@ -318,7 +319,8 @@ contains
 
         ! Here is 10-12 inch dbh size class we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8)then
+	    	25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8 .and. &
+		Ntm112 > Nt12)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
 		else
@@ -327,7 +329,8 @@ contains
 
         ! Here is 12-14 inch dbh size class we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8)then
+	    	30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8 .and. &
+		Ntm114 > Nt14)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt14/Ntm114)*365.0_r8
 		else
@@ -336,7 +339,8 @@ contains
 
         ! Here is 14 inch dbh size class and larger we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	35.56_r8 .and. Ntm116s > 0.0_r8)then
+	    	35.56_r8 .and. Ntm116s > 0.0_r8 .and. &
+		Ntm116s > Nt16s)then
 	    
                 currentCohort%inmort = (1.0_r8 - Nt16s/Ntm116s)*365.0_r8
 		else
