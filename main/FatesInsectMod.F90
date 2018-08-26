@@ -212,27 +212,27 @@ contains
 
         ! Here is the 5-8 inch dbh size class we use in the model.
         if(currentCohort%pft == 2 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
-        	Nt68 = Nt68 + currentCohort%n/currentPatch%area*225.0_r8
+        	Nt68 = Nt68 + currentCohort%n*225.0_r8/10000.0_r8
         end if
 
         ! Here is the 8-10 inch dbh size class we use in the model.
         if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
-        	Nt10 = Nt10 + currentCohort%n/currentPatch%area*225.0_r8
+        	Nt10 = Nt10 + currentCohort%n*225.0_r8/10000.0_r8
         end if
 
         ! Here is 10-12 inch dbh size class we use in the model.
         if(currentCohort%pft == 2 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
-        	Nt12 = Nt12 + currentCohort%n/currentPatch%area*225.0_r8
+        	Nt12 = Nt12 + currentCohort%n*225.0_r8/10000.0_r8
         end if
 
         ! Here is 12-14 inch dbh size class we use in the model.
         if(currentCohort%pft == 2 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
-        	Nt14 = Nt14 + currentCohort%n/currentPatch%area*225.0_r8
+        	Nt14 = Nt14 + currentCohort%n*225.0_r8/10000.0_r8
         end if
 
         ! Here is 14 inch dbh size class and larger we use in the model.
         if(currentCohort%pft == 2 .and. currentCohort%dbh >= 35.56_r8)then
-        	Nt16s = Nt16s + currentCohort%n/currentPatch%area*225.0_r8
+        	Nt16s = Nt16s + currentCohort%n*225.0_r8/10000.0_r8
         end if
 
         currentCohort => currentCohort%shorter
@@ -300,7 +300,7 @@ contains
 	! to the mortality rate on a yearly basis.
         if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
-		Ntm168 > Nt68 .and. Nt12 + Nt14 + Nt16s > 1.0_r8)then
+		Ntm168 > Nt68)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
 		else
@@ -310,7 +310,7 @@ contains
         ! Here is the 8-10 inch dbh size class we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8 .and. &
-		Ntm110 > Nt10 .and. Nt12 + Nt14 + Nt16s > 1.0_r8)then
+		Ntm110 > Nt10)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
 		else
