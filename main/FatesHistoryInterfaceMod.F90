@@ -1744,7 +1744,7 @@ end subroutine flush_hvars
 		       ! Computing mortality due to insects per size class per pft.
 		       ! On Aug. 25, 2018, I added a weighting factor that weights by relative patch area (in m**2)
 		       hio_m9_si_scpf(io_si,scpf) = hio_m9_si_scpf(io_si,scpf) + & 
-		       		ccohort%inmort*ccohort%n*min(cpatch%area,cpatch%total_canopy_area)/10000_r8
+		       		ccohort%inmort*ccohort%n*min(cpatch%area,cpatch%total_canopy_area)/10000.0_r8
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
