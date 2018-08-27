@@ -300,7 +300,7 @@ contains
 	! to the mortality rate on a yearly basis.
         if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
-		Ntm168 > Nt68)then
+		Ntm168 > Nt68 .and. Nt16s > 0.025)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
 		else
@@ -310,7 +310,7 @@ contains
         ! Here is the 8-10 inch dbh size class we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8 .and. &
-		Ntm110 > Nt10)then
+		Ntm110 > Nt10 .and. Nt16s > 0.025)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
 		else
@@ -320,7 +320,7 @@ contains
         ! Here is 10-12 inch dbh size class we use in the model.
         if(InPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    	25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8 .and. &
-		Ntm112 > Nt12)then
+		Ntm112 > Nt12 .and. Nt16s > 0.025)then
 		
                 currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
 		else
