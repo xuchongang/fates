@@ -6,7 +6,7 @@ module EDTypesMod
   use FatesHydraulicsMemMod, only : ed_cohort_hydr_type
   use FatesHydraulicsMemMod, only : ed_site_hydr_type
   
-  use FatesInsectMemMod, only : ed_patch_insect_type
+  use FatesInsectMemMod, only : ed_site_insect_type
 
   implicit none
   save
@@ -483,8 +483,6 @@ module EDTypesMod
 
      ! PLANT HYDRAULICS   (not currently used in hydraulics RGK 03-2018)  
      ! type(ed_patch_hydr_type) , pointer :: pa_hydr              ! All patch hydraulics data, see FatesHydraulicsMemMod.F90
-     ! INSECTS
-     type(ed_patch_insect_type), pointer :: pa_insect		   ! State vars at the patch level: see FatesInsectMemMod.F90
      
    contains
 
@@ -592,6 +590,9 @@ module EDTypesMod
 
      ! PLANT HYDRAULICS
      type(ed_site_hydr_type), pointer :: si_hydr
+     
+     ! INSECTS
+     type(ed_site_insect_type), pointer :: si_insect		   ! State vars at the site level: see FatesInsectMemMod.F90
         
      ! TERMINATION, RECRUITMENT, DEMOTION, and DISTURBANCE
 
