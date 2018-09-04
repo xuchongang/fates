@@ -18,8 +18,6 @@ module EDPatchDynamicsMod
   use EDTypesMod           , only : dtype_ilog
   use EDTypesMod           , only : dtype_ifire
   use EDTypesMod	   , only : dtype_inmort
-  use FatesInsectMemMod	   , only : InitInsectPatch, ed_patch_insect_type
-  use FatesInsectMemMod	   , only : DomainSize, numberInsectTypes, maxNumStages
   use FatesInterfaceMod    , only : hlm_use_planthydro
   use FatesInterfaceMod	   , only : hlm_use_insect
   use FatesInterfaceMod    , only : hlm_numSWb
@@ -357,7 +355,6 @@ contains
     ! !LOCAL VARIABLES:
     type (ed_patch_type) , pointer :: new_patch
     type (ed_patch_type) , pointer :: currentPatch
-    type (ed_patch_insect_type), pointer :: pa_insect
     type (ed_cohort_type), pointer :: currentCohort
     type (ed_cohort_type), pointer :: nc
     type (ed_cohort_type), pointer :: storesmallcohort
@@ -436,11 +433,6 @@ contains
 	     ! This may need to be corrected later.
 	     
           endif
-	  
-	  ! For the insect patches all insects in the disturbed patch move to the new patch
-	  if(hlm_use_insect.eq.itrue) then
-	  	new_patch%pa_insect = currentPatch%pa_insect
-	  end if
 
           !INSERT SURVIVORS FROM DISTURBANCE INTO NEW PATCH 
           currentCohort => currentPatch%shortest
@@ -1335,11 +1327,6 @@ contains
     allocate(new_patch%rootfr_ft(numpft,nlevsoil))
     allocate(new_patch%rootr_ft(numpft,nlevsoil))
     
-    if(hlm_use_insect)then
-       allocate(new_patch%pa_insect)
-       call InitInsectPatch(new_patch%pa_insect)    
-    endif
-    
     call zero_patch(new_patch) !The nan value in here is not working??
 
     new_patch%tallest  => null() ! pointer to patch's tallest cohort    
@@ -1503,14 +1490,6 @@ contains
     currentPatch%sabs_dir(:)                = 0.0_r8
     currentPatch%sabs_dif(:)                = 0.0_r8
     currentPatch%zstar                      = 0.0_r8
-    
-    ! INSECTS (More variables will need to be added if additional insect species are added)
-    currentPatch%pa_insect%InsectPFTPref = 0 				
-    currentPatch%pa_insect%MPB_PhysAge(1:DomainSize, 1:7) = 0.0_r8
-    currentPatch%pa_insect%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
-    currentPatch%pa_insect%MPB_Transit(1:7) = 0.0_r8
-    currentPatch%pa_insect%PrS = 0.0_r8
-    currentPatch%pa_insect%Ct = 0.0_r8
     
     currentPatch%c_stomata                  = 0.0_r8 ! This is calculated immediately before use
     currentPatch%c_lblayer                  = 0.0_r8
@@ -1797,14 +1776,6 @@ contains
     rp%c_lblayer            = (dp%c_lblayer*dp%area + rp%c_lblayer*rp%area) * inv_sum_area
     
     rp%area = rp%area + dp%area !THIS MUST COME AT THE END!
-
-    ! INSECTS: fuse insect patches
-    ! This subroutine needs to be called before the donor
-    ! patch pointer is deallocated because it does not deallocate 
-    ! internally.
-    if(hlm_use_insect.eq.itrue) then
-    	call Fuse_2_Insect_Patches(dp, rp)
-    end if
      
     !insert donor cohorts into recipient patch
     if(associated(dp%shortest))then
@@ -1897,48 +1868,6 @@ contains
 
 
   end subroutine fuse_2_patches
-
-  !==========================================================================================================
-  subroutine Fuse_2_Insect_Patches(dp,rp)
-    ! !DESCRIPTION:
-    ! This subroutine fuses the two sets of insect related variables associated with the
-    ! patches specified in the argument. It fuses the first patch in the argument (the "donor") 
-    ! into the second patch in the argument (the "recipient"). It is different from the subroutine
-    ! called Fuse_2_Patches in the EDPatchDynamicsMod.F90 script in the biogeochem directory
-    ! because many of the variables used in the insect module CANNOT be naively added 
-    ! in a weighted mean. Therefore, the code determines which patch is largest 
-    ! and assigns the recipent patch the characteristics of the larger of the two patches. 
-    
-    ! If averages are absolutely necessary, they may be computed using convolution implemented via
-    ! Fast Fourier Tranforms (FFT). This could be done in a later version of the code but will involve
-    ! some additional complexity.
-    
-    ! IMPORTANT: An additional difference between Fuse_2_Insect_Patches and Fuse_2_Patches
-    ! is that the Fuse_2_Insect_Patches subroutine does not free the memory 
-    ! associated with the second patch (deallocate), but the Fuse_2_Patches subroutine does.
-    ! Therefore, the Fuse_2_Insect_Patches subroutine needs to be called WITHIN the Fuse_2_Patches 
-    ! subroutine before the donor patch, or its pointer at least, is deallocated. 
-    
-    ! !ARGUMENTS:
-      !type (ed_patch_type) , intent(inout), pointer :: dp               ! Donor Patch
-      !type (ed_patch_type) , intent(inout), pointer :: rp               ! Recipient Patch
-      
-      type (ed_patch_type) , pointer :: dp                ! Donor Patch
-      type (ed_patch_type) , target, intent(inout) :: rp  ! Recipient Patch
-      
-      ! These variables do not depend on the patch history or characteristics.
-      rp%pa_insect%InsectPFTPref = 0 
-      rp%pa_insect%InsectPFTPref(1,2)= 1				! This is currently initialized only for mountain pine beetle
-      
-      if(dp%area >= rp%area)then
-      	rp%pa_insect%PrS = dp%pa_insect%PrS
-      	rp%pa_insect%Ct = dp%pa_insect%Ct
-      	rp%pa_insect%MPB_PhysAge = dp%pa_insect%MPB_PhysAge
-      	rp%pa_insect%indensity = dp%pa_insect%indensity
-	rp%pa_insect%MPB_Transit = dp%pa_insect%MPB_Transit
-      end if
-      
-  end subroutine Fuse_2_Insect_Patches
   
   ! ============================================================================
 
@@ -2053,13 +1982,6 @@ contains
        deallocate(cpatch%sabs_dif)
        deallocate(cpatch%rootfr_ft)
        deallocate(cpatch%rootr_ft)
-    end if
-
-    if(hlm_use_insect.eq.itrue)then
-       deallocate(cpatch%pa_insect%MPB_PhysAge)
-       deallocate(cpatch%pa_insect%MPB_Transit)
-       deallocate(cpatch%pa_insect%indensity)
-       deallocate(cpatch%pa_insect)    
     end if
     
     return
