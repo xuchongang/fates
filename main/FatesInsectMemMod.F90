@@ -50,11 +50,12 @@ module FatesInsectMemMod
 	
 	contains
      
-           procedure :: InitInsectSite
+           procedure  :: InitInsectSite
+           procedure  :: ZeroInsectSite
 
     end type ed_site_insect_type
     
-    public  :: InitInsectSite
+
 
     contains
 
@@ -89,5 +90,33 @@ module FatesInsectMemMod
 	this%MinDailyT = 0.0
 
     end subroutine InitInsectSite
+    
+    !==========================================================================================================
+    subroutine ZeroInsectSite(this)
+
+        implicit none
+
+        ! argument
+        class(ed_site_insect_type), intent(inout) :: this
+	
+	! initialize the preference, but will move to the parameter file later
+	this%InsectPFTPref = 0 
+        this%InsectPFTPref(1,2)= 1					! This is currently initialized only for mountain pine beetle
+
+	this%MPB_PhysAge(1:DomainSize, 1:7) = 0.0_r8
+	
+	this%MPB_Transit(1:7) = 0.0_r8
+	
+	this%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
+
+        this%PrS = 0.0_r8
+        this%Ct = 0.0_r8
+	
+	! As model runs typically start January 1, 
+	! I have decided to initialize with non-reactive temperatures for insects.
+	this%MaxDailyT = 0.0
+	this%MinDailyT = 0.0
+
+    end subroutine ZeroInsectSite
        
 end module FatesInsectMemMod

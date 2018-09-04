@@ -23,7 +23,7 @@ module EDInitMod
   use FatesInterfaceMod         , only : hlm_use_planthydro
   use FatesInterfaceMod         , only : hlm_use_inventory_init
   use FatesInterfaceMod         , only : numpft
-  use FatesInterfaceMod        , only : hlm_use_insect
+  use FatesInterfaceMod         , only : hlm_use_insect
   use ChecksBalancesMod         , only : SiteCarbonStock
   use FatesInterfaceMod         , only : nlevsclass
   use FatesAllometryMod         , only : h2d_allom
@@ -34,7 +34,8 @@ module EDInitMod
   use FatesAllometryMod         , only : bsap_allom
   use FatesAllometryMod         , only : bdead_allom
   use FatesAllometryMod         , only : bstore_allom
-  use FatesInsectMemMod         , only : InitInsectSite, ed_site_insect_type
+  use FatesInsectMemMod         , only : ed_site_insect_type
+  use FatesInsectMemMod         , only : InitInsectSite, ZeroInsectSite
 
   ! CIME GLOBALS
   use shr_log_mod               , only : errMsg => shr_log_errMsg
@@ -79,7 +80,10 @@ contains
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
     
     ! Allocating and initializing insects at the site level.
-    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in%si_insect)
+    if(hlm_use_insect.eq.itrue) then
+        allocate(site_in%si_insect)
+        call site_in%si_insect%InitInsectSite()
+    endif
     
     end subroutine init_site_vars
 
@@ -153,7 +157,9 @@ contains
     site_in%spread = 0._r8
     
     ! zeroing insects at the site level.
-    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in%si_insect)
+    if(hlm_use_insect.eq.itrue) then
+      call site_in%si_insect%ZeroInsectSite()
+    endif 
 
   end subroutine zero_site
 
