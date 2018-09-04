@@ -87,18 +87,6 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_gpp_understory_pa
   integer, private :: ih_canopy_biomass_pa
   integer, private :: ih_understory_biomass_pa
-  integer, private :: ih_MPB_Eggs_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_L1_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_L2_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_L3_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_L4_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_P_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_T_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_A_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_FA_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_MPB_Bt_pa 			! insect (mountain pine beetle variables)
-  integer, private :: ih_max_t_pa			! insect (mountain pine beetle variables)
-  integer, private :: ih_min_t_pa 			! insect (mountain pine beetle variables)
   
   ! Indices to site by size-class by age variables
   integer, private :: ih_nplant_si_scag
@@ -147,6 +135,19 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_canopy_mortality_carbonflux_si
   integer, private :: ih_understory_mortality_carbonflux_si
   integer, private :: ih_canopy_spread_si
+  
+  integer, private :: ih_MPB_Eggs_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L1_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L2_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L3_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_L4_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_P_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_T_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_A_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_FA_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_MPB_Bt_si 			! insect (mountain pine beetle variables)
+  integer, private :: ih_max_t_si			! insect (mountain pine beetle variables)
+  integer, private :: ih_min_t_si 			! insect (mountain pine beetle variables)
   
   ! Indices to (site x scpf) variables
   integer, private :: ih_nplant_si_scpf
@@ -1274,7 +1275,7 @@ end subroutine flush_hvars
     use FatesSizeAgeTypeIndicesMod, only : get_age_class_index
     use FatesSizeAgeTypeIndicesMod, only : get_height_index
     use EDTypesMod          , only : nlevleaf
-    use FatesInsectMemMod   , only : ed_patch_insect_type
+    use FatesInsectMemMod   , only : ed_site_insect_type
     use EDParamsMod,          only : ED_val_history_height_bin_edges
 
     ! Arguments
@@ -1313,7 +1314,7 @@ end subroutine flush_hvars
     type(ed_patch_type),pointer  :: cpatch
     type(ed_cohort_type),pointer :: ccohort
     ! INSECTS
-    type(ed_patch_insect_type), pointer :: pa_insect		   ! State vars at the patch level: see FatesInsectMemMod.F90
+    type(ed_site_insect_type), pointer :: si_insect		   ! State vars at the site level: see FatesInsectMemMod.F90
 
     real(r8), parameter :: tiny = 1.e-5_r8      ! some small number
     real(r8), parameter :: reallytalltrees = 1000.   ! some large number (m)
@@ -1400,18 +1401,18 @@ end subroutine flush_hvars
 	       
 	       ! Insect specific-variables  
 	       hio_m9_si_scpf          => this%hvars(ih_m9_si_scpf)%r82d, &
-	       hio_MPB_Eggs_pa	       => this%hvars(ih_MPB_Eggs_pa)%r81d, & 
-	       hio_MPB_L1_pa	       => this%hvars(ih_MPB_L1_pa)%r81d, & 
-	       hio_MPB_L2_pa	       => this%hvars(ih_MPB_L2_pa)%r81d, &
-	       hio_MPB_L3_pa	       => this%hvars(ih_MPB_L3_pa)%r81d, &  
-	       hio_MPB_L4_pa	       => this%hvars(ih_MPB_L4_pa)%r81d, &  
-	       hio_MPB_P_pa	       => this%hvars(ih_MPB_P_pa)%r81d, &
-	       hio_MPB_T_pa	       => this%hvars(ih_MPB_T_pa)%r81d, &
-	       hio_MPB_A_pa	       => this%hvars(ih_MPB_A_pa)%r81d, &
-	       hio_MPB_FA_pa	       => this%hvars(ih_MPB_FA_pa)%r81d, &
-	       hio_MPB_Bt_pa	       => this%hvars(ih_MPB_Bt_pa)%r81d, &  
-	       hio_max_t_pa	       => this%hvars(ih_max_t_pa)%r81d, &
-	       hio_min_t_pa	       => this%hvars(ih_min_t_pa)%r81d, & 
+	       hio_MPB_Eggs_si	       => this%hvars(ih_MPB_Eggs_si)%r81d, & 
+	       hio_MPB_L1_si	       => this%hvars(ih_MPB_L1_si)%r81d, & 
+	       hio_MPB_L2_si	       => this%hvars(ih_MPB_L2_si)%r81d, &
+	       hio_MPB_L3_si	       => this%hvars(ih_MPB_L3_si)%r81d, &  
+	       hio_MPB_L4_si	       => this%hvars(ih_MPB_L4_si)%r81d, &  
+	       hio_MPB_P_si	       => this%hvars(ih_MPB_P_si)%r81d, &
+	       hio_MPB_T_si	       => this%hvars(ih_MPB_T_si)%r81d, &
+	       hio_MPB_A_si	       => this%hvars(ih_MPB_A_si)%r81d, &
+	       hio_MPB_FA_si	       => this%hvars(ih_MPB_FA_si)%r81d, &
+	       hio_MPB_Bt_si	       => this%hvars(ih_MPB_Bt_si)%r81d, &  
+	       hio_max_t_si	       => this%hvars(ih_max_t_si)%r81d, &
+	       hio_min_t_si	       => this%hvars(ih_min_t_si)%r81d, & 
 
                hio_m1_si_scls          => this%hvars(ih_m1_si_scls)%r82d, &
                hio_m2_si_scls          => this%hvars(ih_m2_si_scls)%r82d, &
@@ -1535,6 +1536,20 @@ end subroutine flush_hvars
 
          ! The seed bank is a site level variable
          hio_seed_bank_si(io_si) = sum(sites(s)%seed_bank) * g_per_kg
+	 
+	 ! Update the insect state variables (currently only mountain pine beetle)
+	 hio_MPB_Eggs_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,2))
+	 hio_MPB_L1_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,3))
+	 hio_MPB_L2_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,4))
+	 hio_MPB_L3_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,5))
+	 hio_MPB_L4_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,6))
+	 hio_MPB_P_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,7))
+	 hio_MPB_T_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,8))
+	 hio_MPB_A_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,9))
+	 hio_MPB_FA_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,10))
+	 hio_MPB_Bt_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,11))
+	 hio_max_t_si(io_si)	       = sum(sites(s)%si_insect%MaxDailyT)
+	 hio_min_t_si(io_si)	       = sum(sites(s)%si_insect%MinDailyT)
 
          hio_canopy_spread_si(io_si)        = sites(s)%spread
             
@@ -1742,9 +1757,8 @@ end subroutine flush_hvars
                              ccohort%frmort*ccohort%n
 			     
 		       ! Computing mortality due to insects per size class per pft.
-		       ! On Aug. 25, 2018, I added a weighting factor that weights by relative patch area (in m**2).
 		       	hio_m9_si_scpf(io_si,scpf) = hio_m9_si_scpf(io_si,scpf) + & 
-		       		ccohort%inmort*ccohort%n*min(cpatch%area,cpatch%total_canopy_area)/10000.0_r8
+		       		ccohort%inmort*ccohort%n
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
@@ -2027,20 +2041,6 @@ end subroutine flush_hvars
                hio_litter_moisture_si_fuel(io_si, i_fuel) = hio_litter_moisture_si_fuel(io_si, i_fuel) + &
                     cpatch%litter_moisture(i_fuel) * cpatch%area * AREA_INV
             end do
-	    
-	    ! Update the insect state variables (currently only mountain pine beetle)
-	    hio_MPB_Eggs_pa(io_pa)	       = cpatch%pa_insect%indensity(1,2)
-	    hio_MPB_L1_pa(io_pa)	       = cpatch%pa_insect%indensity(1,3)
-	    hio_MPB_L2_pa(io_pa)	       = cpatch%pa_insect%indensity(1,4)
-	    hio_MPB_L3_pa(io_pa)	       = cpatch%pa_insect%indensity(1,5)
-	    hio_MPB_L4_pa(io_pa)	       = cpatch%pa_insect%indensity(1,6)
-	    hio_MPB_P_pa(io_pa)	       	       = cpatch%pa_insect%indensity(1,7)
-	    hio_MPB_T_pa(io_pa)	               = cpatch%pa_insect%indensity(1,8)
-	    hio_MPB_A_pa(io_pa)	               = cpatch%pa_insect%indensity(1,9)
-	    hio_MPB_FA_pa(io_pa)	       = cpatch%pa_insect%indensity(1,10)
-	    hio_MPB_Bt_pa(io_pa)	       = cpatch%pa_insect%indensity(1,11)
-	    hio_max_t_pa(io_pa)		       = cpatch%pa_insect%MaxDailyT
-	    hio_min_t_pa(io_pa)	               = cpatch%pa_insect%MinDailyT
 	    
             ! Update Litter Flux Variables
 
@@ -3118,7 +3118,7 @@ end subroutine flush_hvars
          avgflag='A', vtype=site_pft_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
          ivar=ivar, initialize=initialize_variables, index = ih_mortality_si_pft )
 	 
-    ! insect density at the patch level (currently only the densities of various
+    ! insect density at the site level (currently only the densities of various
     ! stages of the mountain pine beetle life cycle).
     
     if(hlm_use_insect.eq.itrue) then
@@ -3126,62 +3126,62 @@ end subroutine flush_hvars
     call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_si)
 
     call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_pa)		
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_si)		
 
     call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_si)	
 
     call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_si)	
 	    			
     call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_si)	
 
     call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_si)
 
     call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_pa)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_si)	
 
     call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_si)
 
     call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_si)
 
     call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/(225 m^2)', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_pa)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_si)
 	    
     call this%set_history_var(vname='Max_Daily_T',  units='C', &
             long='maximum daily temp', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_max_t_pa)	 
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_max_t_si)	 
 	    
     call this%set_history_var(vname='Min_Daily_T',  units='C', &
             long='minimum daily temp', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_min_t_pa)   	    
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_min_t_si)   	    
 	    
     end if ! insect variable related statement
 
