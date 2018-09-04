@@ -19,8 +19,8 @@ module FatesInsectMemMod
     integer,  parameter :: maxpft = 14					! maximum number of plant pfts (I've manually entered the current number, which is inelegant...)
     
     !-------------------------------------------------------------------------------------------------------------------------------
-    ! Defining a patch-level type from which to obtain variables. The insect module runs at the patch within site level.
-    type ed_patch_insect_type
+    ! Defining a sute-level type from which to obtain variables.
+    type ed_site_insect_type
         !variables for tracking insect dynamics
 	
 	! array to define the preference of insects (0-not preferred; 1-preferred)
@@ -50,19 +50,19 @@ module FatesInsectMemMod
 	
 	contains
      
-           procedure :: InitInsectPatch
+           procedure :: InitInsectSite
 
-    end type ed_patch_insect_type
+    end type ed_site_insect_type
 
     contains
 
     !==========================================================================================================
-    subroutine InitInsectPatch(this)
+    subroutine InitInsectSite(this)
 
         implicit none
 
         ! argument
-        class(ed_patch_insect_type), intent(inout) :: this
+        class(ed_site_insect_type), intent(inout) :: this
 	
 	! initialize the preference, but will move to the parameter file later
 	allocate(this%InsectPFTPref(1:numberInsectTypes, 1:maxpft))
@@ -86,6 +86,6 @@ module FatesInsectMemMod
 	this%MaxDailyT = 0.0
 	this%MinDailyT = 0.0
 
-    end subroutine InitInsectPatch
+    end subroutine InitInsectSite
        
 end module FatesInsectMemMod

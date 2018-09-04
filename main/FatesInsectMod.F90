@@ -3,7 +3,7 @@ module FatesInsectMod
   use FatesInterfaceMod         , only : bc_in_type
   use FatesInterfaceMod         , only : hlm_current_month, hlm_current_day, hlm_freq_day
   use EDtypesMod                , only : ed_site_type, ed_patch_type, ed_cohort_type
-  use FatesInsectMemMod         , only : ed_patch_insect_type, numberInsectTypes
+  use FatesInsectMemMod         , only : ed_site_insect_type, numberInsectTypes
   !use EDParamsMod               , only : insect_an
 
   ! !PUBLIC MEMBER FUNCTIONS:
@@ -21,7 +21,7 @@ module FatesInsectMod
   private :: RegnierFunc	! produces a hump shaped development rate curve for temperature-dependent insect development
   private :: FlightFunc		! temperature dependent flight probability for adult mountain pine beetles
   private :: RBMortSim		! Regniere and Bentz model of mountain pine beetle winter mortality
-  private :: MPBAttack		! simulates mountain pine beetle attack of various sized trees in a patch.
+  private :: MPBAttack		! simulates mountain pine beetle attack of various sized trees in a site.
 
 contains
 
@@ -30,8 +30,8 @@ contains
     !
     ! !DESCRIPTION:
     !  Core of insect model, calling all insect population demography routines.
-    !  Although the insect model is called at the site level, all of the insect-
-    !  related state variables are stored at the patch level (see FatesInsectMemMod)
+    !  The insect model is called at the site level, and all of the insect-
+    !  related state variables are stored at the site level (see FatesInsectMemMod)
     !
     use FatesInterfaceMod    , only : bc_in_type
     use EDtypesMod           , only : ed_site_type, ed_patch_type, ed_cohort_type
@@ -39,61 +39,42 @@ contains
     type(ed_site_type)      , intent(inout), target  :: currentSite
     type(bc_in_type)        , intent(in)	     :: bc_in
 
-    ! patch pointer	
-    type (ed_patch_type), pointer :: currentPatch
-    ! cohort pointer	
-    type (ed_cohort_type), pointer :: currentCohort
-
-    
-    ! For each site we cycle through the patches from oldest to youngest  
-    currentPatch => currentSite%oldest_patch	! starting with the oldest 
-    
-    do while (associated(currentPatch))
-    
-    	! reset the cohort pointer for each patch iteration
-        currentCohort => currentPatch%tallest
-
-    	!-----------------------------------------------------------------------
-	! calling the insect demography submodels (currently only the mountain
-    	! pine beetle model is implemented). Later there will be calls to other
-    	! insect models that may attack different plant functional types.
-	!-----------------------------------------------------------------------
+    !-----------------------------------------------------------------------
+    ! calling the insect demography submodels (currently only the mountain
+    ! pine beetle model is implemented). Later there will be calls to other
+    ! insect models that may attack different plant functional types.
+    !-----------------------------------------------------------------------
 	
-	call beetle_model(currentPatch, currentCohort, bc_in)
-
-	currentPatch => currentPatch%younger
-	
-     end do	! Patch do loop
+    call beetle_model(currentSite, bc_in)
 
   end subroutine insect_model
 
   !========================================================================
-  subroutine beetle_model(currentPatch, currentCohort, bc_in)
+  subroutine beetle_model(currentSite, bc_in)
     !
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
     use FatesInsectMemMod    , only : delta1, an, bn, ab, bb		! these parameters will be passed using parameter file.
-    use FatesInsectMemMod    , only : ed_patch_insect_type
+    use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
 
     ! !ARGUMENTS:
-    type(ed_patch_type)      , intent(inout), pointer	:: currentPatch
-    type(ed_cohort_type)     , intent(inout), pointer	:: currentCohort
+    type(ed_site_type)       , intent(inout), target  :: currentSite
     type(bc_in_type)         , intent(in)		:: bc_in
-
     !
     ! !LOCAL VARIABLES:
     !-----------------------------------------------------------------------
-    type(ed_patch_insect_type), pointer :: pa_insect
+    type(ed_site_insect_type), pointer :: si_insect
     integer :: iofp                         		! index fates patch age
 
-    ! Temperature variables that drive the mountain pine beetle demography model.
-    real(r8) :: max_airTC                   	! maximum daily air temperature (degrees C) in the patch at reference height
-    real(r8) :: min_airTC                   	! minimum daily air temperature (degrees C) in the patch at reference height
+    ! Temperature variables that drive the mountain pine beetle demography model. These are averages over all of the patches.
+    ! at the specific site.
+    real(r8) :: max_airTC                   	! maximum daily air temperature (degrees C) in the site at reference height
+    real(r8) :: min_airTC                   	! minimum daily air temperature (degrees C) in the site at reference height
 
-    !! Below are state variables that we track at the patch level.
+    !! Below are state variables that we track at the site level.
 
     ! Containers for the distributions of physiological age for each life stage. In the
     ! InitInsectSite subroutine these will be allocated with size equal to the domain size.
@@ -131,11 +112,20 @@ contains
     real(r8) :: Ct                        	! The level of larval cold tolerance in the population.
 
     ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
+    ! Averaged over all patches within each site.
     real(r8) :: Nt68				! initial susceptible host trees in the 5 to 8 inch dbh size class
     real(r8) :: Nt10                    	! initial susceptible host trees in the 8 to 10 inch dbh size class
     real(r8) :: Nt12              		! initial susceptible host trees in the 10 to 12 inch dbh size class
     real(r8) :: Nt14              		! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8) :: Nt16s             		! initial susceptible host trees in the  14 inch or larger dbh size class
+    real(r8) :: Nt16s             		! initial susceptible host trees in the  14 inch or larger dbh size class\
+    
+    ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
+    ! Specific to each patch.
+    real(r8) :: Nt68p				! initial susceptible host trees in the 5 to 8 inch dbh size class
+    real(r8) :: Nt10p                   	! initial susceptible host trees in the 8 to 10 inch dbh size class
+    real(r8) :: Nt12p             		! initial susceptible host trees in the 10 to 12 inch dbh size class
+    real(r8) :: Nt14p             		! initial susceptible host trees in the 12 to 14 inch dbh size class
+    real(r8) :: Nt16sp            		! initial susceptible host trees in the  14 inch or larger dbh size class
 
     ! I also make the equivalent container for the density of hosts prior to insect attack so that we can compute
     ! the proportion that died in the current step (daily time step).
@@ -149,27 +139,30 @@ contains
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 0.684_r8! The minimum endemic parent mountain pine beetle population (male and female) per 225 m^2.
+    
+    ! Total site area in m2 summed over all of the patches (used in the patch-area-weighted density and temperature calculations)
+    real(r8) :: SiteArea
 
     !----------------------------------------------------------------------------------------------------
     ! Grabbing the values of the state variables from currentPatch
 
     ! The physiological age distributions
-    OE = currentPatch%pa_insect%MPB_PhysAge(:,1)
-    OL1 = currentPatch%pa_insect%MPB_PhysAge(:,2)
-    OL2 = currentPatch%pa_insect%MPB_PhysAge(:,3)
-    OL3 = currentPatch%pa_insect%MPB_PhysAge(:,4)
-    OL4 = currentPatch%pa_insect%MPB_PhysAge(:,5)
-    OP = currentPatch%pa_insect%MPB_PhysAge(:,6)
-    OT = currentPatch%pa_insect%MPB_PhysAge(:,7)
+    OE = currentSite%si_insect%MPB_PhysAge(:,1)
+    OL1 = currentSite%si_insect%MPB_PhysAge(:,2)
+    OL2 = currentSite%si_insect%MPB_PhysAge(:,3)
+    OL3 = currentSite%si_insect%MPB_PhysAge(:,4)
+    OL4 = currentSite%si_insect%MPB_PhysAge(:,5)
+    OP = currentSite%si_insect%MPB_PhysAge(:,6)
+    OT = currentSite%si_insect%MPB_PhysAge(:,7)
 
     ! The transitioning individuals from one life stage to another.
-    NewEggstm1 = currentPatch%pa_insect%MPB_Transit(1)
-    NewL1tm1 = currentPatch%pa_insect%MPB_Transit(2)
-    NewL2tm1 = currentPatch%pa_insect%MPB_Transit(3)
-    NewL3tm1 = currentPatch%pa_insect%MPB_Transit(4)
-    NewL4tm1 = currentPatch%pa_insect%MPB_Transit(5)
-    NewPtm1 = currentPatch%pa_insect%MPB_Transit(6)
-    NewTtm1 = currentPatch%pa_insect%MPB_Transit(7)
+    NewEggstm1 = currentSite%si_insect%MPB_Transit(1)
+    NewL1tm1 = currentSite%si_insect%MPB_Transit(2)
+    NewL2tm1 = currentSite%si_insect%MPB_Transit(3)
+    NewL3tm1 = currentSite%si_insect%MPB_Transit(4)
+    NewL4tm1 = currentSite%si_insect%MPB_Transit(5)
+    NewPtm1 = currentSite%si_insect%MPB_Transit(6)
+    NewTtm1 = currentSite%si_insect%MPB_Transit(7)
 
     ! The one in the row argumuent of the indensity array corresponds to mountain pine beetle
     ! (insect type 1). The number in the column argument of the array refers to the
@@ -177,75 +170,110 @@ contains
     ! 8->Teneral adults, 9->Adults, 10->Flown Adults, 11->flying beetles from prvious step (Bt),
     ! 12->Parents (flown adults that succesfully attacked trees that day--daily time step)
     ! Columns 13 to 20 of the indensity array are empty for the mountain pine beetle.
-    Fec = currentPatch%pa_insect%indensity(1,1)
-    E = currentPatch%pa_insect%indensity(1,2)
-    L1 = currentPatch%pa_insect%indensity(1,3)
-    L2 = currentPatch%pa_insect%indensity(1,4)
-    L3 = currentPatch%pa_insect%indensity(1,5)
-    L4 = currentPatch%pa_insect%indensity(1,6)
-    P = currentPatch%pa_insect%indensity(1,7)
-    Te = currentPatch%pa_insect%indensity(1,8)
-    A = currentPatch%pa_insect%indensity(1,9)
-    FA = currentPatch%pa_insect%indensity(1,10)
-    Bt = currentPatch%pa_insect%indensity(1,11)
-    Parents = CurrentPatch%pa_insect%indensity(1,12)
+    Fec = currentSite%si_insect%indensity(1,1)
+    E = currentSite%si_insect%indensity(1,2)
+    L1 = currentSite%si_insect%indensity(1,3)
+    L2 = currentSite%si_insect%indensity(1,4)
+    L3 = currentSite%si_insect%indensity(1,5)
+    L4 = currentSite%si_insect%indensity(1,6)
+    P = currentSite%si_insect%indensity(1,7)
+    Te = currentSite%si_insect%indensity(1,8)
+    A = currentSite%si_insect%indensity(1,9)
+    FA = currentSite%si_insect%indensity(1,10)
+    Bt = currentSite%si_insect%indensity(1,11)
+    Parents = CurrentSite%si_insect%indensity(1,12)
 
-    PrS = currentPatch%pa_insect%PrS
-    Ct = currentPatch%pa_insect%Ct
+    PrS = currentSite%si_insect%PrS
+    Ct = currentSite%si_insect%Ct
 
     !----------------------------------------------------------------------------------------------------
-    ! Calculate the density trees in each of the size classes that we use in the mountain pine beetle model
-    ! for the current patch. I then call the insect life cycle model at the patch level.
+    ! Calculate the patch-area weighted density trees in each of the size classes that we use in the 
+    ! mountain pine beetle model across all patches. I then call the insect life cycle model at the site level.
     Nt68 = 0.0_r8
     Nt10 = 0.0_r8
     Nt12 = 0.0_r8
     Nt14 = 0.0_r8
     Nt16s = 0.0_r8
+    
+    SiteArea = 0.0_r8
+    
+    max_airTC = 0.0_r8
+    min_airTC = 0.0_r8
+    
+    ! We cycle through the patches from oldest to youngest  
+    currentPatch => currentSite%oldest_patch	! starting with the oldest 
+    
+    do while (associated(currentPatch))
+    
+    	! zeroing out the patch specific tree densitites in each size class
+        Nt68p = 0.0_r8
+    	Nt10p = 0.0_r8
+    	Nt12p = 0.0_r8
+    	Nt14p = 0.0_r8
+    	Nt16sp = 0.0_r8
 
-    iofp = currentPatch%patchno             ! This is needed to get the relevant temperature variables from bc_in
-    currentCohort => currentPatch%tallest
+	iofp = currentPatch%patchno             ! This is needed to get the relevant temperature variables from bc_in
+    	currentCohort => currentPatch%tallest
+	
+	! Computing total site are in m^2
+	SiteArea = SiteArea + currentPatch%area
+	
+	! Computing patch area weighted mean temperature
+	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8)*currentPatch%area
+    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8)*currentPatch%area
 
-    do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
+   	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
 
-        ! Below I compute the tree density per 225 m^2 in each of the size classes
-        ! used in the current version of the insect mortality model.
+        	! Below I compute the tree density per 225 m^2 in each of the size classes
+        	! used in the current version of the insect mortality model.
 
-        ! Here is the 5-8 inch dbh size class we use in the model.
-        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
-        	Nt68 = Nt68 + currentCohort%n*225.0_r8/10000.0_r8
-        end if
+        	! Here is the 5-8 inch dbh size class we use in the model.
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
+        		Nt68p = Nt68p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        	end if
 
-        ! Here is the 8-10 inch dbh size class we use in the model.
-        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
-        	Nt10 = Nt10 + currentCohort%n*225.0_r8/10000.0_r8
-        end if
+        	! Here is the 8-10 inch dbh size class we use in the model.
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
+        		Nt10p = Nt10p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        	end if
 
-        ! Here is 10-12 inch dbh size class we use in the model.
-        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
-        	Nt12 = Nt12 + currentCohort%n*225.0_r8/10000.0_r8
-        end if
+        	! Here is 10-12 inch dbh size class we use in the model.
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
+        		Nt12p = Nt12p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        	end if
 
-        ! Here is 12-14 inch dbh size class we use in the model.
-        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
-        	Nt14 = Nt14 + currentCohort%n*225.0_r8/10000.0_r8
-        end if
+        	! Here is 12-14 inch dbh size class we use in the model.
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
+        		Nt14p = Nt14p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        	end if
 
-        ! Here is 14 inch dbh size class and larger we use in the model.
-        if(currentCohort%pft == 2 .and. currentCohort%dbh >= 35.56_r8)then
-        	Nt16s = Nt16s + currentCohort%n*225.0_r8/10000.0_r8
-        end if
+        	! Here is 14 inch dbh size class and larger we use in the model.
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 35.56_r8)then
+        		Nt16sp = Nt16sp + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        	end if
 
-        currentCohort => currentCohort%shorter
+        	currentCohort => currentCohort%shorter
 
-    end do ! This ends the cohort do loop
-
-    ! converting the minimum and maximum daily air temperatures
-    ! from degrees K to degrees C.
-    max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8
-    min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8
-    ! Here I correct for bias in the earth system air temperature dataset compared to weather station data
-    !max_airTC = bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8
-    !min_airTC = bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8
+    	end do ! This ends the cohort do loop
+	
+	! Adding all of the weighted densities to the overall site level density
+	Nt68 = Nt68 + Nt68p
+	Nt10 = Nt10 + Nt10p
+	Nt12 = Nt12 + Nt12p
+	Nt14 = Nt14 + Nt14p
+	Nt16s = Nt16s + Nt16sp
+	
+    end do	! Patch do loop
+    
+    ! Now dividing by total area to complete the weighting process.
+    Nt68 = Nt68/SiteArea
+    Nt10 = Nt10/SiteArea
+    Nt12 = Nt12/SiteArea
+    Nt14 = Nt14/SiteArea
+    Nt16s = Nt16s/SiteArea
+    
+    max_airTC = max_airTC/SiteArea
+    min_airTC = min_airTC/SiteArea
 
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm168 = Nt68
@@ -255,8 +283,7 @@ contains
     Ntm116s = Nt16s
 
     !----------------------------------------------------------------------------------------------------
-    ! Calling the full MPB simulation for the time step. Note that the air
-    ! temperatures are recorded at the patch level.
+    ! Calling the full MPB simulation for the time step. 
     call MPBSim2(max_airTC, min_airTC, Parents, FA, OE, OL1, OL2, &
         OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
         NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
@@ -285,114 +312,121 @@ contains
     end if
 
     !----------------------------------------------------------------------------------------------------
-    ! update the vegetation mortality
-    currentCohort => currentPatch%tallest
+    ! update the vegetation mortality.
+    
+    ! We cycle through the patches from oldest to youngest  
+    currentPatch => currentSite%oldest_patch	! starting with the oldest 
+    
+    do while (associated(currentPatch))
+    	currentCohort => currentPatch%tallest
 
-    ! Note that insect mortality is greater than zero only if the beetle population is
-    ! larger than the endemic beetle population. Otherwise beetles only colonize trees
-    ! that were already killed by other mortality causes so insect mortality is effectively zero.
-    do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
-        ! Below I compute the tree mortality rate (n/ha/year) in each of the size classes
-        ! used in the current version of the insect mortality model.
+    	! Note that insect mortality is greater than zero only if the beetle population is
+    	! larger than the endemic beetle population. Otherwise beetles only colonize trees
+    	! that were already killed by other mortality causes so insect mortality is effectively zero.
+    	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
+        	! Below I compute the tree mortality rate (n/ha/year) in each of the size classes
+        	! used in the current version of the insect mortality model.
 	
-        ! Here is the 5-8 inch dbh size class we use in the model.
-	! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
-	! to the mortality rate on a yearly basis.
-        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-		12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
-		Ntm168 > Nt68)then
+        	! Here is the 5-8 inch dbh size class we use in the model.
+		! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
+		! to the mortality rate on a yearly basis.
+        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+			12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
+			Ntm168 > Nt68)then
 		
-                currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
-		else
-			currentCohort%inmort = 0.0_r8
-        end if
+                		currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
+			else
+				currentCohort%inmort = 0.0_r8
+        	end if
 
-        ! Here is the 8-10 inch dbh size class we use in the model.
-        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8 .and. &
-		Ntm110 > Nt10)then
+        	! Here is the 8-10 inch dbh size class we use in the model.
+        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+	    		20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8 .and. &
+			Ntm110 > Nt10)then
 		
-                currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
-		else
-			currentCohort%inmort = 0.0_r8
-        end if
+                		currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
+			else
+				currentCohort%inmort = 0.0_r8
+        	end if
 
-        ! Here is 10-12 inch dbh size class we use in the model.
-        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8 .and. &
-		Ntm112 > Nt12)then
+        	! Here is 10-12 inch dbh size class we use in the model.
+        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+	    		25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8 .and. &
+			Ntm112 > Nt12)then
 		
-                currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
-		else
-			currentCohort%inmort = 0.0_r8
-        end if
+                		currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
+			else
+				currentCohort%inmort = 0.0_r8
+        	end if
 
-        ! Here is 12-14 inch dbh size class we use in the model.
-        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8 .and. &
-		Ntm114 > Nt14)then
+        	! Here is 12-14 inch dbh size class we use in the model.
+        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+	    		30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8 .and. &
+			Ntm114 > Nt14)then
 		
-                currentCohort%inmort = (1.0_r8 - Nt14/Ntm114)*365.0_r8
-		else
-			currentCohort%inmort = 0.0_r8
-        end if
+                		currentCohort%inmort = (1.0_r8 - Nt14/Ntm114)*365.0_r8
+			else
+				currentCohort%inmort = 0.0_r8
+        	end if
 
-        ! Here is 14 inch dbh size class and larger we use in the model.
-        if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    	35.56_r8 .and. Ntm116s > 0.0_r8 .and. &
-		Ntm116s > Nt16s)then
+        	! Here is 14 inch dbh size class and larger we use in the model.
+        		if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+	    		35.56_r8 .and. Ntm116s > 0.0_r8 .and. &
+			Ntm116s > Nt16s)then
 	    
-                currentCohort%inmort = (1.0_r8 - Nt16s/Ntm116s)*365.0_r8
-		else
-			currentCohort%inmort = 0.0_r8
-        end if
+                		currentCohort%inmort = (1.0_r8 - Nt16s/Ntm116s)*365.0_r8
+			else
+				currentCohort%inmort = 0.0_r8
+        	end if
 
-        currentCohort => currentCohort%shorter
+        	currentCohort => currentCohort%shorter
 
-     end do ! This ends the cohort do loop
+     	end do ! This ends the cohort do loop
+	
+    end do ! This ends the patch do loop
 
     !----------------------------------------------------------------------------------------------------
     !assign the updated values to the array for storage
 
      ! Mountain pine beetle densities in each life stage
-     currentPatch%pa_insect%indensity(1,1) = Fec
-     currentPatch%pa_insect%indensity(1,2) = E
-     currentPatch%pa_insect%indensity(1,3) = L1
-     currentPatch%pa_insect%indensity(1,4) = L2
-     currentPatch%pa_insect%indensity(1,5) = L3
-     currentPatch%pa_insect%indensity(1,6) = L4
-     currentPatch%pa_insect%indensity(1,7) = P
-     currentPatch%pa_insect%indensity(1,8) = Te
-     currentPatch%pa_insect%indensity(1,9) = A
-     currentPatch%pa_insect%indensity(1,10) = FA
-     currentPatch%pa_insect%indensity(1,11) = Bt
-     CurrentPatch%pa_insect%indensity(1,12) = Parents
+     currentSite%si_insect%indensity(1,1) = Fec
+     currentSite%si_insect%indensity(1,2) = E
+     currentSite%si_insect%indensity(1,3) = L1
+     currentSite%si_insect%indensity(1,4) = L2
+     currentSite%si_insect%indensity(1,5) = L3
+     currentSite%si_insect%indensity(1,6) = L4
+     currentSite%si_insect%indensity(1,7) = P
+     currentSite%si_insect%indensity(1,8) = Te
+     currentSite%si_insect%indensity(1,9) = A
+     currentSite%si_insect%indensity(1,10) = FA
+     currentSite%si_insect%indensity(1,11) = Bt
+     CurrentSite%si_insect%indensity(1,12) = Parents
 
      ! densities of individuals transitioning from one stage to another
-     currentPatch%pa_insect%MPB_Transit(1) = NewEggstm1
-     currentPatch%pa_insect%MPB_Transit(2) = NewL1tm1
-     currentPatch%pa_insect%MPB_Transit(3) = NewL2tm1
-     currentPatch%pa_insect%MPB_Transit(4) = NewL3tm1
-     currentPatch%pa_insect%MPB_Transit(5) = NewL4tm1
-     currentPatch%pa_insect%MPB_Transit(6) = NewPtm1
-     currentPatch%pa_insect%MPB_Transit(7) = NewTtm1
+     currentSite%si_insect%MPB_Transit(1) = NewEggstm1
+     currentSite%si_insect%MPB_Transit(2) = NewL1tm1
+     currentSite%si_insect%MPB_Transit(3) = NewL2tm1
+     currentSite%si_insect%MPB_Transit(4) = NewL3tm1
+     currentSite%si_insect%MPB_Transit(5) = NewL4tm1
+     currentSite%si_insect%MPB_Transit(6) = NewPtm1
+     currentSite%si_insect%MPB_Transit(7) = NewTtm1
 
      ! The physiological age distributions
-     currentPatch%pa_insect%MPB_PhysAge(:,1) = OE
-     currentPatch%pa_insect%MPB_PhysAge(:,2) = OL1
-     currentPatch%pa_insect%MPB_PhysAge(:,3) = OL2
-     currentPatch%pa_insect%MPB_PhysAge(:,4) = OL3
-     currentPatch%pa_insect%MPB_PhysAge(:,5) = OL4
-     currentPatch%pa_insect%MPB_PhysAge(:,6) = OP
-     currentPatch%pa_insect%MPB_PhysAge(:,7) = OT
+     currentSite%si_insect%MPB_PhysAge(:,1) = OE
+     currentSite%si_insect%MPB_PhysAge(:,2) = OL1
+     currentSite%si_insect%MPB_PhysAge(:,3) = OL2
+     currentSite%si_insect%MPB_PhysAge(:,4) = OL3
+     currentSite%si_insect%MPB_PhysAge(:,5) = OL4
+     currentSite%si_insect%MPB_PhysAge(:,6) = OP
+     currentSite%si_insect%MPB_PhysAge(:,7) = OT
 
     ! The winter survival parameters
-    currentPatch%pa_insect%PrS = PrS
-    currentPatch%pa_insect%Ct = Ct
+    currentSite%si_insect%PrS = PrS
+    currentSite%si_insect%Ct = Ct
     
     ! Daily maximum and minimum temperatures for diagnostic purposes
-    currentPatch%pa_insect%MaxDailyT = max_airTC
-    currentPatch%pa_insect%MinDailyT = min_airTC
+    currentSite%si_insect%MaxDailyT = max_airTC
+    currentSite%si_insect%MinDailyT = min_airTC
 
 end subroutine beetle_model
 
