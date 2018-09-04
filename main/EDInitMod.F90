@@ -35,6 +35,7 @@ module EDInitMod
   use FatesAllometryMod         , only : bdead_allom
   use FatesAllometryMod         , only : bstore_allom
   use FatesInsectMemMod         , only : InitInsectSite, ed_site_insect_type
+  use FatesInsectMemMod         , only : DomainSize, numberInsectTypes, maxNumStages, maxpft
 
   ! CIME GLOBALS
   use shr_log_mod               , only : errMsg => shr_log_errMsg
