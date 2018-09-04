@@ -23,6 +23,7 @@ module EDInitMod
   use FatesInterfaceMod         , only : hlm_use_planthydro
   use FatesInterfaceMod         , only : hlm_use_inventory_init
   use FatesInterfaceMod         , only : numpft
+  use FatesInterfaceMod        , only : hlm_use_insect
   use ChecksBalancesMod         , only : SiteCarbonStock
   use FatesInterfaceMod         , only : nlevsclass
   use FatesAllometryMod         , only : h2d_allom
@@ -74,8 +75,9 @@ contains
     allocate(site_in%promotion_rate(1:nlevsclass))
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
     
-    if(use_hlm_insect) call InitInsectSite(site_in)
-    !
+    ! Allocating and initializing insects at the site level.
+    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in)
+    
     end subroutine init_site_vars
 
   ! ============================================================================
@@ -146,6 +148,9 @@ contains
 
     ! canopy spread
     site_in%spread = 0._r8
+    
+    ! zeroing insects at the site level.
+    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in)
 
   end subroutine zero_site
 
