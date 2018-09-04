@@ -1538,18 +1538,18 @@ end subroutine flush_hvars
          hio_seed_bank_si(io_si) = sum(sites(s)%seed_bank) * g_per_kg
 	 
 	 ! Update the insect state variables (currently only mountain pine beetle)
-	 hio_MPB_Eggs_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,2))
-	 hio_MPB_L1_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,3))
-	 hio_MPB_L2_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,4))
-	 hio_MPB_L3_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,5))
-	 hio_MPB_L4_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,6))
-	 hio_MPB_P_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,7))
-	 hio_MPB_T_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,8))
-	 hio_MPB_A_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,9))
-	 hio_MPB_FA_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,10))
-	 hio_MPB_Bt_si(io_si)	       = sum(sites(s)%si_insect%indensity(1,11))
-	 hio_max_t_si(io_si)	       = sum(sites(s)%si_insect%MaxDailyT)
-	 hio_min_t_si(io_si)	       = sum(sites(s)%si_insect%MinDailyT)
+	 hio_MPB_Eggs_si(io_si)	       = sites(s)%si_insect%indensity(1,2)
+	 hio_MPB_L1_si(io_si)	       = sites(s)%si_insect%indensity(1,3)
+	 hio_MPB_L2_si(io_si)	       = sites(s)%si_insect%indensity(1,4)
+	 hio_MPB_L3_si(io_si)	       = sites(s)%si_insect%indensity(1,5)
+	 hio_MPB_L4_si(io_si)	       = sites(s)%si_insect%indensity(1,6)
+	 hio_MPB_P_si(io_si)	       = sites(s)%si_insect%indensity(1,7)
+	 hio_MPB_T_si(io_si)	       = sites(s)%si_insect%indensity(1,8)
+	 hio_MPB_A_si(io_si)	       = sites(s)%si_insect%indensity(1,9)
+	 hio_MPB_FA_si(io_si)	       = sites(s)%si_insect%indensity(1,10)
+	 hio_MPB_Bt_si(io_si)	       = sites(s)%si_insect%indensity(1,11)
+	 hio_max_t_si(io_si)	       = sites(s)%si_insect%MaxDailyT
+	 hio_min_t_si(io_si)	       = sites(s)%si_insect%MinDailyT
 
          hio_canopy_spread_si(io_si)        = sites(s)%spread
             
