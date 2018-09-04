@@ -53,6 +53,8 @@ module FatesInsectMemMod
            procedure :: InitInsectSite
 
     end type ed_site_insect_type
+    
+    public  :: InitInsectSite
 
     contains
 

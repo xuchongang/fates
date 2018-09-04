@@ -33,6 +33,7 @@ module EDInitMod
   use FatesAllometryMod         , only : bsap_allom
   use FatesAllometryMod         , only : bdead_allom
   use FatesAllometryMod         , only : bstore_allom
+  use FatesInsectMemMod         , only : InitInsectSite
 
   ! CIME GLOBALS
   use shr_log_mod               , only : errMsg => shr_log_errMsg
@@ -72,6 +73,8 @@ contains
     allocate(site_in%demotion_rate(1:nlevsclass))
     allocate(site_in%promotion_rate(1:nlevsclass))
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
+    
+    if(use_hlm_insect) call InitInsectSite(site_in)
     !
     end subroutine init_site_vars
 
