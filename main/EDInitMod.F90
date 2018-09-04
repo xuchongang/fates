@@ -153,8 +153,6 @@ contains
     site_in%spread = 0._r8
     
     ! zeroing insects at the site level.
-    ! setting up a pointer to the site level insect type.	
-    type(ed_site_insect_type), pointer :: si_insect
     if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in%si_insect)
 
   end subroutine zero_site
