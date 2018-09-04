@@ -64,6 +64,10 @@ contains
     type(ed_site_type)       , intent(inout), target  :: currentSite
     type(bc_in_type)         , intent(in)		:: bc_in
     !
+    ! POINTERS TO GENERIC TYPES	
+    type (ed_patch_type), pointer :: currentPatch
+    type (ed_cohort_type), pointer :: currentCohort
+    !
     ! !LOCAL VARIABLES:
     !-----------------------------------------------------------------------
     type(ed_site_insect_type), pointer :: si_insect
