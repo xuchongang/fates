@@ -34,7 +34,7 @@ module EDInitMod
   use FatesAllometryMod         , only : bsap_allom
   use FatesAllometryMod         , only : bdead_allom
   use FatesAllometryMod         , only : bstore_allom
-  use FatesInsectMemMod         , only : InitInsectSite
+  use FatesInsectMemMod         , only : InitInsectSite, ed_site_insect_type
 
   ! CIME GLOBALS
   use shr_log_mod               , only : errMsg => shr_log_errMsg
@@ -46,6 +46,9 @@ module EDInitMod
 
   character(len=*), parameter, private :: sourcefile = &
         __FILE__
+	
+  ! setting up a pointer to the site level insect type.	
+  type(ed_site_insect_type), pointer :: si_insect
 
   public  :: zero_site
   public  :: init_site_vars
@@ -76,7 +79,7 @@ contains
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
     
     ! Allocating and initializing insects at the site level.
-    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in)
+    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in%si_insect)
     
     end subroutine init_site_vars
 
@@ -150,7 +153,9 @@ contains
     site_in%spread = 0._r8
     
     ! zeroing insects at the site level.
-    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in)
+    ! setting up a pointer to the site level insect type.	
+    type(ed_site_insect_type), pointer :: si_insect
+    if(hlm_use_insect.eq.itrue) call InitInsectSite(site_in%si_insect)
 
   end subroutine zero_site
 
