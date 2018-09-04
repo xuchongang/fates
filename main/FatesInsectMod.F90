@@ -144,7 +144,7 @@ contains
     real(r8) :: SiteArea
 
     !----------------------------------------------------------------------------------------------------
-    ! Grabbing the values of the state variables from currentPatch
+    ! Grabbing the values of the state variables from currentSite
 
     ! The physiological age distributions
     OE = currentSite%si_insect%MPB_PhysAge(:,1)
