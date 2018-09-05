@@ -31,14 +31,11 @@ module FatesInventoryInitMod
    use FatesGlobals     , only : fates_log
    use FatesInterfaceMod, only : bc_in_type
    use FatesInterfaceMod, only : hlm_inventory_ctrl_file
-   use FatesInterfaceMod, only : hlm_use_insect
    use EDTypesMod       , only : ed_site_type
    use EDTypesMod       , only : ed_patch_type
    use EDTypesMod       , only : ed_cohort_type 
    use EDTypesMod       , only : area
    use EDPftvarcon      , only : EDPftvarcon_inst
-   use FatesInsectMemMod, only : ed_site_insect_type
-   use FatesInsectMemMod, only : InitInsectSite
 
    implicit none
    private
@@ -442,12 +439,6 @@ contains
             write(fates_log(),*) 'Inventory Fusion Changed total biomass beyond reasonable limit'
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
-	 
-	 ! Allocating and initializing insects at the site level.
-      	 if(hlm_use_insect.eq.itrue) then
-		allocate(sites(s)%si_insect)
-        	call InitInsectSite(sites(s)%si_insect)
-         endif
          
       end do
 
