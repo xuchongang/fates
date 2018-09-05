@@ -49,7 +49,7 @@ module EDInitMod
         __FILE__
 	
   ! setting up a pointer to the site level insect type.	
-  type(ed_site_insect_type), pointer :: si_insect
+  !type(ed_site_insect_type), pointer :: si_insect
 
   public  :: zero_site
   public  :: init_site_vars
