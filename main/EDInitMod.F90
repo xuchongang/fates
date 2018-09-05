@@ -81,8 +81,8 @@ contains
     
     ! Allocating and initializing insects at the site level.
     if(hlm_use_insect.eq.itrue) then
-        !allocate(site_in%si_insect)
-        call site_in%si_insect%InitInsectSite()
+        allocate(site_in%si_insect)
+        call InitInsectSite(site_in%si_insect)
     endif
     
     end subroutine init_site_vars
@@ -158,7 +158,7 @@ contains
     
     ! zeroing insects at the site level.
     if(hlm_use_insect.eq.itrue) then
-      call site_in%si_insect%ZeroInsectSite()
+      call ZeroInsectSite(site_in%si_insect)
     endif 
 
   end subroutine zero_site
