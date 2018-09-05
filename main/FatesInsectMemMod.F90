@@ -86,8 +86,8 @@ module FatesInsectMemMod
 	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
-	this%MaxDailyT = 0.0
-	this%MinDailyT = 0.0
+	this%MaxDailyT = 0.0_r8
+	this%MinDailyT = 0.0_r8
 
     end subroutine InitInsectSite
     
@@ -114,8 +114,8 @@ module FatesInsectMemMod
 	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
-	this%MaxDailyT = 0.0
-	this%MinDailyT = 0.0
+	this%MaxDailyT = 0.0_r8
+	this%MinDailyT = 0.0_r8
 
     end subroutine ZeroInsectSite
        
