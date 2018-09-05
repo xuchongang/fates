@@ -29,11 +29,14 @@ module FatesInventoryInitMod
    use FatesGlobals     , only : fates_log
    use FatesInterfaceMod, only : bc_in_type
    use FatesInterfaceMod, only : hlm_inventory_ctrl_file
+   use FatesInterfaceMod, only : hlm_use_insect
    use EDTypesMod       , only : ed_site_type
    use EDTypesMod       , only : ed_patch_type
    use EDTypesMod       , only : ed_cohort_type 
    use EDTypesMod       , only : area
    use EDPftvarcon      , only : EDPftvarcon_inst
+   use FatesInsectMemMod, only : ed_site_insect_type
+   use FatesInsectMemMod, only : InitInsectSite
 
    implicit none
    private
@@ -441,6 +444,12 @@ contains
       end do
 
       deallocate(inv_format_list, inv_pss_list, inv_css_list, inv_lat_list, inv_lon_list)
+      
+      ! Allocating and initializing insects at the site level.
+      if(hlm_use_insect.eq.itrue) then
+	allocate(site_in%si_insect)
+        call InitInsectSite(site_in%si_insect)
+      endif
 
       return
    end subroutine initialize_sites_by_inventory
