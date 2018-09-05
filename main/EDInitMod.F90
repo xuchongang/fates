@@ -78,6 +78,7 @@ contains
     allocate(site_in%demotion_rate(1:nlevsclass))
     allocate(site_in%promotion_rate(1:nlevsclass))
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
+    if(hlm_use_insect.eq.itrue) allocate(site_in%si_insect)
     
     ! Allocating and initializing insects at the site level.
     !if(hlm_use_insect.eq.itrue) then
@@ -311,7 +312,7 @@ contains
 	   
 	 ! Allocating and initializing insects at the site level.
       	 if(hlm_use_insect.eq.itrue) then
-		allocate(sites(s)%si_insect)
+		!allocate(sites(s)%si_insect)
         	call InitInsectSite(sites(s)%si_insect)
          endif
            
@@ -323,7 +324,7 @@ contains
 	
 	   ! Allocating and initializing insects at the site level.
       	   if(hlm_use_insect.eq.itrue) then
-		allocate(sites(s)%si_insect)
+		!allocate(sites(s)%si_insect)
         	call InitInsectSite(sites(s)%si_insect)
            endif
 

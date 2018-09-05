@@ -19,7 +19,7 @@ module FatesInsectMemMod
     integer,  parameter :: maxpft = 14					! maximum number of plant pfts (I've manually entered the current number, which is inelegant...)
     
     !-------------------------------------------------------------------------------------------------------------------------------
-    ! Defining a sute-level type from which to obtain variables.
+    ! Defining a site-level type from which to obtain variables.
     type ed_site_insect_type
         !variables for tracking insect dynamics
 	

@@ -267,6 +267,8 @@ contains
 	Nt14 = Nt14 + Nt14p
 	Nt16s = Nt16s + Nt16sp
 	
+	currentPatch => currentPatch%younger
+	
     end do	! Patch do loop
     
     ! Now dividing by total area to complete the weighting process.
@@ -374,7 +376,7 @@ contains
         	end if
 
         	! Here is 14 inch dbh size class and larger we use in the model.
-        		if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 	    		35.56_r8 .and. Ntm116s > 0.0_r8 .and. &
 			Ntm116s > Nt16s)then
 	    
@@ -386,6 +388,8 @@ contains
         	currentCohort => currentCohort%shorter
 
      	end do ! This ends the cohort do loop
+	
+	currentPatch => currentPatch%younger
 	
     end do ! This ends the patch do loop
 
