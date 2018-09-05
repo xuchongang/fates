@@ -81,7 +81,7 @@ contains
     
     ! Allocating and initializing insects at the site level.
     if(hlm_use_insect.eq.itrue) then
-        allocate(site_in%si_insect)
+        !allocate(site_in%si_insect)
         call site_in%si_insect%InitInsectSite()
     endif
     
