@@ -25,6 +25,8 @@ module FatesInventoryInitMod
    ! FATES GLOBALS
    use FatesConstantsMod, only : r8 => fates_r8
    use FatesConstantsMod, only : pi_const
+   use FatesConstantsMod         , only : ifalse
+   use FatesConstantsMod         , only : itrue
    use FatesGlobals     , only : endrun => fates_endrun
    use FatesGlobals     , only : fates_log
    use FatesInterfaceMod, only : bc_in_type
@@ -440,16 +442,16 @@ contains
             write(fates_log(),*) 'Inventory Fusion Changed total biomass beyond reasonable limit'
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
+	 
+	 ! Allocating and initializing insects at the site level.
+      	 if(hlm_use_insect.eq.itrue) then
+		allocate(sites(s)%si_insect)
+        	call InitInsectSite(sites(s)%si_insect)
+         endif
          
       end do
 
       deallocate(inv_format_list, inv_pss_list, inv_css_list, inv_lat_list, inv_lon_list)
-      
-      ! Allocating and initializing insects at the site level.
-      if(hlm_use_insect.eq.itrue) then
-	allocate(site_in%si_insect)
-        call InitInsectSite(site_in%si_insect)
-      endif
 
       return
    end subroutine initialize_sites_by_inventory
