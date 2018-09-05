@@ -80,10 +80,10 @@ contains
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
     
     ! Allocating and initializing insects at the site level.
-    if(hlm_use_insect.eq.itrue) then
-        allocate(site_in%si_insect)
-        call InitInsectSite(site_in%si_insect)
-    endif
+    !if(hlm_use_insect.eq.itrue) then
+    !    allocate(site_in%si_insect)
+    !    call InitInsectSite(site_in%si_insect)
+    !endif
     
     end subroutine init_site_vars
 
@@ -157,9 +157,9 @@ contains
     site_in%spread = 0._r8
     
     ! zeroing insects at the site level.
-    if(hlm_use_insect.eq.itrue) then
-      call ZeroInsectSite(site_in%si_insect)
-    endif 
+    !if(hlm_use_insect.eq.itrue) then
+    !  call ZeroInsectSite(site_in%si_insect)
+    !endif 
 
   end subroutine zero_site
 
@@ -256,6 +256,12 @@ contains
 
      use FatesPlantHydraulicsMod, only : updateSizeDepRhizHydProps 
      use FatesInventoryInitMod,   only : initialize_sites_by_inventory
+     use FatesConstantsMod         , only : ifalse
+     use FatesConstantsMod         , only : itrue
+     use FatesInterfaceMod         , only : hlm_use_insect
+     
+     use FatesInsectMemMod         , only : ed_site_insect_type
+     use FatesInsectMemMod         , only : InitInsectSite
 
      !
      ! !ARGUMENTS    
@@ -302,12 +308,24 @@ contains
            ! For carbon balance checks, we need to initialize the 
            ! total carbon stock
            call SiteCarbonStock(sites(s),sites(s)%old_stock,biomass_stock,litter_stock,seed_stock)
+	   
+	 ! Allocating and initializing insects at the site level.
+      	 if(hlm_use_insect.eq.itrue) then
+		allocate(sites(s)%si_insect)
+        	call InitInsectSite(sites(s)%si_insect)
+         endif
            
         enddo
      else
 
         !FIX(SPM,032414) clean this up...inits out of this loop
         do s = 1, nsites
+	
+	   ! Allocating and initializing insects at the site level.
+      	   if(hlm_use_insect.eq.itrue) then
+		allocate(sites(s)%si_insect)
+        	call InitInsectSite(sites(s)%si_insect)
+           endif
 
            allocate(newp)
 
