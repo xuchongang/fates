@@ -876,7 +876,7 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
         	Ntp114 = Nt14
     	end if
 
-    	if(isnan(Ntp116s) .or. Ntp116s < 0.0)then
+    	if(isnan(Ntp116s) .or. Ntp116s < 0.0_r8)then
         	Ntp116s = Nt16s
     	end if
 
@@ -888,7 +888,7 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
         	Ptp110 = Pt10
     	end if
 
-    	if(isnan(Ptp112) .or. Ptp112 < 0.0_r8 .or. Ntp112 <= 0.0_8)then
+    	if(isnan(Ptp112) .or. Ptp112 < 0.0_r8 .or. Ntp112 <= 0.0_r8)then
         	Ptp112 = Pt12
     	end if
 
