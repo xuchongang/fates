@@ -854,6 +854,51 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
         Ptp112 = Pt12 + exp(ab + bb*11.0_r8)*Bt*Nt12*deltat        ! This is the discretized ODE for parent beetles in 10-12 inch DBH trees
         Ptp114 = Pt14 + exp(ab + bb*13.0_r8)*Bt*Nt14*deltat        ! This is the discretized ODE for parent beetles in 12-14 inch DBH trees
         Ptp116s = Pt16s + exp(ab + bb*15.0_r8)*Bt*Nt16s*deltat     ! This is the discretized ODE for parent beetles in 14 inch + trees
+	
+	! To prevent the algorithm from returning NaNs or negative values.
+    	if(isnan(Btp1) .or. Btp1 < 0.0_r8)then
+        	Btp1 = Bt
+    	end if
+
+    	if(isnan(Ntp168) .or. Ntp168 < 0.0_r8)then
+        	Ntp168 = Nt68
+    	end if
+
+    	if(isnan(Ntp110) .or. Ntp110 < 0.0_r8)then
+        	Nt1p10 = Nt10
+    	end if
+
+    	if(isnan(Ntp112) .or. Ntp112 < 0.0_r8)then
+        	Ntp112 = Nt12
+    	end if
+
+    	if(isnan(Ntp114) .or. Ntp114 < 0.0_r8)then
+        	Ntp114 = Nt14
+    	end if
+
+    	if(isnan(Ntp116s) .or. Ntp116s < 0.0)then
+        	Ntp116s = Nt16s
+    	end if
+
+    	if(isnan(Ptp168) .or. Ptp168 < 0.0_r8 .or. Ntp168 <= 0.0_r8)then
+        	Ptp168 = Pt68
+    	end if
+
+    	if(isnan(Ptp110) .or. Ptp110 < 0.0_r8 .or. Ntp110 <= 0.0_r8)then
+        	Ptp110 = Pt10
+    	end if
+
+    	if(isnan(Ptp112) .or. Ptp112 < 0.0_r8 .or. Ntp112 <= 0.0_8)then
+        	Ptp112 = Pt12
+    	end if
+
+    	if(isnan(Ptp114) .or. Ptp114 < 0.0_r8 .or. Ntp114 <= 0.0_r8)then
+        	Ptp114 = Pt14
+    	end if
+
+    	if(isnan(Ptp116s) .or. Ptp116s < 0.0_r8 .or. Ntp116s <= 0.0_r8)then
+        	Ptp116s = Pt16s
+    	end if
 
         ! Now I update all of the state variables
         Bt = Btp1
@@ -871,51 +916,6 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
 
     end do
     !------------------------------------------------------------------------------------------------
-
-    ! To prevent the algorithm from returning NaNs or negative values.
-    if(isnan(Bt) .or. Bt < 0.0_r8)then
-        Bt = 0.0_r8
-    end if
-
-    if(isnan(Nt68) .or. Nt68 < 0.0_r8)then
-        Nt68 = 0.0_r8
-    end if
-
-    if(isnan(Nt10) .or. Nt10 < 0.0_r8)then
-        Nt10 = 0.0_r8
-    end if
-
-    if(isnan(Nt12) .or. Nt12 < 0.0_r8)then
-        Nt12 = 0.0_r8
-    end if
-
-    if(isnan(Nt14) .or. Nt14 < 0.0_r8)then
-        Nt14 = 0.0_r8
-    end if
-
-    if(isnan(Nt16s) .or. Nt16s < 0.0)then
-        Nt16s = 0.0
-    end if
-
-    if(isnan(Pt68) .or. Pt68 < 0.0_r8)then
-        Pt68 = 0.0_r8
-    end if
-
-    if(isnan(Pt10) .or. Pt10 < 0.0_r8)then
-        Pt10 = 0.0_r8
-    end if
-
-    if(isnan(Pt12) .or. Pt12 < 0.0)then
-        Pt12 = 0.0
-    end if
-
-    if(isnan(Pt14) .or. Pt14 < 0.0)then
-        Pt14 = 0.0
-    end if
-
-    if(isnan(Pt16s) .or. Pt16s < 0.0_r8)then
-        Pt16s = 0.0_r8
-    end if
 
     ! Now I compute the number of new parents in this one day time interval.
     Parents = Pt68 + Pt10 + Pt12 + Pt14 + Pt16s
