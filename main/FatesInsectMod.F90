@@ -865,7 +865,7 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
     	end if
 
     	if(isnan(Ntp110) .or. Ntp110 < 0.0_r8)then
-        	Nt1p10 = Nt10
+        	Ntp110 = Nt10
     	end if
 
     	if(isnan(Ntp112) .or. Ntp112 < 0.0_r8)then
