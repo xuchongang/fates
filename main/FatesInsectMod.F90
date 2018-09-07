@@ -55,7 +55,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : delta1, an, bn, ab, bb		! these parameters will be passed using parameter file.
+    use FatesInsectMemMod    , only : an, dd1		! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -117,27 +117,15 @@ contains
 
     ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
     ! Averaged over all patches within each site.
-    real(r8) :: Nt68				! initial susceptible host trees in the 5 to 8 inch dbh size class
-    real(r8) :: Nt10                    	! initial susceptible host trees in the 8 to 10 inch dbh size class
-    real(r8) :: Nt12              		! initial susceptible host trees in the 10 to 12 inch dbh size class
-    real(r8) :: Nt14              		! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8) :: Nt16s             		! initial susceptible host trees in the  14 inch or larger dbh size class\
+    real(r8) :: NtGEQ20				! initial susceptible host trees in the 20+ cm dbh size class
     
     ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
     ! Specific to each patch.
-    real(r8) :: Nt68p				! initial susceptible host trees in the 5 to 8 inch dbh size class
-    real(r8) :: Nt10p                   	! initial susceptible host trees in the 8 to 10 inch dbh size class
-    real(r8) :: Nt12p             		! initial susceptible host trees in the 10 to 12 inch dbh size class
-    real(r8) :: Nt14p             		! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8) :: Nt16sp            		! initial susceptible host trees in the  14 inch or larger dbh size class
+    real(r8) :: NtGEQ20p			! initial susceptible host trees in the 20+ cm dbh size class
 
     ! I also make the equivalent container for the density of hosts prior to insect attack so that we can compute
     ! the proportion that died in the current step (daily time step).
-    real(r8) :: Ntm168            		! previous susceptible host trees in the 5 to 8 inch dbh size class
-    real(r8) :: Ntm110            		! previous susceptible host trees in the 8 to 10 inch dbh size class
-    real(r8) :: Ntm112            		! previous susceptible host trees in the 10 to 12 inch dbh size class
-    real(r8) :: Ntm114            		! previous susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8) :: Ntm116s           		! previous susceptible host trees in the  14 inch or larger dbh size class
+    real(r8) :: Ntm1GEQ20            		! previous susceptible host trees in the 20+ cm dbh size class
 
     ! Here are variables that I use to decide whether to restart the mountain pine beetle population at endemic population levels
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
@@ -146,6 +134,7 @@ contains
     
     ! Total site area in m2 summed over all of the patches (used in the patch-area-weighted density and temperature calculations)
     real(r8) :: SiteArea
+    integer :: NumPatches
 
     !----------------------------------------------------------------------------------------------------
     ! Grabbing the values of the state variables from currentSite
@@ -193,13 +182,10 @@ contains
     !----------------------------------------------------------------------------------------------------
     ! Calculate the patch-area weighted density trees in each of the size classes that we use in the 
     ! mountain pine beetle model across all patches. I then call the insect life cycle model at the site level.
-    Nt68 = 0.0_r8
-    Nt10 = 0.0_r8
-    Nt12 = 0.0_r8
-    Nt14 = 0.0_r8
-    Nt16s = 0.0_r8
-    
+    NtGEQ20 = 0.0_r8
+
     SiteArea = 0.0_r8
+    NumPatches = 0
     
     max_airTC = 0.0_r8
     min_airTC = 0.0_r8
@@ -210,50 +196,27 @@ contains
     do while (associated(currentPatch))
     
     	! zeroing out the patch specific tree densitites in each size class
-        Nt68p = 0.0_r8
-    	Nt10p = 0.0_r8
-    	Nt12p = 0.0_r8
-    	Nt14p = 0.0_r8
-    	Nt16sp = 0.0_r8
+        NtGEQ20p = 0.0_r8
 
 	iofp = currentPatch%patchno             ! This is needed to get the relevant temperature variables from bc_in
     	currentCohort => currentPatch%tallest
 	
 	! Computing total site are in m^2
 	SiteArea = SiteArea + currentPatch%area
+	NumPatches = NumPatches + 1
 	
-	! Computing patch area weighted mean temperature
-	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8)*currentPatch%area
-    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8)*currentPatch%area
+	! Computing mean temperature averaged across all patches (normalized later)
+	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8)
+    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8)
 
    	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
 
         	! Below I compute the tree density per 225 m^2 in each of the size classes
         	! used in the current version of the insect mortality model.
 
-        	! Here is the 5-8 inch dbh size class we use in the model.
-        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 12.7_r8 .and. currentCohort%dbh < 20.32_r8)then
-        		Nt68p = Nt68p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
-        	end if
-
-        	! Here is the 8-10 inch dbh size class we use in the model.
-        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.32_r8 .and. currentCohort%dbh < 25.4_r8)then
-        		Nt10p = Nt10p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
-        	end if
-
-        	! Here is 10-12 inch dbh size class we use in the model.
-        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 25.4_r8 .and. currentCohort%dbh < 30.48_r8)then
-        		Nt12p = Nt12p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
-        	end if
-
-        	! Here is 12-14 inch dbh size class we use in the model.
-        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 30.48_r8 .and. currentCohort%dbh < 35.56_r8)then
-        		Nt14p = Nt14p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
-        	end if
-
-        	! Here is 14 inch dbh size class and larger we use in the model.
-        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 35.56_r8)then
-        		Nt16sp = Nt16sp + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        	! Here is the 20+ cm dbh size class we use in the model.
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.0_r8)then
+        		NtGEQ20p = NtGEQ20p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
         	end if
 
         	currentCohort => currentCohort%shorter
@@ -261,41 +224,29 @@ contains
     	end do ! This ends the cohort do loop
 	
 	! Adding all of the weighted densities to the overall site level density
-	Nt68 = Nt68 + Nt68p
-	Nt10 = Nt10 + Nt10p
-	Nt12 = Nt12 + Nt12p
-	Nt14 = Nt14 + Nt14p
-	Nt16s = Nt16s + Nt16sp
+	NtGEQ20 = NtGEQ20 + NtGEQ20p
 	
 	currentPatch => currentPatch%younger
 	
     end do	! Patch do loop
     
     ! Now dividing by total area to complete the weighting process.
-    Nt68 = Nt68/SiteArea
-    Nt10 = Nt10/SiteArea
-    Nt12 = Nt12/SiteArea
-    Nt14 = Nt14/SiteArea
-    Nt16s = Nt16s/SiteArea
+    NtGEQ20 = NtGEQ20/SiteArea
     
-    max_airTC = max_airTC/SiteArea
-    min_airTC = min_airTC/SiteArea
+    ! Now completing the temperature averaging process.
+    max_airTC = max_airTC/NumPatches
+    min_airTC = min_airTC/NumPatches
 
     ! I record the number of trees in each of the size classes prior to attack.
-    Ntm168 = Nt68
-    Ntm110 = Nt10
-    Ntm112 = Nt12
-    Ntm114 = Nt14
-    Ntm116s = Nt16s
+    Ntm1GEQ20 = NtGEQ20
 
     !----------------------------------------------------------------------------------------------------
     ! Calling the full MPB simulation for the time step. 
-    call MPBSim2(max_airTC, min_airTC, Parents, FA, OE, OL1, OL2, &
-        OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
-        NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-        Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-        Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, &
-        an, bn, ab, bb, delta1)
+    call MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
+            OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
+            NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
+            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, counter, &
+            NtGEQ20, Bt, an, dd1)
 
     ! In the case of beetle extinction, we re-initialize the parent beetle population with
     ! a small number (endemic beetle population level) of parent beetles. We count the
@@ -333,54 +284,13 @@ contains
         	! Below I compute the tree mortality rate (n/ha/year) in each of the size classes
         	! used in the current version of the insect mortality model.
 	
-        	! Here is the 5-8 inch dbh size class we use in the model.
+        	! Here is the 20+ cm dbh size class we use in the model.
 		! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 		! to the mortality rate on a yearly basis.
         	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-			12.7_r8 .and. currentCohort%dbh < 20.32_r8 .and. Ntm168 > 0.0_r8 .and. &
-			Ntm168 > Nt68)then
+			20.0_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20)then
 		
-                		currentCohort%inmort = (1.0_r8 - Nt68/Ntm168)*365.0_r8	
-			else
-				currentCohort%inmort = 0.0_r8
-        	end if
-
-        	! Here is the 8-10 inch dbh size class we use in the model.
-        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    		20.32_r8 .and. currentCohort%dbh < 25.4_r8 .and. Ntm110 > 0.0_r8 .and. &
-			Ntm110 > Nt10)then
-		
-                		currentCohort%inmort = (1.0_r8 - Nt10/Ntm110)*365.0_r8
-			else
-				currentCohort%inmort = 0.0_r8
-        	end if
-
-        	! Here is 10-12 inch dbh size class we use in the model.
-        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    		25.4_r8 .and. currentCohort%dbh < 30.48_r8 .and. Ntm112 > 0.0_r8 .and. &
-			Ntm112 > Nt12)then
-		
-                		currentCohort%inmort = (1.0_r8 - Nt12/Ntm112)*365.0_r8
-			else
-				currentCohort%inmort = 0.0_r8
-        	end if
-
-        	! Here is 12-14 inch dbh size class we use in the model.
-        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    		30.48_r8 .and. currentCohort%dbh < 35.56_r8 .and. Ntm114 > 0.0_r8 .and. &
-			Ntm114 > Nt14)then
-		
-                		currentCohort%inmort = (1.0_r8 - Nt14/Ntm114)*365.0_r8
-			else
-				currentCohort%inmort = 0.0_r8
-        	end if
-
-        	! Here is 14 inch dbh size class and larger we use in the model.
-        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-	    		35.56_r8 .and. Ntm116s > 0.0_r8 .and. &
-			Ntm116s > Nt16s)then
-	    
-                		currentCohort%inmort = (1.0_r8 - Nt16s/Ntm116s)*365.0_r8
+                		currentCohort%inmort = (1.0_r8 - NtGEQ20/Ntm1GEQ20)*365.0_r8	
 			else
 				currentCohort%inmort = 0.0_r8
         	end if
@@ -442,9 +352,8 @@ end subroutine beetle_model
 Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, &
-            an, bn, ab, bb, delta1)
+            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, counter, &
+            NtGEQ20, Bt, an, dd1)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
     ! oviposition, the egg stage, the four larval instars,
@@ -490,19 +399,12 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(inout) :: Ct             ! The level of larval cold tolerance in the population.
 
     ! input and output variables
-    real(r8), intent(inout) :: Nt68                   ! initial susceptible host trees in the 5 to 8 inch dbh size class
-    real(r8), intent(inout) :: Nt10                   ! initial susceptible host trees in the 8 to 10 inch dbh size class
-    real(r8), intent(inout) :: Nt12                   ! initial susceptible host trees in the 10 to 12 inch dbh size class
-    real(r8), intent(inout) :: Nt14                   ! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8), intent(inout) :: Nt16s                  ! initial susceptible host trees in the  14 inch or larger dbh size class
+    real(r8), intent(inout) :: NtGEQ20                ! initial susceptible host trees in the 20+ cm dbh size class
     real(r8), intent(inout) :: Bt                     ! beetles that remain in flight from the previous step
 
-    ! input parameters (dbh stands for tree diameter at breast height)
-    real(r8), intent(in) :: an                        ! controls the tree loss rate as a function of tree size class
-    real(r8), intent(in) :: bn                        ! controls the tree loss rate as a function of tree size class
-    real(r8), intent(in) :: ab                        ! controls the beetle loss rate as a function of tree size class
-    real(r8), intent(in) :: bb                        ! controls the beetle loss rate as a function of tree size class
-    real(r8), intent(in) :: delta1                  ! the beetle settling rate per hour estimated in Goodsman et al (2016)
+    ! input parameters
+    real(r8), intent(in) :: an                        ! controls the tree loss rate
+    real(r8), intent(in) :: dd1                       ! controls competition among juvenile beetles
 
     !---------------------------------------------------------------------------------
     ! All of the parameters below are internal parameters (internal to the subroutine)
@@ -764,25 +666,20 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! This updates the expected number of adults (A) and flying adults (FA).
 
     ! Simulating the attack of host trees
-    call MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, &
-            an, bn, ab, bb, delta1)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, dd1)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab, bb, delta1)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, dd1)
     ! In this subroutine I solve the differential equations using the Euler method with an exceedingly small time step.
 
     implicit none
 
     ! input and output variables.
     ! Tree density in size classes per 225 m^2 (15m X 15m gap).
-    real(r8), intent(inout) :: Nt68                 ! initial susceptible host trees in the 5 to 8 inch dbh size class
-    real(r8), intent(inout) :: Nt10                 ! initial susceptible host trees in the 8 to 10 inch dbh size class
-    real(r8), intent(inout) :: Nt12                 ! initial susceptible host trees in the 10 to 12 inch dbh size class
-    real(r8), intent(inout) :: Nt14                 ! initial susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8), intent(inout) :: Nt16s                ! initial susceptible host trees in the  14 inch or larger dbh size class
+    real(r8), intent(inout) :: NtGEQ20              ! initial susceptible host trees in the 20+ cm dbh size class
     real(r8), intent(inout) :: Bt                   ! beetles that remain in flight from the previous step
 
     ! input variable
@@ -792,133 +689,49 @@ subroutine MPBAttack(Nt68, Nt10, Nt12, Nt14, Nt16s, Bt, FA, Parents, an, bn, ab,
     real(r8), intent(out) :: Parents                ! the density of beetles that entered trees killed in this time step
 
     ! input parameters (dbh stands for tree diameter at breast height)
-    real(r8), intent(in) :: an                      ! controls the tree loss rate as a function of dbh class
-    real(r8), intent(in) :: bn                      ! controls the tree loss rate as a function of dbh class
-    real(r8), intent(in) :: ab                      ! controls the beetle loss rate as a function of dbh class
-    real(r8), intent(in) :: bb                      ! controls the beetle loss rate as a function of dbh class
-    real(r8), intent(in) :: delta1                  ! the beetle settling rate per hour estimated in Goodsman et al (2016)
+    real(r8), intent(in) :: an                      ! controls the tree loss rate 
+    real(r8), intent(in) :: dd1			    ! controls negative density dependence in juvenile beetles.
 
-    ! Here are internal variables
-
-    ! First we need to keep track of how many trees there initially were in each size class so that we can
-    ! compute the density of infested trees at the end of the one day time step.
+    ! Here are internal variables and parameters
+    ! We assume that the beetle loss rate is approximately 300 times
+    ! the tree loss rate per interaction.
+    real(r8) :: timestep = 1.0_r8         ! one day time step
     real(r8) :: Btp1                      ! an updated value for the beetles
-    real(r8) :: Ntp168                    ! updated susceptible host trees in the 5 to 8 inch dbh size class
-    real(r8) :: Ntp110                    ! updated susceptible host trees in the 8 to 10 inch dbh size class
-    real(r8) :: Ntp112                    ! updated susceptible host trees in the 10 to 12 inch dbh size class
-    real(r8) :: Ntp114                    ! updated susceptible host trees in the 12 to 14 inch dbh size class
-    real(r8) :: Ntp116s                   ! updated susceptible host trees in the  14 inch or larger dbh size class
-
-    real(r8) :: Pt68                      ! parent beetles the 5 to 8 inch dbh size class
-    real(r8) :: Pt10                      ! parent beetles in the 8 to 10 inch dbh size class
-    real(r8) :: Pt12                      ! parent beetles in the 10 to 12 inch dbh size class
-    real(r8) :: Pt14                      ! parent beetles in the 12 to 14 inch dbh size class
-    real(r8) :: Pt16s                     ! parent beetles in the 14 inch or larger dbh size class
-
-    real(r8) :: Ptp168                    ! updated parent beetles the 5 to 8 inch dbh size class
-    real(r8) :: Ptp110                    ! updated parent beetles in the 8 to 10 inch dbh size class
-    real(r8) :: Ptp112                    ! updated parent beetles in the 10 to 12 inch dbh size class
-    real(r8) :: Ptp114                    ! updated parent beetles in the 12 to 14 inch dbh size class
-    real(r8) :: Ptp116s                   ! updated parent beetles in the 14 inch or larger dbh size class
-
-    ! parameters and variables related to the integration routine
-    integer(kind = 4), parameter :: timesteps = 8640  ! number of 10 second time steps in a 24 hour day
-    integer(kind = 4) :: i                            ! the iterator
-    real(r8) :: deltat = 1.0/8640.0
+    real(r8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
+    real(r8) :: Ptp1GEQ20                 ! updated parent beetles the 20+ cm dbh size class
 
     ! I add in the beetles that just started flying in the time step
     Bt = Bt + FA
 
-    ! initializing the parent beetles
-    Pt68 = 0.0_r8
-    Pt10 = 0.0_r8
-    Pt12 = 0.0_r8
-    Pt14 = 0.0_r8
-    Pt16s = 0.0_r8
-
     !---------------------------------------------------------------------------------------------
-    ! Here I do the Euler integration
-    do i = 1,timesteps
-        ! This is the ODE for flying beetles
-        Btp1 = Bt - exp(ab + bb*6.5_r8)*Nt68*deltat - exp(ab + bb*9.0_r8)*Bt*Nt10*deltat - &
-	exp(ab + bb*11.0_r8)*Bt*Nt12*deltat - exp(ab + bb*13.0_r8)*Bt*Nt14*deltat - &
-	exp(ab + bb*15.0_r8)*Bt*Nt16s*deltat - delta1*24.0_r8*Bt*deltat
-        Ntp168 = Nt68 - exp(an + bn*6.5_r8)*Bt*Nt68*deltat           ! This is the discretized ODE for 5-8 inch DBH trees
-        Ntp110 = Nt10 - exp(an + bn*9.0_r8)*Bt*Nt10*deltat           ! This is the discretized ODE for 8-10 inch DBH trees
-        Ntp112 = Nt12 - exp(an + bn*11.0_r8)*Bt*Nt12*deltat          ! This is the discretized ODE for 10-12 inch DBH trees
-        Ntp114 = Nt14 - exp(an + bn*13.0_r8)*Bt*Nt14*deltat          ! This is the discretized ODE for 12-14 inch DBH trees
-        Ntp116s = Nt16s - exp(an + bn*15.0_r8)*Bt*Nt16s*deltat       ! This is the discretized ODE for 14 inch and larger DBH trees
+    ! Here I compute the analytic solutions
 
-        Ptp168 = Pt68 + exp(ab + bb*6.5_r8)*Bt*Nt68*deltat         ! This is the discretized ODE for parent beetles in 5-8 inch DBH trees
-        Ptp110 = Pt10 + exp(ab + bb*9.0_r8)*Bt*Nt10*deltat         ! This is the discretized ODE for parent beetles in 8-10 inch DBH trees
-        Ptp112 = Pt12 + exp(ab + bb*11.0_r8)*Bt*Nt12*deltat        ! This is the discretized ODE for parent beetles in 10-12 inch DBH trees
-        Ptp114 = Pt14 + exp(ab + bb*13.0_r8)*Bt*Nt14*deltat        ! This is the discretized ODE for parent beetles in 12-14 inch DBH trees
-        Ptp116s = Pt16s + exp(ab + bb*15.0_r8)*Bt*Nt16s*deltat     ! This is the discretized ODE for parent beetles in 14 inch + trees
-	
-	! To prevent the algorithm from returning NaNs or negative values.
-    	if(isnan(Btp1) .or. Btp1 < 0.0_r8)then
-        	Btp1 = Bt
-    	end if
+    ! To prevent divide by zeros in the analytic solution, I take this precaution.
+    if(exp(an)*305.5264_r8*NtGEQ20 == exp(an)*Bt) Bt = Bt + 0.01_r8
 
-    	if(isnan(Ntp168) .or. Ntp168 < 0.0_r8)then
-        	Ntp168 = Nt68
-    	end if
+    ! Here's the solution for beetles
+    Btp1 = Bt*exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)/&
+        (1.0_r8 + exp(an)*Bt/(exp(an)*305.5264_r8*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)))
 
-    	if(isnan(Ntp110) .or. Ntp110 < 0.0_r8)then
-        	Ntp110 = Nt10
-    	end if
+    ! Here's the analytic solution for trees
+    Ntp1GEQ20 = NtGEQ20/&
+        (1.0_r8 + exp(an)*Bt/(exp(an)*305.5264_r8*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)))
 
-    	if(isnan(Ntp112) .or. Ntp112 < 0.0_r8)then
-        	Ntp112 = Nt12
-    	end if
-
-    	if(isnan(Ntp114) .or. Ntp114 < 0.0_r8)then
-        	Ntp114 = Nt14
-    	end if
-
-    	if(isnan(Ntp116s) .or. Ntp116s < 0.0_r8)then
-        	Ntp116s = Nt16s
-    	end if
-
-    	if(isnan(Ptp168) .or. Ptp168 < 0.0_r8 .or. Ntp168 <= 0.0_r8)then
-        	Ptp168 = Pt68
-    	end if
-
-    	if(isnan(Ptp110) .or. Ptp110 < 0.0_r8 .or. Ntp110 <= 0.0_r8)then
-        	Ptp110 = Pt10
-    	end if
-
-    	if(isnan(Ptp112) .or. Ptp112 < 0.0_r8 .or. Ntp112 <= 0.0_r8)then
-        	Ptp112 = Pt12
-    	end if
-
-    	if(isnan(Ptp114) .or. Ptp114 < 0.0_r8 .or. Ntp114 <= 0.0_r8)then
-        	Ptp114 = Pt14
-    	end if
-
-    	if(isnan(Ptp116s) .or. Ptp116s < 0.0_r8 .or. Ntp116s <= 0.0_r8)then
-        	Ptp116s = Pt16s
-    	end if
-
-        ! Now I update all of the state variables
-        Bt = Btp1
-        Nt68 = Ntp168
-        Nt10 = Ntp110
-        Nt12 = Ntp112
-        Nt14 = Ntp114
-        Nt16s = Ntp116s
-
-        Pt68 = Ptp168
-        Pt10 = Ptp110
-        Pt12 = Ptp112
-        Pt14 = Ptp114
-        Pt16s = Ptp116s
-
-    end do
+    ! Here's the analytic solution for parent beetles
+    Ptp1GEQ20 = Bt - Bt*exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)/&
+        (1.0_r8 + exp(an)*Bt/(exp(an)*305.5264_r8*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)))
     !------------------------------------------------------------------------------------------------
 
-    ! Now I compute the number of new parents in this one day time interval.
-    Parents = Pt68 + Pt10 + Pt12 + Pt14 + Pt16s
+    ! Now I update all of the state variables.
+    ! The parents calculation now includes an adjuster for negative density dependence.
+    if(Ntp1GEQ20 < NtGEQ20)then
+        Parents = Ptp1GEQ20*exp(-dd1*sqrt(0.5_r8*Ptp1GEQ20/(NtGEQ20 - Ntp1GEQ20)))
+        else
+            Parents = 0.0_r8
+    end if
+
+    Bt = Btp1
+    NtGEQ20 = Ntp1GEQ20
 
 end subroutine MPBAttack
 
