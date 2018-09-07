@@ -242,10 +242,10 @@ contains
 
     !----------------------------------------------------------------------------------------------------
     ! Calling the full MPB simulation for the time step. 
-    call MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
+    call MPBSim2(max_airTC, min_airTC, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, counter, &
+            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
             NtGEQ20, Bt, an, dd1)
 
     ! In the case of beetle extinction, we re-initialize the parent beetle population with
@@ -352,7 +352,7 @@ end subroutine beetle_model
 Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, counter, &
+            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
             NtGEQ20, Bt, an, dd1)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
