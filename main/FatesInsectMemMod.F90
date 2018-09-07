@@ -9,10 +9,10 @@ module FatesInsectMemMod
     ! Need to move these parameters into the parameter file
     real(r8), parameter :: delta1 = 0.19_r8                       	! the beetle settling rate per hour estimated in Goodsman et al (2016)
     !real(r8), parameter :: an = insect_an                         	! controls tree loss rate as a function of beetle and tree density and size class dbh (unitless),default=-16.5478265_r8 
-    real(r8), parameter :: an = -16.5478265_r8
-    real(r8), parameter :: bn = 0.5336751_r8                      	! controls tree loss rate as a function of beetle and tree density and size class dbh (2.54cm)^(-1)
-    real(r8), parameter :: ab = -20.9762301_r8                    	! controls beetle loss rate as a function of beetle and tree density and size class dbh (unitless)
-    real(r8), parameter :: bb = 1.8517650_r8                      	! controls beetle loss rate as a function of beetle and tree density and size class dbh (2.54cm)^(-1)
+    real(r8), parameter :: an = -9.72428292_r8
+    real(r8), parameter :: bn = 0.05708835_r8                      	! controls tree loss rate as a function of beetle and tree density and size class dbh (2.54cm)^(-1)
+    real(r8), parameter :: ab = -5.25209242_r8                    	! controls beetle loss rate as a function of beetle and tree density and size class dbh (unitless)
+    real(r8), parameter :: bb = 1.00433579_r8                      	! controls beetle loss rate as a function of beetle and tree density and size class dbh (2.54cm)^(-1)
     integer,  parameter :: DomainSize = 2**8                      	! domain size 256 categories for physiological ages
     integer,  parameter :: numberInsectTypes = 1                  	! number of insect types (currently only one-mountain pine beetle)
     integer,  parameter :: maxNumStages   = 20                    	! maximum number of stages for insect development
