@@ -98,28 +98,28 @@ contains
     real(r8) :: NewPtm1                     	! density of new pupae in the previous time step (t minus 1)
     real(r8) :: NewTtm1                     	! density of new teneral adults in the previous time step (t minus 1)
 
-    real(r8) :: Fec                         	! the expected number of pre-eggs at each time per 225 m^2
-    real(r8) :: E                           	! the expected number of eggs at each time per 225 m^2
-    real(r8) :: L1                          	! the expected number of L1 at each time step per 225 m^2
-    real(r8) :: L2                          	! the expected number of L2 at each time step per 225 m^2
-    real(r8) :: L3                          	! the expected number of L3 at each time step per 225 m^2
-    real(r8) :: L4                          	! the expected number of L4 at each time step per 225 m^2
-    real(r8) :: P                          	! the expected number of pupae at each time step per 225 m^2
-    real(r8) :: Te                          	! the expected number of tenerals at each time step per 225 m^2
-    real(r8) :: A                           	! the expected number of flying adults at each time step per 225 m^2
-    real(r8) :: FA                          	! density of adults that initiated flight in the current time step per 225 m^2
-    real(r8) :: Bt                		! beetles that remain in flight from the previous step per 225 m^2
-    real(r8) :: Parents                     	! density of parent beetles in the current time step per 225 m^2
+    real(r8) :: Fec                         	! the expected number of pre-eggs at each time per ha
+    real(r8) :: E                           	! the expected number of eggs at each time per ha
+    real(r8) :: L1                          	! the expected number of L1 at each time step per ha
+    real(r8) :: L2                          	! the expected number of L2 at each time step per ha
+    real(r8) :: L3                          	! the expected number of L3 at each time step per ha
+    real(r8) :: L4                          	! the expected number of L4 at each time step per ha
+    real(r8) :: P                          	! the expected number of pupae at each time step per ha
+    real(r8) :: Te                          	! the expected number of tenerals at each time step per ha
+    real(r8) :: A                           	! the expected number of flying adults at each time step ha
+    real(r8) :: FA                          	! density of adults that initiated flight in the current time step per ha
+    real(r8) :: Bt                		! beetles that remain in flight from the previous step per ha
+    real(r8) :: Parents                     	! density of parent beetles in the current time step per ha
 
     ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
     real(r8) :: PrS                       	! probability of winter survival
     real(r8) :: Ct                        	! The level of larval cold tolerance in the population.
 
-    ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
+    ! Current host tree densities for insects (in this case for mountain pine beetle) per ha
     ! Averaged over all patches within each site.
     real(r8) :: NtGEQ20				! initial susceptible host trees in the 20+ cm dbh size class
     
-    ! Current host tree densities for insects (in this case for mountain pine beetle) per 225 m^2 (15 X 15 m gap).
+    ! Current host tree densities for insects (in this case for mountain pine beetle) per ha
     ! Specific to each patch.
     real(r8) :: NtGEQ20p			! initial susceptible host trees in the 20+ cm dbh size class
 
@@ -265,7 +265,6 @@ contains
     if(hlm_current_month == 7 .and. hlm_current_day == 14 .and. FebInPopn < EndMPBPopn) then
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
         ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
-        ! I convert this to a density of beetles per 225 m^2 (value stored in EndMPBPopn parameter).
         Parents = EndMPBPopn
     end if
 
@@ -680,7 +679,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, dd1)
     implicit none
 
     ! input and output variables.
-    ! Tree density in size classes per 225 m^2 (15m X 15m gap).
+    ! Tree density in size classes per ha
     real(r8), intent(inout) :: NtGEQ20              ! initial susceptible host trees in the 20+ cm dbh size class
     real(r8), intent(inout) :: Bt                   ! beetles that remain in flight from the previous step
 
