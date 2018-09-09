@@ -55,7 +55,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : an, dd1		! these parameters will be passed using parameter file.
+    use FatesInsectMemMod    , only : an, ab, dd1		! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -130,7 +130,7 @@ contains
     ! Here are variables that I use to decide whether to restart the mountain pine beetle population at endemic population levels
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
-    real(r8), parameter :: EndMPBPopn = 0.684_r8! The minimum endemic parent mountain pine beetle population (male and female) per 225 m^2.
+    real(r8), parameter :: EndMPBPopn = 30.4_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
     
     ! Total site area in m2 summed over all of the patches (used in the patch-area-weighted density and temperature calculations)
     real(r8) :: SiteArea
@@ -180,7 +180,7 @@ contains
     Ct = currentSite%si_insect%Ct
 
     !----------------------------------------------------------------------------------------------------
-    ! Calculate the patch-area weighted density trees in each of the size classes that we use in the 
+    ! Calculate the site level average tree density in each of the size classes that we use in the 
     ! mountain pine beetle model across all patches. I then call the insect life cycle model at the site level.
     NtGEQ20 = 0.0_r8
 
@@ -211,27 +211,28 @@ contains
 
    	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
 
-        	! Below I compute the tree density per 225 m^2 in each of the size classes
+        	! Below I compute the tree density per ha in each of the size classes
         	! used in the current version of the insect mortality model.
 
         	! Here is the 20+ cm dbh size class we use in the model.
         	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.0_r8)then
-        		NtGEQ20p = NtGEQ20p + currentCohort%n*225.0_r8/10000.0_r8*currentPatch%area
+        		NtGEQ20p = NtGEQ20p + currentCohort%n/10000.0_r8*currentPatch%area
         	end if
 
         	currentCohort => currentCohort%shorter
 
     	end do ! This ends the cohort do loop
 	
-	! Adding all of the weighted densities to the overall site level density
+	! Adding all of the patch densities to the overall site level density
 	NtGEQ20 = NtGEQ20 + NtGEQ20p
 	
 	currentPatch => currentPatch%younger
 	
     end do	! Patch do loop
     
-    ! Now dividing by total area to complete the weighting process.
-    NtGEQ20 = NtGEQ20/SiteArea
+    ! Now dividing by total area to get density per square meter and then 
+    ! converting to density per ha
+    NtGEQ20 = NtGEQ20/SiteArea*10000.0_r8
     
     ! Now completing the temperature averaging process.
     max_airTC = max_airTC/NumPatches
@@ -246,7 +247,7 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            NtGEQ20, Bt, an, dd1)
+            NtGEQ20, Bt, an, ab, dd1)
 
     ! In the case of beetle extinction, we re-initialize the parent beetle population with
     ! a small number (endemic beetle population level) of parent beetles. We count the
@@ -353,7 +354,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            NtGEQ20, Bt, an, dd1)
+            NtGEQ20, Bt, an, ab, dd1)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
     ! oviposition, the egg stage, the four larval instars,
@@ -384,7 +385,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(inout) :: NewPtm1
     real(r8), intent(inout) :: NewTtm1
 
-    real(r8), intent(inout) :: Fec            ! the expected number of pre-eggs at each time
+    real(r8), intent(inout) :: Fec              ! the expected number of pre-eggs at each time
     real(r8), intent(inout) :: E                ! the expected number of eggs at each time
     real(r8), intent(inout) :: L1               ! the expected number of L1 at each time step
     real(r8), intent(inout) :: L2               ! the expected number of L2 at each time step
@@ -392,7 +393,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(inout) :: L4               ! the expected number of L4 at each time step
     real(r8), intent(inout) :: P                ! the expected number of pupae at each time step
     real(r8), intent(inout) :: Te               ! the expected number of tenerals at each time step
-    real(r8), intent(inout) :: A              ! the expected number of flying adults at each time step
+    real(r8), intent(inout) :: A                ! the expected number of flying adults at each time step
 
     ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
     real(r8), intent(inout) :: PrS
@@ -404,6 +405,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     ! input parameters
     real(r8), intent(in) :: an                        ! controls the tree loss rate
+    real(r8), intent(in) :: ab                        ! controls the beetle loss rate
     real(r8), intent(in) :: dd1                       ! controls competition among juvenile beetles
 
     !---------------------------------------------------------------------------------
@@ -666,13 +668,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! This updates the expected number of adults (A) and flying adults (FA).
 
     ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, dd1)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, dd1)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, dd1)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, dd1)
     ! In this subroutine I solve the differential equations using the Euler method with an exceedingly small time step.
 
     implicit none
@@ -689,7 +691,8 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, dd1)
     real(r8), intent(out) :: Parents                ! the density of beetles that entered trees killed in this time step
 
     ! input parameters (dbh stands for tree diameter at breast height)
-    real(r8), intent(in) :: an                      ! controls the tree loss rate 
+    real(r8), intent(in) :: an                      ! controls the tree loss rate
+    real(r8), intent(in) :: ab                      ! controls the beetle loss rate 
     real(r8), intent(in) :: dd1			    ! controls negative density dependence in juvenile beetles.
 
     ! Here are internal variables and parameters
@@ -705,27 +708,32 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, dd1)
 
     !---------------------------------------------------------------------------------------------
     ! Here I compute the analytic solutions
-
+    
     ! To prevent divide by zeros in the analytic solution, I take this precaution.
-    if(exp(an)*305.5264_r8*NtGEQ20 == exp(an)*Bt) Bt = Bt + 0.01_r8
+    if(exp(ab)*NtGEQ20 == exp(an)*Bt) Bt = Bt + 0.01_r8
 
     ! Here's the solution for beetles
-    Btp1 = Bt*exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)/&
-        (1.0_r8 + exp(an)*Bt/(exp(an)*305.5264_r8*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)))
+    Btp1 = Bt*exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)/&
+        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
 
     ! Here's the analytic solution for trees
     Ntp1GEQ20 = NtGEQ20/&
-        (1.0_r8 + exp(an)*Bt/(exp(an)*305.5264_r8*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)))
+        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
 
     ! Here's the analytic solution for parent beetles
-    Ptp1GEQ20 = Bt - Bt*exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)/&
-        (1.0_r8 + exp(an)*Bt/(exp(an)*305.5264_r8*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(an)*305.5264_r8*NtGEQ20)*timestep)))
+    Ptp1GEQ20 = Bt - Bt*exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)/&
+        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
     !------------------------------------------------------------------------------------------------
 
     ! Now I update all of the state variables.
     ! The parents calculation now includes an adjuster for negative density dependence.
+    ! I convert the parent density to density per 4 inch (10.6 cm) disk as this is how
+    ! it was parameterized in the Goodsman et al. (2018) paper from whence
+    ! the dd1 parameter originates. the 114363 number is the surface area of bark in square
+    ! cm that was attacked in the average tree in the Klein et al study (surface area
+    ! was converted from square feet to square cm).
     if(Ntp1GEQ20 < NtGEQ20)then
-        Parents = Ptp1GEQ20*exp(-dd1*sqrt(0.5_r8*Ptp1GEQ20/(NtGEQ20 - Ntp1GEQ20)))
+        Parents = Ptp1GEQ20*exp(-dd1*sqrt(0.5_r8*Ptp1GEQ20/(NtGEQ20 - Ntp1GEQ20)*10.6_r8/114363.64_r8))
         else
             Parents = 0.0_r8
     end if
