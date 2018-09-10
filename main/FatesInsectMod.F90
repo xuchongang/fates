@@ -201,8 +201,7 @@ contains
 	iofp = currentPatch%patchno             ! This is needed to get the relevant temperature variables from bc_in
     	currentCohort => currentPatch%tallest
 	
-	! Computing total site are in m^2
-	SiteArea = SiteArea + currentPatch%area
+	! Computing patch numbers
 	NumPatches = NumPatches + 1
 	
 	! Computing mean temperature averaged across all patches (normalized later)
@@ -216,15 +215,24 @@ contains
 
         	! Here is the 20+ cm dbh size class we use in the model.
         	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.0_r8)then
-        		NtGEQ20p = NtGEQ20p + currentCohort%n/10000.0_r8*currentPatch%area
+        		NtGEQ20p = NtGEQ20p + currentCohort%n/10000.0_r8
         	end if
 
         	currentCohort => currentCohort%shorter
 
     	end do ! This ends the cohort do loop
 	
-	! Adding all of the patch densities to the overall site level density
-	NtGEQ20 = NtGEQ20 + NtGEQ20p
+	! We only add area and densitites of trees if there are at least five trees/ha in the patch
+	! in the size class that is susceptible to mountain pine beetle. Because we've converted the
+	! densities to density per square meter, we need to multiply this by patch area to get numbers per patch.
+	if(NtGEQ20p > 0.0005_r8)then
+		! Computing total site area in m^2
+		SiteArea = SiteArea + currentPatch%area
+		
+		! Adding all of the patch densities multiplied by patch areas to 
+		! calculate the cumulative site count
+		NtGEQ20 = NtGEQ20 + NtGEQ20p*currentPatch%area
+	end if
 	
 	currentPatch => currentPatch%younger
 	
