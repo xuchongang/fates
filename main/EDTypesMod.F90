@@ -313,7 +313,6 @@ module EDTypesMod
      real(r8) ::  area                                             ! patch area: m2  
      integer  ::  countcohorts                                     ! Number of cohorts in patch
      integer  ::  ncl_p                                            ! Number of occupied canopy layers
-     real(r8) :: NGEQ20						   ! density of trees per m2 that have dbh >= 20.0 cm (for insect model)
 
      ! LEAF ORGANIZATION
      real(r8) ::  pft_agb_profile(maxpft,n_dbh_bins)            ! binned above ground biomass, for patch fusion: KgC/m2
@@ -736,7 +735,6 @@ contains
      write(fates_log(),*) 'pa%area               = ',cpatch%area
      write(fates_log(),*) 'pa%countcohorts       = ',cpatch%countcohorts
      write(fates_log(),*) 'pa%ncl_p              = ',cpatch%ncl_p
-     write(fates_log(),*) 'pa%NGEQ20             = ',cpatch%NGEQ20
      write(fates_log(),*) 'pa%total_canopy_area  = ',cpatch%total_canopy_area
      write(fates_log(),*) 'pa%total_tree_area    = ',cpatch%total_tree_area
      write(fates_log(),*) 'pa%bare_frac_area     = ',cpatch%bare_frac_area
