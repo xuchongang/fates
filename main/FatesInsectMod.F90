@@ -215,7 +215,7 @@ contains
         	! used in the current version of the insect mortality model.
 
         	! Here is the 20+ cm dbh size class we use in the model.
-        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 25.4_r8)then
+        	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.0_r8)then
         		NtGEQ20p = NtGEQ20p + currentCohort%n/10000.0_r8*currentPatch%area
         	end if
 
@@ -288,7 +288,7 @@ contains
 		! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 		! to the mortality rate on a yearly basis.
         	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
-			25.4_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20)then
+			20.0_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20)then
 		
                 		currentCohort%inmort = (1.0_r8 - NtGEQ20/Ntm1GEQ20)*365.0_r8	
 			else
