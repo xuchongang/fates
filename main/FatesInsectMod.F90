@@ -222,11 +222,11 @@ contains
 
     	end do ! This ends the cohort do loop
 	
-	! We only add area and densitites of trees if there are at least 100 trees/ha in the patch
+	! We only add area and densitites of trees if there are at least 10 trees/ha in the patch
 	! in the size class that is susceptible to mountain pine beetle. Because we've converted the
 	! densities to density per square meter, we need to multiply this by patch area (in square
 	! meters) to get numbers per patch.
-	if(NtGEQ20p >= 0.01_r8)then
+	if(NtGEQ20p >= 0.001_r8)then
 		! Computing total site area in m^2
 		SiteArea = SiteArea + currentPatch%area
 		
@@ -303,7 +303,7 @@ contains
 		! to the mortality rate on a yearly basis.
         	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 			20.0_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20 .and. &
-			currentPatch%NGEQ20 > 0.01_r8)then
+			currentPatch%NGEQ20 > 0.001_r8)then
 		
                 		currentCohort%inmort = (1.0_r8 - NtGEQ20/Ntm1GEQ20)*365.0_r8	
 			else
