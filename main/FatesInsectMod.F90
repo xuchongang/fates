@@ -222,10 +222,11 @@ contains
 
     	end do ! This ends the cohort do loop
 	
-	! We only add area and densitites of trees if there are at least five trees/ha in the patch
+	! We only add area and densitites of trees if there are at least ten trees/ha in the patch
 	! in the size class that is susceptible to mountain pine beetle. Because we've converted the
-	! densities to density per square meter, we need to multiply this by patch area to get numbers per patch.
-	if(NtGEQ20p > 0.0005_r8)then
+	! densities to density per square meter, we need to multiply this by patch area (in square
+	! meters) to get numbers per patch.
+	if(NtGEQ20p >= 0.001_r8)then
 		! Computing total site area in m^2
 		SiteArea = SiteArea + currentPatch%area
 		
