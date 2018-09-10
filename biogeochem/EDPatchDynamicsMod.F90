@@ -1401,7 +1401,8 @@ contains
     currentPatch%area                       = nan                                           
     currentPatch%canopy_layer_tai(:)        = nan               
     currentPatch%total_canopy_area          = nan
-    currentPatch%bare_frac_area             = nan                             
+    currentPatch%bare_frac_area             = nan   
+    currentPatch%NGEQ20			    = 0.0_r8                          
 
     currentPatch%tlai_profile(:,:,:)        = nan 
     currentPatch%elai_profile(:,:,:)        = 0._r8 
