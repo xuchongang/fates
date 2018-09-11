@@ -275,7 +275,7 @@ contains
         	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 			20.0_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20)then
 		
-                		currentCohort%inmort = (1.0_r8 - NtGEQ20/Ntm1GEQ20)*365.0_r8	
+                		currentCohort%inmort = NtGEQ20/Ntm1GEQ20*365.0_r8	
 			else
 				currentCohort%inmort = 0.0_r8
         	end if
