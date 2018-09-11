@@ -3879,7 +3879,7 @@ end subroutine flush_hvars
     ! Insect induced mortality of plants per size class per pft
     if(hlm_use_insect.eq.itrue) then
     
-    call this%set_history_var(vname='M9_SCPF', units = 'N/ha',                  &
+    call this%set_history_var(vname='M9_SCPF', units = 'N/ha/day',                  &
           long='insect mortality by pft/size',use_default='active',              &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m9_si_scpf )  
