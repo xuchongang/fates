@@ -169,7 +169,7 @@ contains
     real(r8) :: bmort    ! background mortality rate (fraction per year)
     real(r8) :: hmort    ! hydraulic failure mortality rate (fraction per year)
     real(r8) :: frmort   ! freezing mortality rate (fraction per year)
-    real(r8) :: inmort   ! insect induced mortality (rate per day per stem)*(365 days) where the daily rate (0.0 <= inmort/365 <= 1.0)
+    real(r8) :: inmort   ! insect induced mortality (rate per day)*(365 days) where the daily rate (0.0 <= inmort/365 <= 1.0)
     
     real(r8) :: dndt_logging      ! Mortality rate (per day) associated with the a logging event
     integer  :: ipft              ! local copy of the pft index
