@@ -3123,52 +3123,52 @@ end subroutine flush_hvars
     
     if(hlm_use_insect.eq.itrue) then
     
-    call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_si)
 
-    call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_si)		
 
-    call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_si)	
 
-    call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_si)	
 	    			
-    call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_si)	
 
-    call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_si)
 
-    call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_si)	
 
-    call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_si)
 
-    call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_si)
 
-    call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/(225 m^2)', &
+    call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_si)
