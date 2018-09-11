@@ -1758,7 +1758,7 @@ end subroutine flush_hvars
 			     
 		       ! Computing mortality due to insects per size class per pft.
 		       	hio_m9_si_scpf(io_si,scpf) = hio_m9_si_scpf(io_si,scpf) + & 
-		       		(1.0_r8 - ccohort%inmort/365.0_r8)*ccohort%n
+		       		(-1.0_r8*ccohort%inmort/365.0_r8 + 1.0_r8)*ccohort%n
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
@@ -3125,62 +3125,62 @@ end subroutine flush_hvars
     
     call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_si)
 
     call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_si)		
 
     call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_si)	
 
     call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_si)	
 	    			
     call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_si)	
 
     call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_si)
 
     call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_si)	
 
     call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_si)
 
     call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_si)
 
     call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_si)
 	    
     call this%set_history_var(vname='Max_Daily_T',  units='C', &
             long='maximum daily temp', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_max_t_si)	 
 	    
     call this%set_history_var(vname='Min_Daily_T',  units='C', &
             long='minimum daily temp', use_default='active',       &
-            avgflag='A', vtype=patch_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
+            avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
 	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_min_t_si)   	    
 	    
     end if ! insect variable related statement
@@ -3879,7 +3879,7 @@ end subroutine flush_hvars
     ! Insect induced mortality of plants per size class per pft
     if(hlm_use_insect.eq.itrue) then
     
-    call this%set_history_var(vname='M9_SCPF', units = 'N/ha/yr',                  &
+    call this%set_history_var(vname='M9_SCPF', units = 'N/ha',                  &
           long='insect mortality by pft/size',use_default='active',              &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m9_si_scpf )  
