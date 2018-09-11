@@ -1758,7 +1758,7 @@ end subroutine flush_hvars
 			     
 		       ! Computing mortality due to insects per size class per pft.
 		       	hio_m9_si_scpf(io_si,scpf) = hio_m9_si_scpf(io_si,scpf) + & 
-		       		ccohort%inmort*ccohort%n
+		       		(1.0_r8 - ccohort%inmort/365.0_r8)*ccohort%n
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
