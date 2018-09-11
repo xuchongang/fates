@@ -118,10 +118,6 @@ contains
     ! Current host tree densities for insects (in this case for mountain pine beetle) per ha
     ! Averaged over all patches within each site.
     real(r8) :: NtGEQ20				! initial susceptible host trees in the 20+ cm dbh size class
-    
-    ! Current host tree densities for insects (in this case for mountain pine beetle) per ha
-    ! Specific to each patch.
-    real(r8) :: NtGEQ20p			! initial susceptible host trees in the 20+ cm dbh size class
 
     ! I also make the equivalent container for the density of hosts prior to insect attack so that we can compute
     ! the proportion that died in the current step (daily time step).
@@ -132,8 +128,7 @@ contains
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 30.4_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
     
-    ! Total site area in m2 summed over all of the patches (used in the patch-area-weighted density and temperature calculations)
-    real(r8) :: SiteArea
+    ! number of patches in the site
     integer :: NumPatches
 
     !----------------------------------------------------------------------------------------------------
@@ -184,7 +179,6 @@ contains
     ! mountain pine beetle model across all patches. I then call the insect life cycle model at the site level.
     NtGEQ20 = 0.0_r8
 
-    SiteArea = 0.0_r8
     NumPatches = 0
     
     max_airTC = 0.0_r8
@@ -194,9 +188,6 @@ contains
     currentPatch => currentSite%oldest_patch	! starting with the oldest 
     
     do while (associated(currentPatch))
-    
-    	! zeroing out the patch specific tree densitites in each size class
-        NtGEQ20p = 0.0_r8
 
 	iofp = currentPatch%patchno             ! This is needed to get the relevant temperature variables from bc_in
     	currentCohort => currentPatch%tallest
@@ -213,29 +204,20 @@ contains
         	! Below I compute the tree density per ha in each of the size classes
         	! used in the current version of the insect mortality model.
 
-        	! Here is the 20+ cm dbh size class we use in the model.
+        	! Here is the 20+ cm dbh size class we use in the model. The fraction 
+		! in parentheses ensures that when summed up over the whole site,
+		! the density of trees will be the density per ha.
         	if(currentCohort%pft == 2 .and. currentCohort%dbh >= 20.0_r8)then
-        		NtGEQ20p = NtGEQ20p + currentCohort%n/10000.0_r8
+        		NtGEQ20 = NtGEQ20 + currentCohort%n*(currentPatch%area/10000.0_r8)
         	end if
 
         	currentCohort => currentCohort%shorter
 
     	end do ! This ends the cohort do loop
 	
-	! Computing total site area in m^2
-	SiteArea = SiteArea + currentPatch%area
-		
-	! Adding all of the patch densities multiplied by patch areas to 
-	! calculate the cumulative site count
-	NtGEQ20 = NtGEQ20 + NtGEQ20p*currentPatch%area
-	
 	currentPatch => currentPatch%younger
 	
     end do	! Patch do loop
-    
-    ! Now dividing by total area to get density per square meter and then 
-    ! converting to density per ha.
-    NtGEQ20 = NtGEQ20/SiteArea*10000.0_r8
     
     ! Now completing the temperature averaging process.
     max_airTC = max_airTC/NumPatches
