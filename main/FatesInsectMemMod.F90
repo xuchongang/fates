@@ -7,10 +7,9 @@ module FatesInsectMemMod
 
     ! Here are input parameter for the MPBAttack subroutine
     ! Need to move these parameters into the parameter file
-    !real(r8),  parameter :: an = insect_an                         	! controls tree loss rate as a function of beetle and tree density, default=-15.71251_r8
-    real(r8),  parameter :: an= -15.704843_r8				! controls tree loss rate as a function of beetle and tree density
-    real(r8),  parameter :: ab= -8.389501_r8				! controls beetle loss rate as a function of beetle and tree density
-    real(r8),  parameter :: dd1 = 0.0_r8				! controls juvenile mountain pine beetle negative density-dependence
+    !real(r8),  parameter :: an = insect_an                         	! controls tree loss rate as a function of beetle and tree density, default=-14.457156_r8
+    real(r8),  parameter :: an= -14.457156_r8				! controls tree loss rate as a function of beetle and tree density
+    real(r8),  parameter :: ab= -8.584849_r8				! controls beetle loss rate as a function of beetle and tree density
     integer,  parameter :: DomainSize = 2**8                      	! domain size 256 categories for physiological ages
     integer,  parameter :: numberInsectTypes = 1                  	! number of insect types (currently only one-mountain pine beetle)
     integer,  parameter :: maxNumStages   = 20                    	! maximum number of stages for insect development
