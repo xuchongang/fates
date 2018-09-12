@@ -55,7 +55,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : an, ab,			! these parameters will be passed using parameter file.
+    use FatesInsectMemMod    , only : an, ab			! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -232,7 +232,7 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            NtGEQ20, Bt, an, ab)
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn)
 
     ! In the case of beetle extinction, we re-initialize the parent beetle population with
     ! a small number (endemic beetle population level) of parent beetles. We count the
@@ -338,7 +338,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            NtGEQ20, Bt, an, ab)
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
     ! oviposition, the egg stage, the four larval instars,
@@ -390,6 +390,8 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! input parameters
     real(r8), intent(in) :: an                        ! controls the tree loss rate
     real(r8), intent(in) :: ab                        ! controls the beetle loss rate
+    real(r8), intent(in) :: FebInPopn                 ! February insect population
+    real(r8), intent(in) :: EndMPBPopn                ! Endemic mountain pine beetle population threshold
 
     !---------------------------------------------------------------------------------
     ! All of the parameters below are internal parameters (internal to the subroutine)
@@ -651,13 +653,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! This updates the expected number of adults (A) and flying adults (FA).
 
     ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! In this subroutine I solve the differential equations using the Euler method with an exceedingly small time step.
 
     implicit none
@@ -676,6 +678,8 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab)
     ! input parameters (dbh stands for tree diameter at breast height)
     real(r8), intent(in) :: an                      ! controls the tree loss rate
     real(r8), intent(in) :: ab                      ! controls the beetle loss rate 
+    real(r8), intent(in) :: FebInPopn         	    ! February insect population
+    real(r8), intent(in) :: EndMPBPopn       	    ! Endemic mountain pine beetle population threshold
 
     ! Here are internal variables and parameters
     ! We assume that the beetle loss rate is approximately 300 times
@@ -708,10 +712,15 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab)
     !------------------------------------------------------------------------------------------------
 
     ! Now I update all of the state variables.
-    ! The parents calculation now includes an adjuster for negative density dependence.
-    Parents = Ptp1GEQ20
-    Bt = Btp1
-    NtGEQ20 = Ntp1GEQ20
+    if(FebInPopn > EndMPBPopn)then
+        Parents = Ptp1GEQ20
+        Bt = Btp1
+        NtGEQ20 = Ntp1GEQ20
+        else
+            Parents = 0.0
+            Bt = 0.0
+            NtGEQ20 = NtGEQ20
+    end if
 
 end subroutine MPBAttack
 
