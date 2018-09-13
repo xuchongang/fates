@@ -127,6 +127,7 @@ contains
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 30.4_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
+    real(kind = 8), parameter :: IncipMPBPopn = 600.0 ! The incipient parent mountain pine beetle population (male and female) per ha
     
     ! number of patches in the site
     integer :: NumPatches
@@ -248,7 +249,7 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn)
+            NtGEQ20, Bt, an, ab, FebInPopn, IncipMPBPopn)
 
     !----------------------------------------------------------------------------------------------------
     ! update the vegetation mortality.
@@ -335,7 +336,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn)
+            NtGEQ20, Bt, an, ab, FebInPopn, IncipMPBPopn)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
     ! oviposition, the egg stage, the four larval instars,
@@ -388,7 +389,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(in) :: an                        ! controls the tree loss rate
     real(r8), intent(in) :: ab                        ! controls the beetle loss rate
     real(r8), intent(in) :: FebInPopn                 ! February insect population
-    real(r8), intent(in) :: EndMPBPopn                ! Endemic mountain pine beetle population threshold
+    real(r8), intent(in) :: IncipMPBPopn 	      ! The incipient parent mountain pine beetle population (male and female) per ha
 
     !---------------------------------------------------------------------------------
     ! All of the parameters below are internal parameters (internal to the subroutine)
@@ -650,13 +651,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! This updates the expected number of adults (A) and flying adults (FA).
 
     ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, IncipMPBPopn)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, IncipMPBPopn)
     ! In this subroutine I solve the differential equations using the Euler method with an exceedingly small time step.
 
     implicit none
@@ -676,7 +677,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     real(r8), intent(in) :: an                      ! controls the tree loss rate
     real(r8), intent(in) :: ab                      ! controls the beetle loss rate 
     real(r8), intent(in) :: FebInPopn         	    ! February insect population
-    real(r8), intent(in) :: EndMPBPopn       	    ! Endemic mountain pine beetle population threshold
+    real(r8), intent(in) :: IncipMPBPopn 	    ! The incipient parent mountain pine beetle population (male and female) per ha
 
     ! Here are internal variables and parameters
     ! We assume that the beetle loss rate is approximately 300 times
@@ -707,15 +708,19 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     Ptp1GEQ20 = Bt - Bt*exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)/&
         (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
     !------------------------------------------------------------------------------------------------
-
-    ! Now I update all of the state variables.
-    if(FebInPopn >= EndMPBPopn)then
+    
+    ! Now I update all of the state variables. This depends on whether the population is endemic or not.
+    ! when populations are in the endemic phase (below the incipient threshold), they only attack weakened
+    ! trees that are already functionally dead from other causes.
+    if(FebInPopn >= IncipMPBPopn)then
         Parents = Ptp1GEQ20
         Bt = Btp1
         NtGEQ20 = Ntp1GEQ20
         else
-            Parents = 0.0
-            Bt = 0.0
+            ! Under the endemic scenario beetles all beetles
+            ! become parents but none kill trees.
+            Parents = Bt
+            Bt = 0.0_r8
             NtGEQ20 = NtGEQ20
     end if
 
