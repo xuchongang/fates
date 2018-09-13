@@ -127,7 +127,7 @@ contains
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 30.4_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
-    real(kind = 8), parameter :: IncipMPBPopn = 600.0 ! The incipient parent mountain pine beetle population (male and female) per ha
+    real(kind = 8), parameter :: IncipMPBPopn = 600.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
     
     ! number of patches in the site
     integer :: NumPatches
