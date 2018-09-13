@@ -225,6 +225,22 @@ contains
 
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm1GEQ20 = NtGEQ20
+    
+    ! In the case of beetle extinction, we re-initialize the parent beetle population with
+    ! a small number (endemic beetle population level) of parent beetles. We count the
+    ! population in February so that we know that none have flown yet, but if it is exceedingly
+    ! small, we re-initialize with parents on July 14 of the same year.
+    InPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
+
+    if(hlm_current_month == 2 .and. hlm_current_day == 1) then
+        FebInPopn = InPopn
+    end if
+
+    if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
+        ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
+        ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
+        Parents = EndMPBPopn
+    end if
 
     !----------------------------------------------------------------------------------------------------
     ! Calling the full MPB simulation for the time step. 
@@ -233,25 +249,6 @@ contains
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
             NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn)
-
-    ! In the case of beetle extinction, we re-initialize the parent beetle population with
-    ! a small number (endemic beetle population level) of parent beetles. We count the
-    ! population in February so that we know that none have flown yet, but if it is exceedingly
-    ! small, we re-initialize with parents on July 14 of the same year.
-    InPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
-    
-    ! I assign a default value to the population in February
-    FebInPopn = 0.0_r8
-
-    if(hlm_current_month == 2 .and. hlm_current_day == 1) then
-        FebInPopn = InPopn
-    end if
-
-    if(hlm_current_month == 7 .and. hlm_current_day == 14 .and. FebInPopn < EndMPBPopn) then
-        ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
-        ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
-        Parents = EndMPBPopn
-    end if
 
     !----------------------------------------------------------------------------------------------------
     ! update the vegetation mortality.
@@ -712,7 +709,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     !------------------------------------------------------------------------------------------------
 
     ! Now I update all of the state variables.
-    if(FebInPopn > EndMPBPopn)then
+    if(FebInPopn >= EndMPBPopn)then
         Parents = Ptp1GEQ20
         Bt = Btp1
         NtGEQ20 = Ntp1GEQ20
