@@ -649,6 +649,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! Simulating adult flight
     call AdSR(NewA, Tmin2, Tmax2, A, FA)
     ! This updates the expected number of adults (A) and flying adults (FA).
+    
+    ! Killing beetles that mistakenly remain in flight during cold temperatures.
+    ! This prevents them from killing trees when they shouldn't be.
+    if(Tmin <= -18.0)then
+        FA = 0.0_r8
+	Bt = 0.0_r8
+    end if
 
     ! Simulating the attack of host trees
     call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, IncipMPBPopn)
@@ -746,14 +753,17 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     ! internal parameters
     real(r8), parameter :: fmax = 82.0      ! Regniere et al 2012 estimate that 82 eggs are produced per female
 
+    real(r8), parameter :: netp = 82.0      ! This is one minus the net probability  of mortality from causes other
+    					    ! than winter cold when the average winter mortality has been accounted for.
+
     ! Aplying winter mortality to egg laying adults
-     if(Tmn2 <= -18.0)then
+    if(Tmn2 <= -18.0)then
         Fec = 0.0_r8
     end if
 
     ! Computing new eggs. Note this has to be done before updating the
     ! Fec variable below.
-    NewEggs = Fec*(1.0_r8 - exp(-med))
+    NewEggs = Fec*(1.0_r8 - exp(-med))*netp
 
     ! Simulating oviposition: (Fec represents the number of eggs remaining)
     ! Below I assume that half of the individuals that fly and
