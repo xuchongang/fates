@@ -751,10 +751,10 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     real(r8), intent(out) :: NewEggs          ! Eggs laid in the time step
 
     ! internal parameters
-    real(r8), parameter :: fmax = 82.0      ! Regniere et al 2012 estimate that 82 eggs are produced per female
+    real(r8), parameter :: fmax = 82.0_r8     ! Regniere et al 2012 estimate that 82 eggs are produced per female
 
-    real(r8), parameter :: netp = 82.0      ! This is one minus the net probability  of mortality from causes other
-    					    ! than winter cold when the average winter mortality has been accounted for.
+    real(r8), parameter :: netp = 0.3667677_r8! This is one minus the net probability  of mortality from causes other
+    					      ! than winter cold when the average winter mortality has been accounted for.
 
     ! Aplying winter mortality to egg laying adults
     if(Tmn2 <= -18.0)then
