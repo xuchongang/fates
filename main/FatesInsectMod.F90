@@ -1,7 +1,7 @@
 module FatesInsectMod
   use shr_kind_mod              , only : r8 => shr_kind_r8
   use FatesInterfaceMod         , only : bc_in_type
-  use FatesInterfaceMod         , only : hlm_current_month, hlm_current_day, hlm_freq_day
+  use FatesInterfaceMod         , only : hlm_current_year, hlm_current_month, hlm_current_day, hlm_freq_day
   use EDtypesMod                , only : ed_site_type, ed_patch_type, ed_cohort_type
   use FatesInsectMemMod         , only : ed_site_insect_type, numberInsectTypes
   !use EDParamsMod               , only : insect_an
@@ -241,6 +241,14 @@ contains
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
         ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
         Parents = EndMPBPopn
+    end if
+    
+    ! Here's a hack to initialize the model with density of insects appropriate for the study region.
+    if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+        ! The intial number of parents in 2000 in Rocky Mountain National Park assuming that
+	! each of 2.97418 killed trees per ha was attacked by 85.2142 females (correct for 20 cm dbh trees)
+	! which were later joined by an equal number of males.
+        Parents = 506.8847_r8
     end if
 
     !----------------------------------------------------------------------------------------------------
