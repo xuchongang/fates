@@ -246,8 +246,8 @@ contains
     ! Here's a hack to initialize the model with density of insects appropriate for the study region.
     if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The intial number of parents in 2000 in Rocky Mountain National Park assuming that
-	! each of 2.97418 killed trees per ha was attacked by 85.2142 females (correct for 20 cm dbh trees)
-	! which were later joined by an equal number of males.
+	! each of 2.97418 killed trees per ha killed in 2000 was attacked by 85.2142 females 
+	(correct for 20 cm dbh trees) which were later joined by an equal number of males.
         Parents = 506.8847_r8
     end if
 
