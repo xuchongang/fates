@@ -127,7 +127,7 @@ contains
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 30.4_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
-    real(kind = 8), parameter :: IncipMPBPopn = 600.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
+    real(kind = 8), parameter :: IncipMPBPopn = 450.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
     
     ! number of patches in the site
     integer :: NumPatches
@@ -761,7 +761,7 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     ! internal parameters
     real(r8), parameter :: fmax = 82.0_r8     ! Regniere et al 2012 estimate that 82 eggs are produced per female
 
-    real(r8), parameter :: netp = 0.2526481_r8! This is one minus the net probability  of mortality from causes other
+    real(r8), parameter :: netp = 0.3667677_r8! This is one minus the net probability  of mortality from causes other
     					      ! than winter cold when the average winter mortality has been accounted for.
 
     ! Aplying winter mortality to egg laying adults
