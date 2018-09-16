@@ -126,8 +126,8 @@ contains
     ! Here are variables that I use to decide whether to restart the mountain pine beetle population at endemic population levels
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
-    real(r8), parameter :: EndMPBPopn = 30.4_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
-    real(kind = 8), parameter :: IncipMPBPopn = 450.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
+    real(r8), parameter :: EndMPBPopn = 40.0_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
+    real(kind = 8), parameter :: IncipMPBPopn = 300.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
     
     ! number of patches in the site
     integer :: NumPatches
@@ -759,7 +759,7 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     real(r8), intent(out) :: NewEggs          ! Eggs laid in the time step
 
     ! internal parameters
-    real(r8), parameter :: fmax = 82.0_r8     ! Regniere et al 2012 estimate that 82 eggs are produced per female
+    real(r8), parameter :: fmax = 54.66667_r8 ! Regniere et al 2012 estimate that 82 eggs are produced per female (2/3 of these are female)
 
     real(r8), parameter :: netp = 0.3667677_r8! This is one minus the net probability  of mortality from causes other
     					      ! than winter cold when the average winter mortality has been accounted for.
