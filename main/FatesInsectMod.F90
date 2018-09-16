@@ -20,7 +20,6 @@ module FatesInsectMod
   private :: LnormPDF		! produces a lognormal distribution on a specified domain
   private :: RegnierFunc	! produces a hump shaped development rate curve for temperature-dependent insect development
   private :: FlightFunc		! temperature dependent flight probability for adult mountain pine beetles
-  private :: RBMortSim		! Regniere and Bentz model of mountain pine beetle winter mortality
   private :: MPBAttack		! simulates mountain pine beetle attack of various sized trees in a site.
 
 contains
@@ -57,7 +56,7 @@ contains
     !
     use FatesInsectMemMod    , only : an, ab			! these parameters will be passed using parameter file.
     use FatesInsectMemMod    , only : ed_site_insect_type
-    use FatesInterfaceMod    , only : hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
+    use FatesInterfaceMod    , only : hlm_current_year, hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
 
     ! !ARGUMENTS:
@@ -111,9 +110,8 @@ contains
     real(r8) :: Bt                		! beetles that remain in flight from the previous step per ha
     real(r8) :: Parents                     	! density of parent beetles in the current time step per ha
 
-    ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
-    real(r8) :: PrS                       	! probability of winter survival
-    real(r8) :: Ct                        	! The level of larval cold tolerance in the population.
+    ! related to the winter mortality model for mountain pine beetle:
+    real(r8) :: ColdestT                       	! Coldest yearly temperature experienced to date.
 
     ! Current host tree densities for insects (in this case for mountain pine beetle) per ha
     ! Averaged over all patches within each site.
@@ -172,8 +170,7 @@ contains
     Bt = currentSite%si_insect%indensity(1,11)
     Parents = CurrentSite%si_insect%indensity(1,12)
 
-    PrS = currentSite%si_insect%PrS
-    Ct = currentSite%si_insect%Ct
+    ColdestT = currentSite%si_insect%ColdestT
 
     !----------------------------------------------------------------------------------------------------
     ! Calculate the site level average tree density in each of the size classes that we use in the 
@@ -246,9 +243,19 @@ contains
     ! Here's a hack to initialize the model with density of insects appropriate for the study region.
     if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The intial number of parents in 2000 in Rocky Mountain National Park assuming that
-	! each of 2.97418 killed trees per ha killed in 2000 was attacked by 85.2142 females 
-	! (correct for 20 cm dbh trees) which were later joined by an equal number of males.
-        Parents = 506.8847_r8
+	! each of 2.97418 killed trees per ha killed in 2000 was attacked by 230.8043 females 
+	! (our estimate of number of females per tree from Yellowstone dataset).
+        Parents = 686.4535_r8
+    end if
+    
+    ! Updating the coldest temperature
+    if(min_airTC < ColdestT)then
+    	ColdestT = Tmin
+    end if
+    
+    ! Resetting the coldest temperature tracker on July 21 of each year:
+    if(hlm_current_month == 7 .and. hlm_current_day == 21) then
+       ColdestT = 15.0_r8
     end if
 
     !----------------------------------------------------------------------------------------------------
@@ -256,7 +263,7 @@ contains
     call MPBSim2(max_airTC, min_airTC, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
+            Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
             NtGEQ20, Bt, an, ab, FebInPopn, IncipMPBPopn)
 
     !----------------------------------------------------------------------------------------------------
@@ -329,9 +336,8 @@ contains
      currentSite%si_insect%MPB_PhysAge(:,6) = OP
      currentSite%si_insect%MPB_PhysAge(:,7) = OT
 
-    ! The winter survival parameters
-    currentSite%si_insect%PrS = PrS
-    currentSite%si_insect%Ct = Ct
+    ! The winter survival related variables.
+    currentSite%si_insect%ColdestT = ColdestT
     
     ! Daily maximum and minimum temperatures for diagnostic purposes
     currentSite%si_insect%MaxDailyT = max_airTC
@@ -343,7 +349,7 @@ end subroutine beetle_model
 Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
-            Fec, E, L1, L2, L3, L4, P, Te, A, PrS, Ct, &
+            Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
             NtGEQ20, Bt, an, ab, FebInPopn, IncipMPBPopn)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
@@ -386,8 +392,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(inout) :: A                ! the expected number of flying adults at each time step
 
     ! The smallest probability of larval winter survival as a function of the lowest temperature to date.
-    real(r8), intent(inout) :: PrS
-    real(r8), intent(inout) :: Ct             ! The level of larval cold tolerance in the population.
+    real(r8), intent(in) :: ColdestT
 
     ! input and output variables
     real(r8), intent(inout) :: NtGEQ20                ! initial susceptible host trees in the 20+ cm dbh size class
@@ -483,6 +488,10 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), parameter :: DeltaM7 = 7.1479
     real(r8), parameter :: omega7 = 0.1463
     real(r8), parameter :: psi7 = 0.01173
+    
+    ! Here are the parameters for the simplified model of larval mortality
+    real(r8), parameter :: alpha3 = -35.4185	! The temperature in degrees centigrade at which only 50 % survival occurs
+    real(r8), parameter :: Beta3 = 2.0		! controls the rate of change of survival probability as a function of temperature 
 
     ! Here are variables to hold the buffered under bark temperatures
     real(r8) :: Tmean     ! mean temperature at each time step in degrees Celcius
@@ -631,16 +640,12 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! This updates the aging distribution (OL4) and  NewL4tm1 and
     ! outputs a scalar for the expected number of fourth instar larvae (L4).
 
-    ! Applying larval mortality. Calling this subroutine
-    ! produces a new minimum survival probability estimate and a
-    ! new estimate of the current level of cold-hardiness.
-    call RBMortSim(Tmin2, Tmax2, PrSurvNew, Ct)
-    ! Updating the minimum survival probability estimate
-    PrS = min(PrS, PrSurvNew)
-    ! larval mortality is only applied as individuals exit the
-    ! larval stage because it depends on the minimum survival
-    ! probability they experienced over their larval career.
-    !NewP = NewP*PrS
+    ! Applying larval mortality only as individuals exit the larval stage and
+    ! develop into pupae because winter mortality depends on the coldest 
+    ! temperature experienced over an individual's whole larval career. 
+    ! Winter survival probability is modeled as a logistic curve function of 
+    ! the coldest winter (air) temperature to date.
+    NewP = NewP*1.0/(1.0 + exp(-(ColdestT - alpha3)/Beta3))
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
@@ -761,7 +766,7 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     ! internal parameters
     real(r8), parameter :: fmax = 54.66667_r8 ! Regniere et al 2012 estimate that 82 eggs are produced per female (2/3 of these are female)
 
-    real(r8), parameter :: netp = 0.3667677_r8! This is one minus the net probability  of mortality from causes other
+    real(r8), parameter :: netp = 0.2526481_r8! This is one minus the net probability  of mortality from causes other
     					      ! than winter cold when the average winter mortality has been accounted for.
 
     ! Aplying winter mortality to egg laying adults
@@ -1145,115 +1150,6 @@ subroutine FlightFunc(TC, Flying)
     end if
 
 end subroutine FlightFunc
-
-!===============================================================================
-Subroutine RBMortSim(Tmx2, Tmn2, PrSurv, Ct)
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! The RBMortSim subroutine implements the Regniere and Bentz (2007)
-    ! larval mortality simulation model.
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    implicit none
-
-    real(r8), intent(in) :: Tmx2              ! Daily maximum under bark temperature
-    real(r8), intent(in) :: Tmn2              ! Daily minimum under bark temperature
-    real(r8), intent(out) :: PrSurv           ! Lowest temperature to date.
-    real(r8), intent(inout) :: Ct             ! current accumulated level of cold hardiness
-
-    ! below are internal variables and parameters
-    real(r8) :: CtNew                         ! The new level of cold hardiness
-
-    ! Defining the constants
-    ! the "parameter" indicates that
-    ! these are constants.
-
-    ! Parameters of the winter larval mortality model
-    ! from Table 2 in Regniere and Bentz 2007
-    ! the parameters are broken into groups below by
-    ! equation in the original manuscript
-
-    ! parameters for distribution of supercooling points (equation 1)
-    real(r8), parameter :: alpha1 = -9.8       ! mean supercooling point (SCP) in state 1 in degree C
-    real(r8), parameter :: Beta1 = 2.26        ! spread of SCP in state 1
-    real(r8), parameter :: alpha2 = -21.2      ! mean SCP in state 2
-    real(r8), parameter :: Beta2 = 1.47        ! spread of SCP in state 2
-    real(r8), parameter :: alpha3 = -32.3      ! mean SCP in state 3
-    real(r8), parameter :: Beta3 = 2.42        ! spread of SCP in state 3
-
-    ! parameters for the gain rate (equation 3)
-    real(r8), parameter :: rhoG = 0.311        ! maximum gain rate
-    real(r8), parameter :: sigmaG = 8.716      ! spread of the gain temperature response
-
-    ! parameters for the changing optimal temperature for gains in cold hardiness (equation 5)
-    real(r8), parameter :: muG = -5.0
-    real(r8), parameter :: kappaG = -39.3
-
-    ! parameters for the loss rate (equation 4)
-    real(r8), parameter :: rhoL = 0.791
-    real(r8), parameter :: sigmaL = 3.251
-
-    ! parameters for the changing optimal temperature for loss of cold hardiness (equation 6)
-    real(r8), parameter :: muL = 33.9
-    real(r8), parameter :: kappaL = -32.7
-
-    ! These are the breakpoints that dictate what proportion of individuals are in each SCP state
-    real(r8), parameter :: LambdaZero = 0.254
-    real(r8), parameter :: LambdaOne = 0.764
-
-    ! Variables involved in iteration
-    real(r8) :: T               ! mean temperature at each time step in degrees Celcius
-    real(r8) :: Range1          ! maximum range of temperature under the bark
-
-    ! Defining other variables that are recomputed in each time step
-    real(r8) :: TG              ! optimum temperature for gaining cold hardiness
-    real(r8) :: TL              ! optimum temperature for losing cold hardiness
-    real(r8) :: Gt              ! gain of cold hardiness at time t
-    real(r8) :: Lt              ! loss of cold hardiness at time t
-    real(r8) :: p1              ! the proportion of individuals in stage 1
-    real(r8) :: p2              ! the proportion of individuals in stage 2
-    real(r8) :: p3              ! the proportion of individuals in stage 3
-
-    !---------------------------------------------------------------------------
-    ! Now for the calculations
-
-    ! Computing the max and min under-bark temperature as well as the range
-    ! using the Bolstad, Bentz, and Logan (1997) model
-    T = (Tmn2 + Tmx2)/2.0_r8 ! The mean temperature
-    Range1 = Tmx2 - Tmn2
-
-    ! Computing the optimum gain and loss temperatures (equations 5 and 6).
-    TG = muG + kappaG*Ct
-    TL = muL + kappaL*Ct
-
-    ! Computing the gain and loss functions for this time step (equations 3 and 4)
-    Gt = Range1*rhoG*exp(-(T - TG)/sigmaG)/(sigmaG*(1 + exp(-(T - TG)/sigmaG))**2.0)
-    Lt = Range1*rhoL*exp(-(T - TL)/sigmaL)/(sigmaL*(1 + exp(-(T - TL)/sigmaL))**2.0)
-
-    ! Computing the amount of cold hardiness achieved in the step (equation 7)
-    if(hlm_current_month >= 6 .and. Ct < 0.5_r8)then
-        CtNew = Ct + (1 - Ct)*Gt
-    else
-         CtNew = Ct + (1 - Ct)*Gt - Ct*Lt
-    end if
-
-    ! Computing the proportion of larvae that are in each SCP stage (equation 9)
-    ! This is modified from equation 9 according to advice from Jacques Regniere
-    p1 = max(0.0_r8,min(1.0_r8,(0.5_r8-CtNew)/(0.5_r8-LambdaZero)))
-    p3 = max(0.0_r8,min(1.0_r8,(CtNew-0.5_r8)/(LambdaOne-0.5_r8)))
-    p2 = 1 - p1 - p3
-
-    ! Now computing the probability of surviving in each time step
-    ! Due to supercooling points, the probability of survival is just the
-    ! cumulative density function of the corresponding logistic distribution
-    ! function
-    PrSurv = p1/(1 + exp(-(Tmn2 - alpha1)/Beta1)) + &
-    p2/(1 + exp(-(Tmn2 - alpha2)/Beta2)) + &
-    p3/(1 + exp(-(Tmn2 - alpha3)/Beta3))
-
-    ! Now I update the cold tolerance level
-    Ct = CtNew
-
-End Subroutine RBMortSim
 
 End Subroutine MPBSim2
 
