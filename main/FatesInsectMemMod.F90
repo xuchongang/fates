@@ -38,8 +38,7 @@ module FatesInsectMemMod
         real(r8), allocatable :: indensity(:,:) 	 
 	
         ! Variables related to mountain pine beetle winter survival (these are specific to the mountain pine beetle)
-        real(r8) :: PrS                         			! smallest probability of mountain pine beetle winter survival (unitless)
-        real(r8) :: Ct                          			! The level of mountain pine beetle larval cold tolerance in the population (unitless).
+        real(r8) :: ColdestT                         			! coldest winter temperature experienced to date (resets on a yearly basis)
 	
 	! Maximum and minimum daily temperatures in degree C
 	real(r8) :: MaxDailyT                         			
@@ -78,8 +77,7 @@ module FatesInsectMemMod
 	allocate(this%indensity(1:numberInsectTypes, 1:maxNumStages))	
 	this%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
 
-        this%PrS = 0.0_r8
-        this%Ct = 0.0_r8
+        this%ColdestT = 15.0_r8
 	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
@@ -106,8 +104,7 @@ module FatesInsectMemMod
 	
 	this%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
 
-        this%PrS = 0.0_r8
-        this%Ct = 0.0_r8
+        this%ColdestT = 0.0_r8
 	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
