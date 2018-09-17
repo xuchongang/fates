@@ -534,15 +534,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8) :: NewT
     real(r8) :: NewA
 
-    real(r8) :: PrSurvNew         ! a container for the new candidate for larval minimum survival probability
-
     !--------------------------------------------------------------------------------------------------
-
-    ! I reset winter survival probability and cold-hardiness accumulation after each Winter/Spring season. 
-    if(hlm_current_month == 6 .and. hlm_current_day == 1)then
-        PrS = 1.0_r8
-        Ct = 0.0_r8
-    end if
 
     !! We need to compute the mean phloem temperature according to the model of
     !! Bolstad, Bentz and Logan (1997).
@@ -779,10 +771,10 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     NewEggs = Fec*(1.0_r8 - exp(-med))*netp
 
     ! Simulating oviposition: (Fec represents the number of eggs remaining)
-    ! Below I assume that half of the individuals that fly and
-    ! lay eggs are females (after tree induced colonization mortality)
-    ! and each female lays an initial clutch of 82 eggs.
-    Fec = 0.5_r8*Parents*fmax + Fec*exp(-med)
+    ! each female lays an initial clutch of 82 eggs multiplied by two over three
+    ! which is the proportion of the eggs that are female (the model only tracks
+    ! female mountain pine beetles).
+    Fec = Parents*fmax + Fec*exp(-med)
 
 end subroutine Ovipos
 
