@@ -647,7 +647,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! temperature experienced over an individual's whole larval career. 
     ! Winter survival probability is modeled as a logistic curve function of 
     ! the coldest winter (air) temperature to date.
-    NewP = NewP*1.0/(1.0 + exp(-(ColdestT - alpha3)/Beta3))
+    !NewP = NewP*1.0/(1.0 + exp(-(ColdestT - alpha3)/Beta3))
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
