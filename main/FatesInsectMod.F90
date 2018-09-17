@@ -125,7 +125,8 @@ contains
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 40.0_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
-    real(kind = 8), parameter :: IncipMPBPopn = 300.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
+    !real(kind = 8), parameter :: IncipMPBPopn = 300.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
+    real(kind = 8), parameter :: IncipMPBPopn = 45.0_r8 ! The incipient parent mountain pine beetle population (male and female) per ha
     
     ! number of patches in the site
     integer :: NumPatches
@@ -236,7 +237,7 @@ contains
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
-        ! to be 15.2 attacks (female beetles) beetles = 30.4 beetles including male and female.
+        ! to be 40 attacks (female beetles) per ha.
         Parents = EndMPBPopn
     end if
     
@@ -286,7 +287,7 @@ contains
     	currentCohort => currentPatch%tallest
 
     	! Note that insect mortality is greater than zero only if the beetle population is
-    	! larger than the endemic beetle population. Otherwise beetles only colonize trees
+    	! larger than the incipient epidemic beetle population. Otherwise beetles only colonize trees
     	! that were already killed by other mortality causes so insect mortality is effectively zero.
     	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
         	! Below I compute the tree mortality rate (n/ha/year) in each of the size classes
@@ -295,7 +296,7 @@ contains
         	! Here is the 20+ cm dbh size class we use in the model.
 		! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 		! to the mortality rate on a yearly basis.
-        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+        	if(FebInPopn > IncipMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 			20.0_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20)then
 		
                 		currentCohort%inmort = (1.0_r8 - NtGEQ20/Ntm1GEQ20)*365.0_r8	
@@ -647,7 +648,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! temperature experienced over an individual's whole larval career. 
     ! Winter survival probability is modeled as a logistic curve function of 
     ! the coldest winter (air) temperature to date.
-    !NewP = NewP*1.0/(1.0 + exp(-(ColdestT - alpha3)/Beta3))
+    NewP = NewP/(1.0_r8 + exp(-(ColdestT - alpha3)/Beta3))
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
@@ -702,8 +703,6 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, IncipMPBPopn)
     real(r8), intent(in) :: IncipMPBPopn 	    ! The incipient parent mountain pine beetle population (male and female) per ha
 
     ! Here are internal variables and parameters
-    ! We assume that the beetle loss rate is approximately 300 times
-    ! the tree loss rate per interaction.
     real(r8) :: timestep = 1.0_r8         ! one day time step
     real(r8) :: Btp1                      ! an updated value for the beetles
     real(r8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
@@ -720,15 +719,15 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, IncipMPBPopn)
 
     ! Here's the solution for beetles
     Btp1 = Bt*exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)/&
-        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
+        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
 
     ! Here's the analytic solution for trees
     Ntp1GEQ20 = NtGEQ20/&
-        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
+        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
 
     ! Here's the analytic solution for parent beetles
     Ptp1GEQ20 = Bt - Bt*exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)/&
-        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
+        (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
     !------------------------------------------------------------------------------------------------
     
     ! Now I update all of the state variables. This depends on whether the population is endemic or not.
