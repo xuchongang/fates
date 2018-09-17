@@ -249,13 +249,13 @@ contains
     !    Parents = 686.4535_r8
     !end if
     
-    ! Here's a hack to initialize the model with density of insects appropriate for the Rocky
-    ! Mountain National Park.
-    if(hlm_current_year == 2003 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    ! Here's a hack to initialize the model with density of insects appropriate for 
+    ! Glacier National Park.
+    if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The intial number of parents in 2003 in Glacier National Park assuming that
-	! each of 0.4461271 killed trees per ha killed in 2003 was attacked by 230.8043 females 
+	! each of 7.050161 killed trees per ha killed in 2005 was attacked by 230.8043 females 
 	! (our estimate of number of females per tree from Yellowstone dataset).
-        Parents = 102.9681_r8
+        Parents = 1627.207_r8
     end if
     
     ! Updating the coldest temperature
