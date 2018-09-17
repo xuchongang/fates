@@ -240,12 +240,22 @@ contains
         Parents = EndMPBPopn
     end if
     
-    ! Here's a hack to initialize the model with density of insects appropriate for the study region.
-    if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    ! Here's a hack to initialize the model with density of insects appropriate for the Rocky
+    ! Mountain National Park.
+    !if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The intial number of parents in 2000 in Rocky Mountain National Park assuming that
 	! each of 2.97418 killed trees per ha killed in 2000 was attacked by 230.8043 females 
 	! (our estimate of number of females per tree from Yellowstone dataset).
-        Parents = 686.4535_r8
+    !    Parents = 686.4535_r8
+    !end if
+    
+    ! Here's a hack to initialize the model with density of insects appropriate for the Rocky
+    ! Mountain National Park.
+    if(hlm_current_year == 2003 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+        ! The intial number of parents in 2003 in Glacier National Park assuming that
+	! each of 0.4461271 killed trees per ha killed in 2003 was attacked by 230.8043 females 
+	! (our estimate of number of females per tree from Yellowstone dataset).
+        Parents = 102.9681_r8
     end if
     
     ! Updating the coldest temperature
