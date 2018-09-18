@@ -43,8 +43,8 @@
 ! The following parameters (traits) are used
 !
 ! wood_density, mean stem wood specific gravity (heart,sap,bark)
-! allom_latosa_int, leaf area to sap area ratio, intercept [m2/cm2]
-! allom_latosa_slp, leaf area to sap area ratio, slope on diameter [m2/cm2/cm]
+! allom_latosa_int, sapwood area per leaf area, intercept [cm2/m2]
+! allom_latosa_slp, sapwood area per leaf area, slope on diameter [cm2/m2/cm]
 ! c2b, real, carbon to biomass multiplier (~2.0)
 ! allom_l2fr, fine root biomass per leaf biomass ratio [kgC/kgC]
 ! allom_agb_frac, the fraction of stem above ground [-]
@@ -93,6 +93,8 @@ module FatesAllometryMod
   use FatesGlobals     , only : fates_log
   use FatesGlobals     , only : endrun => fates_endrun
   use EDTypesMod       , only : nlevleaf, dinc_ed
+  use EDTypesMod       , only : nclmax
+
 
   implicit none
 
@@ -104,18 +106,38 @@ module FatesAllometryMod
   public :: bleaf         ! Generic actual leaf biomass wrapper
   public :: storage_fraction_of_target ! storage as fraction of leaf biomass
   public :: tree_lai      ! Calculate tree-level LAI from actual leaf biomass
-  public :: tree_sai      ! Calculate tree-level SAI from target leaf biomass
+  public :: tree_sai      ! Calculate tree-level SAI from tree-level LAI
   public :: bsap_allom    ! Generic sapwood wrapper
   public :: bbgw_allom    ! Generic coarse root wrapper
   public :: bfineroot     ! Generic actual fine root biomass wrapper
   public :: bdead_allom   ! Generic bdead wrapper
   public :: carea_allom   ! Generic crown area wrapper
   public :: bstore_allom  ! Generic maximum storage carbon wrapper
+  public :: decay_coeff_kn
   public :: StructureResetOfDH ! Method to set DBH to sync with structure biomass
   public :: CheckIntegratedAllometries
+  public :: set_root_fraction  ! Generic wrapper to calculate normalized
+                               ! root profiles
 
   logical         , parameter :: verbose_logging = .false.
   character(len=*), parameter :: sourcefile = __FILE__
+
+  
+  ! The code will call the wrapper routine "set_root_fraction"
+  ! in at least two different context.  In one context it will query
+  ! set_root_fraction to describe the depth profile of hydraulicly
+  ! active roots.  In the other context, it will ask the wrapper
+  ! to define the profile of roots as litter.  We allow these
+  ! two contexts to differ.  While not fully implemented, the use
+  ! will have control parameters to choose from different relationships
+  ! in these two contexts.  The calling function, therefore
+  ! has to tell the wrapper function which context (water or biomass)
+  ! is being querried.  So that we don't have to do messy string
+  ! parsing, we have two pre-defined flags.
+
+  integer, parameter, public :: i_hydro_rootprof_context  = 1
+  integer, parameter, public :: i_biomass_rootprof_context = 2
+
 
   ! If testing b4b with older versions, do not remove sapwood
   ! Our old methods with saldarriaga did not remove sapwood from the
@@ -521,85 +543,169 @@ contains
   end subroutine storage_fraction_of_target
 
   ! =====================================================================================
-  
-  real(r8) function tree_lai( bl, status_coh, pft, c_area, n )
 
-    ! ============================================================================
-    !  LAI of individual trees is a function of the total leaf area and the total canopy area.   
-    ! ============================================================================
+  real(r8) function tree_lai( bl, pft, c_area, nplant, cl, canopy_lai)
 
-    real(r8), intent(in) :: bl            ! plant leaf biomass [kg]     
-    integer, intent(in)  :: status_coh    ! growth status of plant  (2 = leaves on , 1 = leaves off)
+    ! -----------------------------------------------------------------------------------
+    ! LAI of individual trees is a function of the total leaf area and the total 
+    ! canopy area.   
+    ! ----------------------------------------------------------------------------------
+
+    ! !ARGUMENTS
+    real(r8), intent(in) :: bl                        ! plant leaf biomass [kg]     
     integer, intent(in)  :: pft
-    real(r8), intent(in) :: c_area        ! areal extent of canopy (m2)
-    real(r8), intent(in) :: n             ! number of individuals in cohort per 'area' (10000m2 default)
+    real(r8), intent(in) :: c_area                    ! areal extent of canopy (m2)
+    real(r8), intent(in) :: nplant                    ! number of individuals in cohort per ha
+    integer, intent(in)  :: cl                        ! canopy layer index
+    real(r8), intent(in) :: canopy_lai(nclmax)        ! total leaf area index of 
+                                                      ! each canopy layer
 
+    ! !LOCAL VARIABLES:
     real(r8) :: leafc_per_unitarea ! KgC of leaf per m2 area of ground.
     real(r8) :: slat               ! the sla of the top leaf layer. m2/kgC
+    real(r8) :: canopy_lai_above   ! total LAI of canopy layer overlying this tree
+    real(r8) :: vai_per_lai        ! ratio of vegetation area index (ie. sai+lai) 
+                                   ! to lai for individual tree
+    real(r8) :: kn                 ! coefficient for exponential decay of 1/sla and 
+                                   ! vcmax with canopy depth
+    real(r8) :: sla_max            ! Observational constraint on how large sla 
+                                   ! (m2/gC) can become
+    real(r8) :: leafc_slamax       ! Leafc_per_unitarea at which sla_max is reached
+    real(r8) :: clim               ! Upper limit for leafc_per_unitarea in exponential 
+                                   ! tree_lai function
+    !----------------------------------------------------------------------
 
     if( bl  <  0._r8 .or. pft  ==  0 ) then
        write(fates_log(),*) 'problem in treelai',bl,pft
     endif
 
     slat = g_per_kg * EDPftvarcon_inst%slatop(pft) ! m2/g to m2/kg
-    leafc_per_unitarea = bl/(c_area/n) !KgC/m2
+    leafc_per_unitarea = bl/(c_area/nplant) !KgC/m2
+    
     if(leafc_per_unitarea > 0.0_r8)then
-       tree_lai = leafc_per_unitarea * slat  !kg/m2 * m2/kg = unitless LAI 
+
+
+       if (cl==1) then ! if in we are in the canopy (top) layer)
+          canopy_lai_above = 0._r8
+       else
+          canopy_lai_above = sum(canopy_lai(1:cl-1))
+       end if
+
+       ! Coefficient for exponential decay of 1/sla with canopy depth:
+       kn = decay_coeff_kn(pft)
+
+       ! take PFT-level maximum SLA value, even if under a thick canopy (which has units of m2/gC),
+       ! and put into units of m2/kgC
+       sla_max = g_per_kg *EDPftvarcon_inst%slamax(pft)
+       ! Leafc_per_unitarea at which sla_max is reached due to exponential sla profile in canopy:
+       leafc_slamax = (slat - sla_max * exp(-1.0_r8 * kn * canopy_lai_above)) / &
+            (-1.0_r8 * kn * slat * sla_max)
+       if(leafc_slamax < 0.0_r8)then
+          leafc_slamax = 0.0_r8
+       endif
+
+       ! Calculate tree_lai (m2 leaf area /m2 ground) = unitless LAI
+       !----------------------------------------------------------------------
+       ! If leafc_per_unitarea is less than leafc_slamax,
+       ! sla with depth in the canopy will not exceed sla_max.
+       ! In this case, we can use an exponential profile for sla throughout the entire canopy.
+       ! The exponential profile for sla is given by:
+       ! sla(at a given canopy depth) = slat / exp(-kn (canopy_lai_above + tree_lai)
+       ! 
+       ! We can solve for tree_lai using the above function for the sla profile and first setting 
+       ! leafc_per_unitarea = integral of e^(-kn(x + canopy_lai_above)) / slatop
+       ! over x = 0 to tree_lai
+       ! Then, rearranging the equation to solve for tree_lai.
+
+       if (leafc_per_unitarea <= leafc_slamax)then
+          tree_lai = (log(exp(-1.0_r8 * kn * canopy_lai_above) - &
+               kn * slat * leafc_per_unitarea) + &
+               (kn * canopy_lai_above)) / (-1.0_r8 * kn)
+
+          ! If leafc_per_unitarea becomes too large, tree_lai becomes an imaginary number 
+          ! (because the tree_lai equation requires us to take the natural log of something >0)
+          ! Thus, we include the following error message in case leafc_per_unitarea becomes too large.
+          clim = (exp(-1.0_r8 * kn * canopy_lai_above)) / (kn * slat)
+          if (leafc_per_unitarea >= clim) then
+             write(fates_log(),*) 'too much leafc_per_unitarea' , leafc_per_unitarea, clim, pft, canopy_lai_above
+             write(fates_log(),*) 'Aborting'
+             call endrun(msg=errMsg(sourcefile, __LINE__))
+          endif
+
+          ! When leafc_per_unitarea is greater than leafc_slamax, 
+          ! tree_lai could become so great that the sla profile surpasses sla_max at depth.
+          ! In this case, we use the exponential profile to calculate tree_lai until
+          ! we reach the maximum allowed value for sla (sla_max).
+          ! Then, calculate the remaining tree_lai using a linear function of sla_max and the remaining leafc.
+       
+       else if(leafc_per_unitarea > leafc_slamax)then
+          
+          ! Add exponential and linear portions of tree_lai
+          ! Exponential term for leafc = leafc_slamax; 
+          ! Linear term (static sla = sla_max) for portion of leafc > leafc_slamax
+          tree_lai = ((log(exp(-1.0_r8 * kn * canopy_lai_above) - &
+               kn * slat * leafc_slamax) + &
+               (kn * canopy_lai_above)) / (-1.0_r8 * kn)) + &
+               (leafc_per_unitarea - leafc_slamax) * sla_max
+
+          ! if leafc_slamax becomes too large, tree_lai_exp becomes an imaginary number 
+          ! (because the tree_lai equation requires us to take the natural log of something >0)
+          ! Thus, we include the following error message in case leafc_slamax becomes too large.
+          clim = (exp(-1.0_r8 * kn * canopy_lai_above)) / (kn * slat)
+          if(leafc_slamax >= clim)then
+             write(fates_log(),*) 'too much leafc_slamax' , &
+                  leafc_per_unitarea, leafc_slamax, clim, pft, canopy_lai_above
+             write(fates_log(),*) 'Aborting'
+             call endrun(msg=errMsg(sourcefile, __LINE__))
+          endif
+       end if ! (leafc_per_unitarea  > leafc_slamax)
     else
        tree_lai = 0.0_r8
-    endif
-
-
-    ! here, if the LAI exceeeds the maximum size of the possible array, then we have no way of accomodating it
-    ! at the moments nlevleaf default is 40, which is very large, so exceeding this would clearly illustrate a 
-    ! huge error 
-    if(tree_lai > nlevleaf*dinc_ed)then
-       write(fates_log(),*) 'too much lai' , tree_lai , pft , nlevleaf * dinc_ed
-       write(fates_log(),*) 'Aborting'
-       call endrun(msg=errMsg(sourcefile, __LINE__))
-    endif
+    endif ! (leafc_per_unitarea > 0.0_r8)
 
     return
-
   end function tree_lai
 
   ! ============================================================================
 
-  real(r8) function tree_sai( dbh, pft, canopy_trim, c_area, n )
+  real(r8) function tree_sai( pft, dbh, canopy_trim, c_area, nplant, cl, canopy_lai, treelai )
 
     ! ============================================================================
-    !  SAI of individual trees is a function of the target leaf biomass
+    !  SAI of individual trees is a function of the LAI of individual trees
     ! ============================================================================
 
-    real(r8),intent(in)  :: dbh
-    integer, intent(in)  :: pft
-    real(r8),intent(in)  :: canopy_trim
-    real(r8), intent(in) :: c_area        ! areal extent of canopy (m2)
-    real(r8), intent(in) :: n             ! number of individuals in cohort per 'area' (10000m2 default)
+    integer, intent(in)  :: pft                
+    real(r8), intent(in) :: dbh                
+    real(r8), intent(in) :: canopy_trim        ! trimming function (0-1)
+    real(r8), intent(in) :: c_area             ! crown area (m2)
+    real(r8), intent(in) :: nplant             ! number of plants
+    integer, intent(in)  :: cl                 ! canopy layer index
+    real(r8), intent(in) :: canopy_lai(nclmax) ! total leaf area index of 
+                                               ! each canopy layer
+    real(r8), intent(in) :: treelai            ! tree LAI for checking purposes only
 
-    real(r8) :: leafc_per_unitarea ! KgC of target leaf per m2 area of ground.
-    real(r8) :: sai_scaler     
-    real(r8) :: b_leaf
+    real(r8)             :: target_bleaf
+    real(r8)             :: target_lai
 
-    sai_scaler = g_per_kg * EDPftvarcon_inst%allom_sai_scaler(pft)  ! m2/g to m2/kg
+    call bleaf(dbh,pft,canopy_trim,target_bleaf)
 
-    call bleaf(dbh,pft,canopy_trim,b_leaf)
+    target_lai = tree_lai( target_bleaf, pft, c_area, nplant, cl, canopy_lai) 
 
-    leafc_per_unitarea = b_leaf/(c_area/n) !KgC/m2
+    tree_sai   =  EDPftvarcon_inst%allom_sai_scaler(pft) * target_lai
 
-    tree_sai = leafc_per_unitarea * sai_scaler !kg/m2 * m2/kg = unitless SAI 
 
-    ! here, if the LAI exceeeds the maximum size of the possible array, then we have no way of accomodating it
-    ! at the moments nlevleaf default is 40, which is very large, so exceeding this would clearly illustrate a 
-    ! huge error 
-    if(tree_sai > nlevleaf*dinc_ed)then
-       write(fates_log(),*) 'too much sai' , tree_sai , pft , nlevleaf * dinc_ed
-       write(fates_log(),*) 'Aborting'
+    if( (treelai + tree_sai) > (nlevleaf*dinc_ed) )then
+       write(fates_log(),*) 'The leaf and stem are predicted for a cohort, maxed out the array size'
+       write(fates_log(),*) 'lai: ',treelai
+       write(fates_log(),*) 'sai: ',tree_sai
+       write(fates_log(),*) 'lai+sai: ',treelai+tree_sai
+       write(fates_log(),*) 'nlevleaf,dinc_ed,nlevleaf*dinc_ed :',nlevleaf,dinc_ed,nlevleaf*dinc_ed
        call endrun(msg=errMsg(sourcefile, __LINE__))
-    endif
+    end if
+    
+
 
     return
-
   end function tree_sai
   
   ! ============================================================================
@@ -650,10 +756,10 @@ contains
        ! Force sapwood to be less than a maximum fraction of total biomass
        ! (this comes into play typically in very small plants)
        bsap_cap = max_frac*(bagw+bbgw)
-       bsap     = min( bsap_cap,bsap)
 
-       if(present(dbsapdd))then
-          if ( bsap  >= bsap_cap ) then
+       if(bsap>bsap_cap) then
+          bsap     = bsap_cap
+          if(present(dbsapdd))then
              dbsapdd = max_frac*(dbagwdd+dbbgwdd)
           end if
        end if
@@ -937,12 +1043,6 @@ contains
                 c2b          => EDPftvarcon_inst%c2b(ipft), & 
                 agb_fraction => EDPftvarcon_inst%allom_agb_frac(ipft) )
 
-      ! notes:
-      ! latosa_int units of [/m]
-      ! (1/latosa)* slatop*    gtokg    *   cm2tom2     / c2b   * mg2kg  * dens
-      ! density (g/cm3 == Mg/m3 b/c  1e6 = 100^3)
-      ! [cm2/m2] * [m2/gC]*[1000gC/1kgC]*[1m2/10000cm2] /[kg/kgC]*[kg/Mg]*[Mg/m3] = [/m]
-      !          0.012 * 1000 * (1/10000) / 2 * 1000 * 0.7
 
       bsap = bleaf * latosa_int * h
       
@@ -1774,6 +1874,225 @@ contains
   end subroutine carea_2pwr
   
   ! =========================================================================
+
+  subroutine set_root_fraction(root_fraction, ft, zi, lowerb, icontext )
+    !
+    ! !DESCRIPTION:
+    !  Calculates the fractions of the root biomass in each layer for each pft. 
+    !  It assumes an exponential decay.  If the soil depth is shallower than
+    !  then exponential attenuation function, then it will normalize
+    !  the profile and divide through.
+    !
+    ! !USES:
+
+    !
+    ! !ARGUMENTS
+    real(r8),intent(inout) :: root_fraction(:)
+    integer, intent(in)    :: ft
+    real(r8),intent(in)    :: zi(lowerb:)
+    integer,intent(in)     :: lowerb
+    integer,intent(in)     :: icontext
+
+    ! Parameters
+    !
+    ! TO-DO: NEXT TIME WE ROLL OUT A NEW PARAMETER INTERFACE, ADD
+    ! PROFILE SWAPPING FLAGS.  OR IF THERE IS NO DEMAND< LEAVE AS IS.
+    !
+    !
+    ! Two context exist 'hydraulic' and 'biomass'.  This allows us to
+    ! allow different profiles for how water is drawn from the soil
+    ! and different profiles to define the biomass for litter flux.
+    ! These two context can currently choose 1 of the following three
+    ! methods of defining the profile: 1) A 1 parameter exponential, 2)
+    ! a beta profile defined by Jackson et al. and 3) a 2 parameter
+    ! exponential.
+    ! All methods return a normalized profile.
+
+    integer, parameter :: exponential_1p_profile_type = 1
+    integer, parameter :: jackson_beta_profile_type   = 2
+    integer, parameter :: exponential_2p_profile_type = 3
+
+    integer :: root_profile_type
+
+    !----------------------------------------------------------------------
+    
+    if(lbound(zi,1).ne.0) then
+       write(fates_log(),*) 'lbound:',lbound(zi)
+       write(fates_log(),*) 'ubound:',ubound(zi)
+       write(fates_log(),*) 'layer interface levels should have 0 index'
+       call endrun(msg=errMsg(sourcefile, __LINE__))
+    end if
+
+    if(icontext == i_hydro_rootprof_context) then
+       
+       root_profile_type = exponential_2p_profile_type
+       
+    else if(icontext == i_biomass_rootprof_context) then
+
+       root_profile_type = jackson_beta_profile_type
+
+    else
+       write(fates_log(),*) 'An undefined context for calculating root profiles was provided'
+       write(fates_log(),*) 'There are only two contexts, hydraulic and biomass, pick one.'
+       write(fates_log(),*) 'Aborting'
+       call endrun(msg=errMsg(sourcefile, __LINE__))
+    end if
+
+    
+    select case(root_profile_type)
+    case ( exponential_1p_profile_type ) 
+       call exponential_1p_root_profile(root_fraction, ft, zi) 
+    case ( jackson_beta_profile_type )
+       call jackson_beta_root_profile(root_fraction, ft, zi)
+    case ( exponential_2p_profile_type ) 
+       call exponential_2p_root_profile(root_fraction, ft, zi)
+    case default
+       write(fates_log(),*) 'An undefined root profile type was specified'
+       write(fates_log(),*) 'Aborting'
+       call endrun(msg=errMsg(sourcefile, __LINE__))
+    end select
+
+    return
+  end subroutine set_root_fraction
+
+  ! =====================================================================================
+    
+  subroutine exponential_2p_root_profile(root_fraction, ft, zi )
+    !
+    ! !ARGUMENTS
+    real(r8),intent(out) :: root_fraction(:)
+    integer,intent(in)   :: ft
+    real(r8),intent(in)  :: zi(0:)
+
+    ! Locals
+    integer  :: nlevsoil    ! Number of soil layers
+    integer  :: lev         ! soil layer index
+    real(r8) :: sum_rootfr  ! sum of root fraction for normalization
+    
+    nlevsoil = ubound(zi,1)
+    
+    sum_rootfr = 0.0_r8
+    do lev = 1, nlevsoil
+       root_fraction(lev) = .5_r8*( &
+             exp(-EDPftvarcon_inst%roota_par(ft) * zi(lev-1))  &
+             + exp(-EDPftvarcon_inst%rootb_par(ft) * zi(lev-1))  &
+             - exp(-EDPftvarcon_inst%roota_par(ft) * zi(lev))    &
+             - exp(-EDPftvarcon_inst%rootb_par(ft) * zi(lev)))
+       
+       sum_rootfr = sum_rootfr + root_fraction(lev)
+    end do
+    
+    ! Normalize the root profile
+    root_fraction(1:nlevsoil) = root_fraction(1:nlevsoil)/sum_rootfr
+    
+    return
+  end subroutine exponential_2p_root_profile
+
+  ! =====================================================================================
+  
+  subroutine exponential_1p_root_profile(root_fraction, ft, zi)
+
+    !
+    ! !ARGUMENTS
+    real(r8),intent(out) :: root_fraction(:)
+    integer,intent(in)   :: ft
+    real(r8),intent(in)  :: zi(0:)
+    
+    !
+    ! LOCAL VARIABLES:
+    integer :: lev         ! soil depth layer index
+    integer :: nlevsoil    ! number of soil layers
+    real(r8) :: depth      ! Depth to middle of layer [m]
+    real(r8) :: sum_rootfr ! sum of rooting profile for normalization
+
+    real(r8), parameter :: rootprof_exp  = 3.  ! how steep profile is
+    ! for root C inputs (1/ e-folding depth) (1/m)
+    
+    nlevsoil = ubound(zi,1)
+    
+    ! define rooting profile from exponential parameters
+    sum_rootfr = 0.0_r8
+    do lev = 1,  nlevsoil
+       root_fraction(lev) = exp(-rootprof_exp * 0.5*(zi(lev)+zi(lev-1)) )
+       sum_rootfr = sum_rootfr + root_fraction(lev)
+    end do
+    
+    ! Normalize the root profile
+    root_fraction(1:nlevsoil) = root_fraction(1:nlevsoil)/sum_rootfr
+    
+    
+    return
+  end subroutine exponential_1p_root_profile
+    
+  ! =====================================================================================
+
+  subroutine jackson_beta_root_profile(root_fraction, ft, zi)
+
+     
+    ! !ARGUMENTS
+    real(r8),intent(out) :: root_fraction(:) ! fraction of root mass in each soil layer
+    integer,intent(in)   :: ft               ! functional type
+    real(r8),intent(in)  :: zi(0:)           ! depth of layer interfaces 0-nlevsoil
+    
+    !
+    ! LOCAL VARIABLES:
+    integer :: lev         ! soil depth layer index
+    integer :: nlevsoil    ! number of soil layers
+    real(r8) :: sum_rootfr ! sum of rooting profile, for normalization 
+    
+    ! Note cdk 2016/08 we actually want to use the carbon index here rather than the water index.  
+    ! Doing so will be answer changing though so perhaps easiest to do this in steps.
+    integer, parameter :: rooting_profile_varindex_water = 1
+
+    nlevsoil = ubound(zi,1)
+    ! use beta distribution parameter from Jackson et al., 1996
+    sum_rootfr = 0.0_r8
+    do lev = 1, nlevsoil
+       root_fraction(lev) = &
+             ( EDPftvarcon_inst%rootprof_beta(ft, rooting_profile_varindex_water) ** & 
+             ( zi(lev-1)*100._r8) - &
+             EDPftvarcon_inst%rootprof_beta(ft, rooting_profile_varindex_water) ** & 
+             ( zi(lev)*100._r8) )
+       sum_rootfr = sum_rootfr + root_fraction(lev)
+    end do
+    
+    ! Normalize the root profile
+    root_fraction(1:nlevsoil) = root_fraction(1:nlevsoil)/sum_rootfr
+
+    return
+  end subroutine jackson_beta_root_profile
+
+  ! =====================================================================================
+
+  
+  real(r8) function decay_coeff_kn(pft)
+    
+    ! ---------------------------------------------------------------------------------
+    ! This function estimates the decay coefficient used to estimate vertical
+    ! attenuation of properties in the canopy.
+    !
+    ! Decay coefficient (kn) is a function of vcmax25top for each pft.
+    !
+    ! Currently, this decay is applied to vcmax attenuation, and SLA (optionally)
+    !
+    ! ---------------------------------------------------------------------------------
+    
+    !ARGUMENTS
+    integer, intent(in) :: pft
+    
+    !LOCAL VARIABLES
+    ! -----------------------------------------------------------------------------------
+    
+    ! Bonan et al (2011) JGR, 116, doi:10.1029/2010JG001593 used
+    ! kn = 0.11. Here, we derive kn from vcmax25 as in Lloyd et al 
+    ! (2010) Biogeosciences, 7, 1833-1859
+    
+    decay_coeff_kn = exp(0.00963_r8 * EDPftvarcon_inst%vcmax25top(pft) - 2.43_r8)
+    
+    return
+  end function decay_coeff_kn
+
+  ! =====================================================================================
 
   subroutine StructureResetOfDH( bdead, ipft, canopy_trim, d, h )
 

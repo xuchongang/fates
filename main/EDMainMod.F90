@@ -292,11 +292,13 @@ contains
       !turn off this?! Liang Wei June 22
           ! BOC...update tree 'hydraulic geometry' 
           ! (size --> heights of elements --> hydraulic path lengths --> 
+
           ! maximum node-to-node conductances
        !   if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
        !    call updateSizeDepTreeHydProps(currentCohort, bc_in)
        !    call updateSizeDepTreeHydStates(currentCohort)
        !   end if
+
   
           currentCohort => currentCohort%taller
 

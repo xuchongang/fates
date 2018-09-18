@@ -51,8 +51,13 @@ module EDPftvarcon
      real(r8), allocatable :: stress_decid(:)
      real(r8), allocatable :: season_decid(:)
      real(r8), allocatable :: evergreen(:)
+     real(r8), allocatable :: slamax(:)
      real(r8), allocatable :: slatop(:)
      real(r8), allocatable :: leaf_long(:)
+     real(r8), allocatable :: expleaf_long(:)
+     real(r8), allocatable :: youngleaf_long(:)
+     real(r8), allocatable :: oldleaf_long(:)
+     real(r8), allocatable :: senleaf_long(:)
      real(r8), allocatable :: roota_par(:)
      real(r8), allocatable :: rootb_par(:)
      real(r8), allocatable :: lf_flab(:)
@@ -66,8 +71,13 @@ module EDPftvarcon
                                                 ! of leaf scattering elements decreases light interception
      real(r8), allocatable :: c3psn(:)          ! index defining the photosynthetic pathway C4 = 0,  C3 = 1
      real(r8), allocatable :: vcmax25top(:)
+     real(r8), allocatable :: vcmax25top_fexp(:)
+     real(r8), allocatable :: vcmax25top_fyoung(:)
+     real(r8), allocatable :: vcmax25top_fold(:)
+     real(r8), allocatable :: vcmax25top_fsen(:)          
      real(r8), allocatable :: leafcn(:)
      real(r8), allocatable :: frootcn(:)
+     real(r8), allocatable :: woodcn(:)
      real(r8), allocatable :: smpso(:)
      real(r8), allocatable :: smpsc(:)
      real(r8), allocatable :: grperc(:) 
@@ -118,9 +128,10 @@ module EDPftvarcon
      real(r8), allocatable :: allom_smode(:)        ! sapwood allometry function type
      real(r8), allocatable :: allom_stmode(:)       ! storage allometry functional type 
                                                     ! (HARD-CODED FOR TIME BEING, RGK 11-2017)
-     real(r8), allocatable :: allom_latosa_int(:)   ! Leaf area to sap area ratio, intercept [m2/cm2]
-     real(r8), allocatable :: allom_latosa_slp(:)   ! Leaf area to sap area ratio, slope on diameter
-                                                    ! [m2/cm2/cm]
+     real(r8), allocatable :: allom_latosa_int(:)   ! Leaf area to sap area conversion, intercept 
+                                                    ! (sapwood area / leaf area) [cm2/m2]
+     real(r8), allocatable :: allom_latosa_slp(:)   ! Leaf area to sap area conversion, slope 
+                                                    ! (sapwood area / leaf area / diameter) [cm2/m2/cm]
      real(r8), allocatable :: allom_l2fr(:)         ! Fine root biomass per leaf biomass ratio [kgC/kgC]
      real(r8), allocatable :: allom_agb_frac(:)     ! Fraction of stem above ground [-]
      real(r8), allocatable :: allom_d2h1(:)         ! Parameter 1 for d2h allometry (intercept, or "c")
@@ -356,6 +367,10 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
+    name = 'fates_leaf_slamax'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
     name = 'fates_leaf_slatop'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -363,7 +378,23 @@ contains
     name = 'fates_leaf_long'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
-
+	 
+    name = 'fates_expleaf_long'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 	
+    name = 'fates_youngleaf_long'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 	
+    name = 'fates_oldleaf_long'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 	
+    name = 'fates_senleaf_long'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)	 	
+	  
     name = 'fates_roota_par'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -413,11 +444,31 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
+    name = 'fates_leaf_vcmax25top_fexp'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fyoung'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fold'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fsen'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
     name = 'fates_leaf_cn_ratio'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
     name = 'fates_froot_cn_ratio'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_wood_cn_ratio'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
@@ -781,6 +832,10 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%evergreen)
 
+    name = 'fates_leaf_slamax'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%slamax)
+
     name = 'fates_leaf_slatop'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%slatop)
@@ -788,6 +843,22 @@ contains
     name = 'fates_leaf_long'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%leaf_long)
+	 
+    name = 'fates_expleaf_long'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%expleaf_long)
+	 
+    name = 'fates_youngleaf_long'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%youngleaf_long)
+	 
+    name = 'fates_oldleaf_long'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%oldleaf_long)
+	 
+    name = 'fates_senleaf_long'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%senleaf_long)	 	 	 
 
     name = 'fates_roota_par'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -837,6 +908,22 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%vcmax25top)
 
+    name = 'fates_leaf_vcmax25top_fexp'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fexp)
+
+    name = 'fates_leaf_vcmax25top_fyoung'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fyoung)
+
+    name = 'fates_leaf_vcmax25top_fold'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fold)
+
+    name = 'fates_leaf_vcmax25top_fsen'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fsen)
+
     name = 'fates_leaf_cn_ratio'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%leafcn)
@@ -844,6 +931,10 @@ contains
     name = 'fates_froot_cn_ratio'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%frootcn)
+
+    name = 'fates_wood_cn_ratio'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%woodcn)
 
     name = 'fates_smpso'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -1486,8 +1577,13 @@ contains
         write(fates_log(),fmt0) 'stress_decid = ',EDPftvarcon_inst%stress_decid
         write(fates_log(),fmt0) 'season_decid = ',EDPftvarcon_inst%season_decid
         write(fates_log(),fmt0) 'evergreen = ',EDPftvarcon_inst%evergreen
-        write(fates_log(),fmt0) 'slatop = ',EDPftvarcon_inst%slatop
+        write(fates_log(),fmt0) 'slamax = ',EDPftvarcon_inst%slamax
+        write(fates_log(),fmt0) 'slatop = ',EDPftvarcon_inst%slatop        
         write(fates_log(),fmt0) 'leaf_long = ',EDPftvarcon_inst%leaf_long
+	write(fates_log(),fmt0) 'expleaf_long = ',EDPftvarcon_inst%expleaf_long
+	write(fates_log(),fmt0) 'youngleaf_long = ',EDPftvarcon_inst%youngleaf_long
+	write(fates_log(),fmt0) 'oldleaf_long = ',EDPftvarcon_inst%oldleaf_long
+	write(fates_log(),fmt0) 'senleaf_long = ',EDPftvarcon_inst%senleaf_long
         write(fates_log(),fmt0) 'roota_par = ',EDPftvarcon_inst%roota_par
         write(fates_log(),fmt0) 'rootb_par = ',EDPftvarcon_inst%rootb_par
         write(fates_log(),fmt0) 'lf_flab = ',EDPftvarcon_inst%lf_flab
@@ -1500,8 +1596,13 @@ contains
         write(fates_log(),fmt0) 'clumping_index = ',EDPftvarcon_inst%clumping_index
         write(fates_log(),fmt0) 'c3psn = ',EDPftvarcon_inst%c3psn
         write(fates_log(),fmt0) 'vcmax25top = ',EDPftvarcon_inst%vcmax25top
+        write(fates_log(),fmt0) 'vcmax25top_fexp = ',EDPftvarcon_inst%vcmax25top_fexp
+        write(fates_log(),fmt0) 'vcmax25top_fyoung = ',EDPftvarcon_inst%vcmax25top_fyoung
+        write(fates_log(),fmt0) 'vcmax25top_fold = ',EDPftvarcon_inst%vcmax25top_fold
+        write(fates_log(),fmt0) 'vcmax25top_fsen = ',EDPftvarcon_inst%vcmax25top_fsen	
         write(fates_log(),fmt0) 'leafcn = ',EDPftvarcon_inst%leafcn
         write(fates_log(),fmt0) 'frootcn = ',EDPftvarcon_inst%frootcn
+        write(fates_log(),fmt0) 'woodcn = ',EDPftvarcon_inst%woodcn
         write(fates_log(),fmt0) 'smpso = ',EDPftvarcon_inst%smpso
         write(fates_log(),fmt0) 'smpsc = ',EDPftvarcon_inst%smpsc
         write(fates_log(),fmt0) 'grperc = ',EDPftvarcon_inst%grperc

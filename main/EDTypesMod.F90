@@ -11,7 +11,7 @@ module EDTypesMod
 
   integer, parameter :: maxPatchesPerSite  = 10   ! maximum number of patches to live on a site
   integer, parameter :: maxCohortsPerPatch = 160  ! maximum number of cohorts per patch
-
+  
   integer, parameter :: nclmax = 2                ! Maximum number of canopy layers
   integer, parameter :: ican_upper = 1            ! Nominal index for the upper canopy
   integer, parameter :: ican_ustory = 2           ! Nominal index for understory in two-canopy system
@@ -23,7 +23,8 @@ module EDTypesMod
                                                   ! the parameter file may determine that fewer
                                                   ! are used, but this helps allocate scratch
                                                   ! space and output arrays.
-
+  						  
+  integer, parameter :: use_leaf_age = 1          ! switch of using leaf age
 
   ! -------------------------------------------------------------------------------------
   ! Radiation parameters
@@ -83,7 +84,8 @@ module EDTypesMod
   ! BIOLOGY/BIOGEOCHEMISTRY        
   integer , parameter :: external_recruitment = 0          ! external recruitment flag 1=yes  
   integer , parameter :: SENES                = 10         ! Window of time over which we track temp for cold sensecence (days)
-  real(r8), parameter :: DINC_ED              = 1.0_r8     ! size of LAI bins. 
+  real(r8), parameter :: dinc_ed              = 1.0_r8     ! size of VAI bins (LAI+SAI)  [CHANGE THIS NAME WITH NEXT INTERFACE
+                                                           ! UPDATE]
   integer , parameter :: N_DIST_TYPES         = 3          ! Disturbance Modes 1) tree-fall, 2) fire, 3) logging
   integer , parameter :: dtype_ifall          = 1          ! index for naturally occuring tree-fall generated event
   integer , parameter :: dtype_ifire          = 2          ! index for fire generated disturbance event
@@ -291,6 +293,12 @@ module EDTypesMod
      real(r8) ::  cambial_mort                           ! probability that trees dies due to cambial char:-
      real(r8) ::  crownfire_mort                         ! probability of tree post-fire mortality due to crown scorch:-
      real(r8) ::  fire_mort                              ! post-fire mortality from cambial and crown damage assuming two are independent:-
+     
+     !leaf age
+     real(r8) ::  fracExpLeaves                          ! proportion of new expanding leaves
+     real(r8) ::  fracYoungLeaves                        ! proportion of young adult leaves
+     real(r8) ::  fracOldLeaves                          ! proportion of old adult leaves     
+     real(r8) ::  fracSenLeaves                          ! proportion of senescent leaves     
 
      ! Integration
      real(r8) :: ode_opt_step                            ! What is the current optimum step size
@@ -334,12 +342,11 @@ module EDTypesMod
 
      ! LEAF ORGANIZATION
      real(r8) ::  pft_agb_profile(maxpft,n_dbh_bins)            ! binned above ground biomass, for patch fusion: KgC/m2
-     real(r8) ::  canopy_layer_tai(nclmax)                      ! total area index of each canopy layer
+     real(r8) ::  canopy_layer_tlai(nclmax)                     ! total leaf area index of each canopy layer
                                                                 ! used to determine attenuation of parameters during
                                                                 ! photosynthesis m2 veg / m2 of canopy area (patch without bare ground)
      real(r8) ::  total_canopy_area                                ! area that is covered by vegetation : m2
      real(r8) ::  total_tree_area                                  ! area that is covered by woody vegetation : m2
-     real(r8) ::  bare_frac_area                                   ! bare soil in this patch expressed as a fraction of the total soil surface.
      real(r8) ::  zstar                                            ! height of smallest canopy tree -- only meaningful in "strict PPA" mode
 
      real(r8) :: c_stomata                                    ! Mean stomatal conductance of all leaves in the patch   [umol/m2/s]
@@ -751,7 +758,6 @@ contains
      write(fates_log(),*) 'pa%ncl_p              = ',cpatch%ncl_p
      write(fates_log(),*) 'pa%total_canopy_area  = ',cpatch%total_canopy_area
      write(fates_log(),*) 'pa%total_tree_area    = ',cpatch%total_tree_area
-     write(fates_log(),*) 'pa%bare_frac_area     = ',cpatch%bare_frac_area
      write(fates_log(),*) 'pa%zstar              = ',cpatch%zstar
      write(fates_log(),*) 'pa%c_stomata          = ',cpatch%c_stomata
      write(fates_log(),*) 'pa%c_lblayer          = ',cpatch%c_lblayer
