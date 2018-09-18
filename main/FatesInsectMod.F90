@@ -285,7 +285,7 @@ contains
     	currentCohort => currentPatch%tallest
 
     	! Note that insect mortality is greater than zero only if the beetle population is
-    	! larger than the incipient epidemic beetle population. Otherwise beetles only colonize trees
+    	! larger than the epidemic beetle population. Otherwise beetles only colonize trees
     	! that were already killed by other mortality causes so insect mortality is effectively zero.
     	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
         	! Below I compute the tree mortality rate (n/ha/year) in each of the size classes
@@ -294,7 +294,7 @@ contains
         	! Here is the 20+ cm dbh size class we use in the model.
 		! In each dbhclass we multiply the daily probability of mortality by 365.0_r8
 		! to the mortality rate on a yearly basis.
-        	if(FebInPopn > IncipMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
+        	if(FebInPopn > EndMPBPopn .and. currentCohort%pft == 2 .and. currentCohort%dbh >= &
 			20.0_r8 .and. NtGEQ20 > 0.0_r8 .and. Ntm1GEQ20 > NtGEQ20)then
 		
                 		currentCohort%inmort = (1.0_r8 - NtGEQ20/Ntm1GEQ20)*365.0_r8	
