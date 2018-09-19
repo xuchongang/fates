@@ -250,12 +250,12 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The intial number of parents in 2003 in Glacier National Park assuming that
 	! each of 7.050161 killed trees per ha killed in 2005 was attacked by 173.216 females 
 	! (our estimate of number of females per tree from Yellowstone dataset).
-        Parents = 1221.201_r8
-    end if
+    !    Parents = 1221.201_r8
+    !end if
     
     ! Updating the coldest temperature
     if(min_airTC < ColdestT)then
