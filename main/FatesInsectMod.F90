@@ -193,8 +193,10 @@ contains
 	NumPatches = NumPatches + 1
 	
 	! Computing mean temperature averaged across all patches (normalized later)
-	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8)
-    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8)
+	!max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8)
+    	!min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8)
+	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8)
+    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8)
 
    	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
 
