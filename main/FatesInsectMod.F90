@@ -649,7 +649,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! temperature experienced over an individual's whole larval career. 
     ! Winter survival probability is modeled as a logistic curve function of 
     ! the coldest winter (air) temperature to date.
-    NewP = NewP/(1.0_r8 + exp(-(ColdestT - alpha3)/Beta3))
+    NewP = NewP/(1.0_r8 + dexp(-(ColdestT - alpha3)/Beta3))
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
@@ -718,13 +718,13 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
     ! Here I compute the analytic solutions
 
     ! Here's the solution for beetles
-    Btp1 = Bt/(1.0_r8 + Bt*exp(ab)*timestep)
+    Btp1 = Bt/(1.0_r8 + Bt*dexp(ab)*timestep)
 
     ! Here's the analytic solution for attacking beetles
-    Atp1GEQ20 = Bt*(Bt*exp(ab)*timestep/(1.0_r8 + Bt*exp(ab)*timestep))
+    Atp1GEQ20 = Bt*(Bt*dexp(ab)*timestep/(1.0_r8 + Bt*dexp(ab)*timestep))
 
     ! Here's the analytic solution for trees
-    Ntp1GEQ20 = NtGEQ20*((1.0_r8 + Bt*exp(ab)*timestep)**(exp(an)/exp(ab)))*exp(-exp(an)*Bt*timestep)
+    Ntp1GEQ20 = NtGEQ20*((1.0_r8 + Bt*dexp(ab)*timestep)**(dexp(an)/dexp(ab)))*dexp(-dexp(an)*Bt*timestep)
 
     ! Here's the analytic solution for infested trees
     Itp1GEQ20 = NtGEQ20 - Ntp1GEQ20
@@ -739,12 +739,12 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
     if(Itp1GEQ20 > 0.0_r8)then
 
         if(FebInPopn > EndMPBPopn)then
-            Parents = Atp1GEQ20*exp(-dd1*sqrt(Atp1GEQ20/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+            Parents = Atp1GEQ20*dexp(-dd1*sqrt(Atp1GEQ20/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
             Bt = Btp1
             NtGEQ20 = Ntp1GEQ20
             else
                 ! Under the endemic scenario beetles do not kill trees.
-                Parents = Atp1GEQ20*exp(-dd1*sqrt(Atp1GEQ20/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+                Parents = Atp1GEQ20*dexp(-dd1*sqrt(Atp1GEQ20/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
                 Bt = Btp1
                 NtGEQ20 = NtGEQ20
         end if
@@ -783,13 +783,13 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
 
     ! Computing new eggs. Note this has to be done before updating the
     ! Fec variable below.
-    NewEggs = Fec*(1.0_r8 - exp(-med))*netp
+    NewEggs = Fec*(1.0_r8 - dexp(-med))*netp
 
     ! Simulating oviposition: (Fec represents the number of eggs remaining)
     ! each female lays an initial clutch of 82 eggs multiplied by two over three
     ! which is the proportion of the eggs that are female (the model only tracks
     ! female mountain pine beetles).
-    Fec = Parents*fmax + Fec*exp(-med)
+    Fec = Parents*fmax + Fec*dexp(-med)
 
 end subroutine Ovipos
 
@@ -1096,7 +1096,7 @@ Subroutine LnormPDF(x, mulog, sigmalog, PDF)
 
     real(r8), parameter :: pi = 3.1415927
 
-    PDF = 1.0/(x*sigmalog*sqrt(2.0*pi))*exp(-1.0/(2.0*sigmalog**2.0)*(log(x)-mulog)**2.0)
+    PDF = 1.0/(x*sigmalog*sqrt(2.0*pi))*dexp(-1.0/(2.0*sigmalog**2.0)*(log(x)-mulog)**2.0)
 
 end Subroutine LnormPDF
 
@@ -1127,8 +1127,8 @@ subroutine RegniereFunc(TC, TB, DeltaB, TM, DeltaM, omega, psi, DevR)
 
     ! Computing the development rate
     if(TC >= TB .and. TC <= TM) then
-        DevR = psi*(exp(omega*(TC - TB)) - (TM - TC)/(TM - TB)*exp(-omega*(TC - TB)/DeltaB) &
-        - (TC - TB)/(TM - TB)*exp(omega*(TM - TB) - (TM - TC)/DeltaM))
+        DevR = psi*(dexp(omega*(TC - TB)) - (TM - TC)/(TM - TB)*dexp(-omega*(TC - TB)/DeltaB) &
+        - (TC - TB)/(TM - TB)*dexp(omega*(TM - TB) - (TM - TC)/DeltaM))
     end if
 
 end subroutine RegniereFunc
