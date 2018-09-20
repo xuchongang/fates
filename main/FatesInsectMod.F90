@@ -54,7 +54,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : an, ab, dd1			! these parameters will be passed using parameter file.
+    use FatesInsectMemMod    , only : an			
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_year, hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -193,10 +193,8 @@ contains
 	NumPatches = NumPatches + 1
 	
 	! Computing mean temperature averaged across all patches (normalized later)
-	!max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8)
-    	!min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8)
-	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8)
-    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8)
+	max_airTC = max_airTC + (bc_in%tgcm_max_pa(iofp) - 273.15_r8 - 2.762601_r8)
+    	min_airTC = min_airTC + (bc_in%tgcm_min_pa(iofp) - 273.15_r8 - 4.777561_r8)
 
    	do while(associated(currentCohort)) ! cycling through cohorts from tallest to shortest
 
@@ -275,7 +273,7 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1)
+            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1)
 
     !----------------------------------------------------------------------------------------------------
     ! update the vegetation mortality.
@@ -361,7 +359,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1)
+            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
     ! oviposition, the egg stage, the four larval instars,
@@ -411,7 +409,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     ! input parameters
     real(r8), intent(in) :: an                        ! controls the tree loss rate
-    real(r8), intent(in) :: ab                        ! controls the beetle loss rate
     real(r8), intent(in) :: FebInPopn                 ! February insect population
     real(r8), intent(in) :: EndMPBPopn 	      	      ! The endemic mountain pine beetle population (females per ha)
     real(r8), intent(in) :: dd1                       ! controls density dependent competition of juvenile mountain pine beetles
@@ -675,13 +672,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     end if
 
     ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd1)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, FebInPopn, EndMPBPopn, dd1)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd1)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, FebInPopn, EndMPBPopn, dd1)
     ! In this subroutine I solve the differential equations analytically.
 
     implicit none
@@ -699,34 +696,24 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
 
     ! input parameters (dbh stands for tree diameter at breast height)
     real(r8), intent(in) :: an                      ! controls the tree loss rate
-    real(r8), intent(in) :: ab                      ! controls the beetle loss rate 
     real(r8), intent(in) :: FebInPopn               ! February insect population
     real(r8), intent(in) :: EndMPBPopn              ! endemic mountain pine beetle population threshold
     real(r8), intent(in) :: dd1                     ! parameter controlling competition among juvenile beetles
 
     ! Here are internal variables and parameters
-    real(r8) :: timestep = 1.0_r8         ! one day time step
     real(r8) :: Btp1                      ! an updated value for the beetles
     real(r8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
-    real(r8) :: Atp1GEQ20                 ! updated parent beetles in the 20+ cm dbh size class
     real(r8) :: Itp1GEQ20                 ! updated infested trees in the 20+ cm dbh size class
 
-    ! I add in the beetles that just started flying in the time step
-    Bt = Bt + FA
+    
     
     !---------------------------------------------------------------------------------------------
-    ! Here I compute the analytic solutions
+    ! Here I compute the solutions
+    
+    Btp1 = Bt + FA
+    
+    Ntp1GEQ20 = NtGEQ20*dexp(an*(Btp1 - Bt))
 
-    ! Here's the solution for beetles
-    Btp1 = Bt/(1.0_r8 + Bt*dexp(ab)*timestep)
-
-    ! Here's the analytic solution for attacking beetles
-    Atp1GEQ20 = Bt*(Bt*dexp(ab)*timestep/(1.0_r8 + Bt*dexp(ab)*timestep))
-
-    ! Here's the analytic solution for trees
-    Ntp1GEQ20 = NtGEQ20*((1.0_r8 + Bt*dexp(ab)*timestep)**(dexp(an)/dexp(ab)))*dexp(-dexp(an)*Bt*timestep)
-
-    ! Here's the analytic solution for infested trees
     Itp1GEQ20 = NtGEQ20 - Ntp1GEQ20
 
     !------------------------------------------------------------------------------------------------
@@ -739,12 +726,12 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
     if(Itp1GEQ20 > 0.0_r8)then
 
         if(FebInPopn > EndMPBPopn)then
-            Parents = Atp1GEQ20*dexp(-dd1*sqrt(Atp1GEQ20/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+            Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
             Bt = Btp1
             NtGEQ20 = Ntp1GEQ20
             else
                 ! Under the endemic scenario beetles do not kill trees.
-                Parents = Atp1GEQ20*dexp(-dd1*sqrt(Atp1GEQ20/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+                Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
                 Bt = Btp1
                 NtGEQ20 = NtGEQ20
         end if
@@ -1154,6 +1141,14 @@ subroutine FlightFunc(TC, Flying)
     if(TC >= 17.53_r8 .and. TC <= 42.00_r8) then
         Flying = 2.500e+01_r8 + (-5.324e+00_r8)*TC + (4.277e-01_r8)*(TC**2) + (-1.633e-02_r8)*(TC**3) + &
         (3.014e-04_r8)*(TC**4) + (-2.172e-06_r8)*(TC**5)
+    end if
+    
+    if(Flying > 1.0) then
+        Flying = 1.0
+    end if
+
+    if(Flying < 0.0) then
+        Flying = 0.0
     end if
 
 end subroutine FlightFunc
