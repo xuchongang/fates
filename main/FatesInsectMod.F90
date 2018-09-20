@@ -124,7 +124,7 @@ contains
     ! Here are variables that I use to decide whether to restart the mountain pine beetle population at endemic population levels
     real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
-    real(r8), parameter :: EndMPBPopn = 40.0_r8 ! The minimum endemic parent mountain pine beetle population (male and female) per ha
+    real(r8), parameter :: EndMPBPopn = 40.0_r8 ! The minimum endemic parent mountain pine beetle population (female) per ha
     
     ! number of patches in the site
     integer :: NumPatches
@@ -250,14 +250,11 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    !if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
-        ! The intial number of parents in 2003 in Glacier National Park assuming that
-	! each of 7.050161 killed trees per ha killed in 2005 was attacked by 173.216 females 
-	! (our estimate of number of females per tree from Yellowstone dataset).
-        !Parents = 1221.201_r8
-	! Adjusting for negative density dependence
-	!parents = parents*dexp(-dd1*sqrt(parents/7.050161_r8/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-    !end if
+    if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+        ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2008
+	! according to our attack model.
+	parents = 349223.2_r8
+    end if
     
     ! Updating the coldest temperature
     if(min_airTC < ColdestT)then
