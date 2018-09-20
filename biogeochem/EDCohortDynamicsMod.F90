@@ -21,7 +21,7 @@ module EDCohortDynamicsMod
   use EDTypesMod            , only : min_npm2, min_nppatch
   use EDTypesMod            , only : min_n_safemath
   use EDTypesMod            , only : nlevleaf
-  use EDTypesMod            , only : dinc_ed
+  use EDTypesMod            , only : use_leaf_age
   use FatesInterfaceMod      , only : hlm_use_planthydro
   use FatesPlantHydraulicsMod, only : FuseCohortHydraulics
   use FatesPlantHydraulicsMod, only : CopyCohortHydraulics
@@ -153,11 +153,16 @@ contains
     ! Assign canopy extent and depth
     call carea_allom(new_cohort%dbh,new_cohort%n,spread,new_cohort%pft,new_cohort%c_area)
 
-    new_cohort%treelai = tree_lai(new_cohort%bl, new_cohort%status_coh, new_cohort%pft, &
-         new_cohort%c_area, new_cohort%n)
+    new_cohort%treelai = tree_lai(new_cohort%bl, new_cohort%pft, new_cohort%c_area,    &
+                                  new_cohort%n, new_cohort%canopy_layer,               &
+                                  patchptr%canopy_layer_tlai )    
+
+    new_cohort%treesai = tree_sai(new_cohort%pft, new_cohort%dbh, new_cohort%canopy_trim,   &
+                                  new_cohort%c_area, new_cohort%n, new_cohort%canopy_layer, &
+                                  patchptr%canopy_layer_tlai, new_cohort%treelai )  
+
     new_cohort%lai     = new_cohort%treelai * new_cohort%c_area/patchptr%area
-    new_cohort%treesai = tree_sai(new_cohort%dbh, new_cohort%pft, new_cohort%canopy_trim, &
-         new_cohort%c_area, new_cohort%n)
+
 
     ! Put cohort at the right place in the linked list
     storebigcohort   => patchptr%tallest
@@ -176,6 +181,27 @@ contains
        snull = 1
        patchptr%shortest => new_cohort 
     endif
+    
+    if(use_leaf_age==itrue) then
+       if(recruitstatus==1)then
+          new_cohort%fracExpLeaves = 1.0_r8
+	  new_cohort%fracYoungLeaves = 0.0_r8
+	  new_cohort%fracOldLeaves = 0.0_r8
+	  new_cohort%fracSenLeaves = 0.0_r8
+       else
+         if(status == 2) then !leaf on
+          new_cohort%fracExpLeaves = 0.25_r8
+	  new_cohort%fracYoungLeaves = 0.25_r8
+	  new_cohort%fracOldLeaves = 0.25_r8
+	  new_cohort%fracSenLeaves = 0.25_r8
+	 else
+          new_cohort%fracExpLeaves = 1.0_r8
+	  new_cohort%fracYoungLeaves = 0.0_r8
+	  new_cohort%fracOldLeaves = 0.0_r8
+	  new_cohort%fracSenLeaves = 0.0_r8	   
+	 endif       
+       endif
+    endif
 
     ! Recuits do not have mortality rates, nor have they moved any
     ! carbon when they are created.  They will bias our statistics
@@ -185,9 +211,9 @@ contains
     new_cohort%isnew = .true.
 
     if( hlm_use_planthydro.eq.itrue ) then
-       call InitHydrCohort(new_cohort)
-       call updateSizeDepTreeHydProps(new_cohort, bc_in) 
-       call initTreeHydStates(currentSite,new_cohort, bc_in)
+       call InitHydrCohort(CurrentSite,new_cohort)
+       call updateSizeDepTreeHydProps(CurrentSite,new_cohort, bc_in) 
+       call initTreeHydStates(CurrentSite,new_cohort, bc_in)
        if(recruitstatus==1)then
           new_cohort%co_hydr%is_newly_recuited = .true.
        endif
@@ -718,6 +744,24 @@ contains
                                 
                                 currentCohort%canopy_trim = (currentCohort%n*currentCohort%canopy_trim &
                                       + nextc%n*nextc%canopy_trim)/newn
+				      
+				if(use_leaf_age) then
+				  if(currentCohort%bl>0)then
+				    currentCohort%fracExpLeaves = (currentCohort%n*currentCohort%fracExpLeaves*currentCohort%bl &
+                                      + nextc%n*nextc%fracExpLeaves*nextc%bl)/(newn*currentCohort%bl)
+				    currentCohort%fracYoungLeaves = (currentCohort%n*currentCohort%fracYoungLeaves*currentCohort%bl   &
+                                      + nextc%n*nextc%fracYoungLeaves*nextc%bl)/(newn*currentCohort%bl)
+				    currentCohort%fracOldLeaves = (currentCohort%n*currentCohort%fracOldLeaves*currentCohort%bl   &
+                                      + nextc%n*nextc%fracOldLeaves*nextc%bl)/(newn*currentCohort%bl)
+				    currentCohort%fracSenLeaves = 1.0_r8-currentCohort%fracExpLeaves-currentCohort%fracYoungLeaves -&
+				      currentCohort%fracOldLeaves 
+	                          else
+				     currentCohort%fracExpLeaves = 1.0_r8
+	                             currentCohort%fracYoungLeaves = 0.0_r8
+	                             currentCohort%fracOldLeaves = 0.0_r8
+	                             currentCohort%fracSenLeaves = 0.0_r8			       
+				  endif 				      				      				      
+				endif
 
                                 ! Hang ZHOU, c13disc_acc calculation
                                 if ((currentCohort%n * currentCohort%gpp_acc + nextc%n * nextc%gpp_acc) .eq. 0.0_r8) then
@@ -852,7 +896,26 @@ contains
                                                nextc%n*nextc%year_net_uptake(i))/newn                
                                       endif
                                    enddo
-                                   
+				   
+				   !leaf age
+				   if(use_leaf_age) then
+				    if(currentCohort%bl>0)then
+				      currentCohort%fracExpLeaves = (currentCohort%n*currentCohort%fracExpLeaves*currentCohort%bl &
+                                       + nextc%n*nextc%fracExpLeaves*nextc%bl)/(newn*currentCohort%bl)
+				      currentCohort%fracYoungLeaves = (currentCohort%n*currentCohort%fracYoungLeaves*currentCohort%bl&
+                                       + nextc%n*nextc%fracYoungLeaves*nextc%bl)/(newn*currentCohort%bl)
+				      currentCohort%fracOldLeaves = (currentCohort%n*currentCohort%fracOldLeaves*currentCohort%bl   &
+                                       + nextc%n*nextc%fracOldLeaves*nextc%bl)/(newn*currentCohort%bl)
+				      currentCohort%fracSenLeaves = 1.0_r8-currentCohort%fracExpLeaves-currentCohort%fracYoungLeaves -&
+				       currentCohort%fracOldLeaves
+				    else
+				       currentCohort%fracExpLeaves = 1.0_r8  
+				       currentCohort%fracYoungLeaves = 0.0_r8
+				       currentCohort%fracOldLeaves = 0.0_r8
+				       currentCohort%fracSenLeaves = 0.0_r8
+				    endif 				      				      				      
+				   endif
+                                     
                                 end if !(currentCohort%isnew)
 
                                 currentCohort%n = newn     
@@ -921,7 +984,7 @@ contains
               !---------------------------------------------------------------------!        
               dynamic_fusion_tolerance = dynamic_fusion_tolerance * 1.1_r8
 
-              write(fates_log(),*) 'maxcohorts exceeded',dynamic_fusion_tolerance
+              !write(fates_log(),*) 'maxcohorts exceeded',dynamic_fusion_tolerance
 
            else
 
@@ -1226,6 +1289,14 @@ contains
     n%lmort_direct=o%lmort_direct
     n%lmort_collateral =o%lmort_collateral
     n%lmort_infra =o%lmort_infra
+    
+    if(use_leaf_age==itrue) then
+          n%fracExpLeaves = o%fracExpLeaves
+	  n%fracYoungLeaves = o%fracYoungLeaves
+	  n%fracOldLeaves = o%fracOldLeaves
+	  n%fracSenLeaves = o%fracSenLeaves
+    endif
+
 
     ! Flags
     n%isnew = o%isnew
