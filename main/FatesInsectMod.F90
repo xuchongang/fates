@@ -54,7 +54,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : an, dd1			
+    use FatesInsectMemMod    , only : an, dd1, alpha3, Beta3			
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_year, hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -223,14 +223,25 @@ contains
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm1GEQ20 = NtGEQ20
     
+    ! Updating the coldest temperature
+    if(min_airTC < ColdestT)then
+    	ColdestT = Tmin
+    end if
+    
+    ! Resetting the coldest temperature tracker on July 21 of each year:
+    if(hlm_current_month == 7 .and. hlm_current_day == 21) then
+       ColdestT = 15.0_r8
+    end if
+    
     ! In the case of beetle extinction, we re-initialize the parent beetle population with
     ! a small number (endemic beetle population level) of parent beetles. We count the
     ! population in February so that we know that none have flown yet, but if it is exceedingly
-    ! small, we re-initialize with parents on July 14 of the same year.
-    InPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
-
+    ! small, we re-initialize with parents on July 21 of the same year.
     if(hlm_current_month == 2 .and. hlm_current_day == 1) then
-        FebInPopn = InPopn
+    	! We need to apply winter martality to the larvae even though it might not have been applied yet
+	! in the model (it is only applied after larvae develop into pupae to account for all temperatures
+	! experienced by developing larvae).
+        FebInPopn = Fec + E + (L1 + L2 + L3 + L4)/(1.0_r8 + dexp(-(ColdestT - alpha3)/Beta3)) + P + Te + A
     end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
@@ -244,7 +255,7 @@ contains
     if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	Parents = 4185.838_r8
+	Parents = 210.4509_r8
     end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -252,7 +263,7 @@ contains
     !if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
-	!Parents = 32335.74_r8
+	!Parents = 1625.741_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -260,18 +271,8 @@ contains
     !if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	!Parents = 349223.2_r8
+	!Parents = 17557.86_r8
     !end if
-    
-    ! Updating the coldest temperature
-    if(min_airTC < ColdestT)then
-    	ColdestT = Tmin
-    end if
-    
-    ! Resetting the coldest temperature tracker on July 21 of each year:
-    if(hlm_current_month == 7 .and. hlm_current_day == 21) then
-       ColdestT = 15.0_r8
-    end if
 
     !----------------------------------------------------------------------------------------------------
     ! Calling the full MPB simulation for the time step. 
@@ -279,7 +280,8 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1)
+            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1, &
+	    alpha3, Beta3)
 
     !----------------------------------------------------------------------------------------------------
     ! update the vegetation mortality.
@@ -365,7 +367,8 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1)
+            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1 &
+	    alpha3, Beta3)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
     ! oviposition, the egg stage, the four larval instars,
@@ -418,6 +421,8 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(in) :: FebInPopn                 ! February insect population
     real(r8), intent(in) :: EndMPBPopn 	      	      ! The endemic mountain pine beetle population (females per ha)
     real(r8), intent(in) :: dd1                       ! controls density dependent competition of juvenile mountain pine beetles
+    real(r8), intent(in) :: alpha3 	      	      ! the air temperature at which 50 % of beetle larvae die
+    real(r8), intent(in) :: Beta3                     ! parameter that controls how quicly beetle mortality changes with cold temps
 
     !---------------------------------------------------------------------------------
     ! All of the parameters below are internal parameters (internal to the subroutine)
@@ -503,10 +508,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), parameter :: DeltaM7 = 7.1479
     real(r8), parameter :: omega7 = 0.1463
     real(r8), parameter :: psi7 = 0.01173
-    
-    ! Here are the parameters for the simplified model of larval mortality
-    real(r8), parameter :: alpha3 = -35.4185	! The temperature in degrees centigrade at which only 50 % survival occurs
-    real(r8), parameter :: Beta3 = 2.0		! controls the rate of change of survival probability as a function of temperature 
 
     ! Here are variables to hold the buffered under bark temperatures
     real(r8) :: Tmean     ! mean temperature at each time step in degrees Celcius
