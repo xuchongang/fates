@@ -252,11 +252,12 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Yellowstone National Park.
-    if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	Parents = 210.4509_r8
-    end if
+	!Parents = 210.4509_r8
+	!Parents = 86.97432_r8
+    !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Rocky Mountain National Park.
@@ -264,15 +265,17 @@ contains
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
 	!Parents = 1625.741_r8
+	!Parents = 671.8796_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    !if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
 	!Parents = 17557.86_r8
-    !end if
+	Parents = 7256.24_r8
+    end if
 
     !----------------------------------------------------------------------------------------------------
     ! Calling the full MPB simulation for the time step. 
