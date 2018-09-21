@@ -750,14 +750,14 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
     if(Itp1GEQ20 > 0.0_r8)then
 
         if(FebInPopn > EndMPBPopn)then
-            !Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-	    Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+            Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+	    !Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
             Bt = Btp1
             NtGEQ20 = Ntp1GEQ20
             else
                 ! Under the endemic scenario beetles do not kill trees.
-                !Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-		Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+                Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+		!Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
                 Bt = Btp1
                 NtGEQ20 = NtGEQ20
         end if
