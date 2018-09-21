@@ -54,7 +54,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : an, dd1, alpha3, Beta3			
+    use FatesInsectMemMod    , only : an, ab, dd1, alpha3, Beta3			
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_year, hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -122,7 +122,6 @@ contains
     real(r8) :: Ntm1GEQ20            		! previous susceptible host trees in the 20+ cm dbh size class
 
     ! Here are variables that I use to decide whether to restart the mountain pine beetle population at endemic population levels
-    real(r8) :: InPopn            		! current total population of insects within trees (if measured before they fly)
     real(r8) :: FebInPopn         		! current total population of insects estimated on Feb. first (before they would fly)
     real(r8), parameter :: EndMPBPopn = 40.0_r8 ! The minimum endemic parent mountain pine beetle population (female) per ha
     
@@ -280,7 +279,7 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1, &
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1, &
 	    alpha3, Beta3)
 
     !----------------------------------------------------------------------------------------------------
@@ -367,7 +366,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, FebInPopn, EndMPBPopn, dd1 &
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1 &
 	    alpha3, Beta3)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
@@ -418,6 +417,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     ! input parameters
     real(r8), intent(in) :: an                        ! controls the tree loss rate
+    real(r8), intent(in) :: ab                        ! controls proportion of beetles that attack
     real(r8), intent(in) :: FebInPopn                 ! February insect population
     real(r8), intent(in) :: EndMPBPopn 	      	      ! The endemic mountain pine beetle population (females per ha)
     real(r8), intent(in) :: dd1                       ! controls density dependent competition of juvenile mountain pine beetles
@@ -679,13 +679,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     end if
 
     ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, FebInPopn, EndMPBPopn, dd1)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd1)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, FebInPopn, EndMPBPopn, dd1)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd1)
     ! In this subroutine I solve the differential equations analytically.
 
     implicit none
@@ -703,23 +703,36 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, FebInPopn, EndMPBPopn, dd1)
 
     ! input parameters (dbh stands for tree diameter at breast height)
     real(r8), intent(in) :: an                      ! controls the tree loss rate
+    real(r8), intent(in) :: ab                      ! controls proportion of beetles that attack
     real(r8), intent(in) :: FebInPopn               ! February insect population
     real(r8), intent(in) :: EndMPBPopn              ! endemic mountain pine beetle population threshold
     real(r8), intent(in) :: dd1                     ! parameter controlling competition among juvenile beetles
 
     ! Here are internal variables and parameters
+    real(r8) :: timestep = 1.0_r8         ! one day time step
     real(r8) :: Btp1                      ! an updated value for the beetles
     real(r8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
     real(r8) :: Itp1GEQ20                 ! updated infested trees in the 20+ cm dbh size class
 
-    
+    real(r8) :: TotalPopn
     
     !---------------------------------------------------------------------------------------------
     ! Here I compute the solutions
-    
-    Btp1 = Bt + FA
-    
-    Ntp1GEQ20 = NtGEQ20*dexp(an*(Btp1 - Bt))
+
+    TotalPopn = Bt + FA
+
+    ! This initializes the attack proportion model.
+    if(Bt == 0.0_r8)then
+        Bt = 0.1_r8*FA
+    end if
+
+    if(TotalPopn > 0.0_r8)then
+        Btp1 = Bt/(Bt/TotalPopn + dexp(-dexp(ab)*TotalPopn*timestep)*(1.0_r8 - Bt/TotalPopn))
+        else
+            Btp1 = 0.0_r8
+    end if
+
+    Ntp1GEQ20 = NtGEQ20*dexp(-dexp(an)*(Btp1 - Bt))
 
     Itp1GEQ20 = NtGEQ20 - Ntp1GEQ20
 
