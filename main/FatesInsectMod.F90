@@ -239,22 +239,21 @@ contains
         Parents = EndMPBPopn
     end if
     
-    ! Here's a hack to initialize the model with density of insects appropriate for the Rocky
-    ! Mountain National Park.
-    !if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
-        ! The intial number of parents in 2000 in Rocky Mountain National Park assuming that
-	! each of 2.97418 killed trees per ha killed in 2000 was attacked by 173.216 females 
-	! (our estimate of number of females per tree from Yellowstone dataset).
-    !    Parents = 515.1756_r8
-    !end if
+    ! Here's a hack to initialize the model with density of insects appropriate for 
+    ! Rocky Mountain National Park.
+    if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+        ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
+	! according to our attack model.
+	Parents = 32335.74_r8
+    end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
-        ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2008
+    !if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+        ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	parents = 349223.2_r8
-    end if
+	!Parents = 349223.2_r8
+    !end if
     
     ! Updating the coldest temperature
     if(min_airTC < ColdestT)then
