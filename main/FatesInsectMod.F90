@@ -366,7 +366,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1 &
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1, &
 	    alpha3, Beta3)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
