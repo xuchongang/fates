@@ -240,8 +240,8 @@ contains
     	! We need to apply winter martality to the larvae even though it might not have been applied yet
 	! in the model (it is only applied after larvae develop into pupae to account for all temperatures
 	! experienced by developing larvae).
-        !FebInPopn = Fec + E + (L1 + L2 + L3 + L4)/(1.0_r8 + dexp(-(ColdestT - alpha3)/Beta3)) + P + Te + A
-	FebInPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
+        FebInPopn = Fec + E + (L1 + L2 + L3 + L4)/(1.0_r8 + dexp(-(ColdestT - alpha3)/Beta3)) + P + Te + A
+	!FebInPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
     end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
@@ -657,7 +657,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! temperature experienced over an individual's whole larval career. 
     ! Winter survival probability is modeled as a logistic curve function of 
     ! the coldest winter (air) temperature to date.
-    !NewP = NewP/(1.0_r8 + dexp(-(ColdestT - alpha3)/Beta3))
+    NewP = NewP/(1.0_r8 + dexp(-(ColdestT - alpha3)/Beta3))
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
@@ -750,14 +750,14 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
     if(Itp1GEQ20 > 0.0_r8)then
 
         if(FebInPopn > EndMPBPopn)then
-            Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-	    !Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+            !Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+	    Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
             Bt = Btp1
             NtGEQ20 = Ntp1GEQ20
             else
                 ! Under the endemic scenario beetles do not kill trees.
-                Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-		!Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+                !Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+		Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
                 Bt = Btp1
                 NtGEQ20 = NtGEQ20
         end if
