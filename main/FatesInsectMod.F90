@@ -252,27 +252,27 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Yellowstone National Park.
-    if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	Parents = 28.52883_r8
-    end if
+	!Parents = 253.4311_r8
+    !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Rocky Mountain National Park.
-    !if(hlm_current_year == 2005 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2006 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
-	!Parents = 226.3262_r8
+	!Parents = 2010.531_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    !if(hlm_current_year == 2008 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	!Parents = 2187.944_r8
-    !end if
+	Parents = 19436.23_r8
+    end if
 
     !----------------------------------------------------------------------------------------------------
     ! Calling the full MPB simulation for the time step. 
@@ -720,7 +720,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! Here I compute the analytic solutions
 
     ! To prevent divide by zeros in the analytic solution, I take this precaution.
-    if(dexp(ab)*NtGEQ20 == dexp(an)*Bt) Bt = Bt + 0.01_r8
+    if(dexp(ab)*NtGEQ20 == dexp(an)*Bt) Bt = Bt - Bt*0.01_r8
 
     ! Here's the solution for beetles
     Btp1 = Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
@@ -773,8 +773,7 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     ! internal parameters
     real(r8), parameter :: fmax = 54.66667_r8 ! Regniere et al 2012 estimate that 82 eggs are produced per female (2/3 of these are female)
 
-    real(r8), parameter :: netp = 0.2526481_r8! This is one minus the net probability  of mortality from causes other
-    					      ! than winter cold when the average winter mortality has been accounted for.
+    real(r8), parameter :: netp = 0.1625_r8   ! This is one minus the probability of dying from a variety of causes.
 
     ! Aplying winter mortality to egg laying adults
     if(Tmn2 <= -18.0)then
