@@ -706,58 +706,49 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     real(r8), intent(in) :: ab                      ! controls proportion of beetles that attack
     real(r8), intent(in) :: FebInPopn               ! February insect population
     real(r8), intent(in) :: EndMPBPopn              ! endemic mountain pine beetle population threshold
-    real(r8), intent(in) :: dd1                     ! parameter controlling competition among juvenile beetles
 
     ! Here are internal variables and parameters
-    real(r8) :: timestep = 1.0_r8         ! one day time step
-    real(r8) :: Btp1                      ! an updated value for the beetles
-    real(r8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
-    real(r8) :: Itp1GEQ20                 ! updated infested trees in the 20+ cm dbh size class
+    real(kind = 8) :: timestep = 1.0_r8         ! one day time step
+    real(kind = 8) :: Btp1                      ! an updated value for the beetles
+    real(kind = 8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
+    real(kind = 8) :: Ptp1GEQ20                 ! updated parent beetles the 20+ cm dbh size class
 
-    real(r8) :: TotalPopn
+    ! I add in the beetles that just started flying in the time step.
+    Bt = Bt + FA
     
     !---------------------------------------------------------------------------------------------
-    ! Here I compute the solutions
+    ! Here I compute the analytic solutions
 
-    TotalPopn = Bt + FA
+    ! To prevent divide by zeros in the analytic solution, I take this precaution.
+    if(dexp(ab)*NtGEQ20 == dexp(an)*Bt) Bt = Bt + 0.01_r8
 
-    ! This initializes the attack proportion model.
-    if(Bt == 0.0_r8)then
-        Bt = 0.1_r8*FA
-    end if
+    ! Here's the solution for beetles
+    Btp1 = Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
+        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
 
-    if(TotalPopn > 0.0_r8)then
-        Btp1 = Bt/(Bt/TotalPopn + dexp(-dexp(ab)*TotalPopn*timestep)*(1.0_r8 - Bt/TotalPopn))
-        else
-            Btp1 = 0.0_r8
-    end if
+    ! Here's the analytic solution for trees
+    Ntp1GEQ20 = NtGEQ20/&
+        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
 
-    Ntp1GEQ20 = NtGEQ20*dexp(-dexp(an)*(Btp1 - Bt))
-
-    Itp1GEQ20 = NtGEQ20 - Ntp1GEQ20
+    ! Here's the analytic solution for parent beetles
+    Ptp1GEQ20 = Bt - Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
+        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
 
     !------------------------------------------------------------------------------------------------
     
     ! Now I update all of the state variables. This depends on whether the population is endemic or not.
     ! when populations are in the endemic phase, they only attack weakened
     ! trees that are already functionally dead from other causes.
-    ! 114363.64 is the surface area attacked by MPB in an average tree (from the Klein et al data)
-    ! the formulation for Ricker type negative density dependence comes from Goodsman et al 2018.
-    if(Itp1GEQ20 > 0.0_r8)then
 
-        if(FebInPopn > EndMPBPopn)then
-            Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/40.386_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-	    !Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+    if(FebInPopn > EndMPBPopn)then
+        Parents = Ptp1GEQ20
+        Bt = Btp1
+        NtGEQ20 = Ntp1GEQ20
+        else
+        ! Under the endemic scenario beetles do not kill trees.
+            Parents = Ptp1GEQ20
             Bt = Btp1
-            NtGEQ20 = Ntp1GEQ20
-            else
-                ! Under the endemic scenario beetles do not kill trees.
-                Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/40.386_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-		!Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
-                Bt = Btp1
-                NtGEQ20 = NtGEQ20
-        end if
-
+            NtGEQ20 = NtGEQ20
     end if
 
 end subroutine MPBAttack
