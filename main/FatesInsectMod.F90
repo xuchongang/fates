@@ -54,7 +54,7 @@ contains
     ! !DESCRIPTION:
     ! The mountain pine beetle model.
     !
-    use FatesInsectMemMod    , only : an, ab, dd1, alpha3, Beta3			
+    use FatesInsectMemMod    , only : an, ab, alpha3, Beta3			
     use FatesInsectMemMod    , only : ed_site_insect_type
     use FatesInterfaceMod    , only : hlm_current_year, hlm_current_month, hlm_current_day, hlm_freq_day, bc_in_type
     use EDtypesMod           , only : ed_patch_type, ed_cohort_type
@@ -280,7 +280,7 @@ contains
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1, &
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, &
 	    alpha3, Beta3)
 
     !----------------------------------------------------------------------------------------------------
@@ -367,7 +367,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
             OL3, OL4, OP, OT, NewEggstm1, NewL1tm1, &
             NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
             Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
-            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, dd1, &
+            NtGEQ20, Bt, an, ab, FebInPopn, EndMPBPopn, &
 	    alpha3, Beta3)
     ! This subroutine simulates the demographic processes
     ! of the mountain pine beetle for a single time step including
@@ -421,7 +421,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(in) :: ab                        ! controls proportion of beetles that attack
     real(r8), intent(in) :: FebInPopn                 ! February insect population
     real(r8), intent(in) :: EndMPBPopn 	      	      ! The endemic mountain pine beetle population (females per ha)
-    real(r8), intent(in) :: dd1                       ! controls density dependent competition of juvenile mountain pine beetles
     real(r8), intent(in) :: alpha3 	      	      ! the air temperature at which 50 % of beetle larvae die
     real(r8), intent(in) :: Beta3                     ! parameter that controls how quicly beetle mortality changes with cold temps
 
@@ -680,13 +679,13 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     end if
 
     ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd1)
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
     ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
-subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd1)
+subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! In this subroutine I solve the differential equations analytically.
 
     implicit none
@@ -747,14 +746,14 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn, dd
     if(Itp1GEQ20 > 0.0_r8)then
 
         if(FebInPopn > EndMPBPopn)then
-            !Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-	    Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+            Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/40.386_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+	    !Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
             Bt = Btp1
             NtGEQ20 = Ntp1GEQ20
             else
                 ! Under the endemic scenario beetles do not kill trees.
-                !Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/20.0_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
-		Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
+                Parents = (Btp1 - Bt)*dexp(-dd1*sqrt((Btp1 - Bt)/Itp1GEQ20/40.386_r8*3.14159265359_r8*((10.6_r8/2.0_r8)**2.0_r8)/114363.64_r8))
+		!Parents = min(Itp1GEQ20*173.216_r8, Btp1 - Bt)
                 Bt = Btp1
                 NtGEQ20 = NtGEQ20
         end if
