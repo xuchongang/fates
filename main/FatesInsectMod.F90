@@ -264,7 +264,7 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    if(hlm_current_year == 1 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
 	FA = 31940.5_r8
@@ -384,7 +384,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     real(r8), intent(in) :: Tmax
     real(r8), intent(in) :: Tmin
     real(r8), intent(inout) :: Parents
-    real(r8), intent(out) :: FA
+    real(r8), intent(inout) :: FA
 
     real(r8), intent(inout) :: OE(2**8)
     real(r8), intent(inout) :: OL1(2**8)
@@ -613,6 +613,19 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
 
     !---------------------------------------------------------------------------------------------------------
     ! Now we can simulate each of the life stages by calling the appropriate subroutines
+    
+    ! Killing beetles that mistakenly remain in flight during cold temperatures.
+    ! This prevents them from killing trees when they shouldn't be.
+    if(Tmin <= 0.0)then
+        FA = 0.0_r8
+	Bt = 0.0_r8
+    end if
+
+    ! Simulating the attack of host trees. I moved this to the front so that we 
+    ! can initialize with an estimate of the number of flying adults.
+    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
+    ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
+    ! flight and outputs a number of parents that will start the oviposition process.
 
     ! Simulating oviposition:
     call Ovipos(Fec, Parents, med0, Tmin2, NewEggs)
@@ -673,18 +686,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! Simulating adult flight
     call AdSR(NewA, Tmin2, Tmax2, A, FA)
     ! This updates the expected number of adults (A) and flying adults (FA).
-    
-    ! Killing beetles that mistakenly remain in flight during cold temperatures.
-    ! This prevents them from killing trees when they shouldn't be.
-    if(Tmin <= 0.0)then
-        FA = 0.0_r8
-	Bt = 0.0_r8
-    end if
-
-    ! Simulating the attack of host trees
-    call MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
-    ! This updates the density of trees in each of the size classes, and the density of beetles that remain in
-    ! flight and outputs a number of parents that will start the oviposition process.
     
     contains
     !=================================================================================================================
