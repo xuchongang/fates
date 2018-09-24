@@ -1248,21 +1248,21 @@ contains
        
       !Liang Wei  put original pool values back     --->
       currentCohort%dbh   = tempST2_dbh   
-      currentCohort%br    = tempST2_br   
-      currentCohort%bsw   = tempST2_bsw 
-      currentCohort%bdead = tempST2_bdead
+      !currentCohort%br    = tempST2_br   
+      !currentCohort%bsw   = tempST2_bsw 
+      !currentCohort%bdead = tempST2_bdead
       currentCohort%hite  = tempST2_hite
     
     !Liang Wei, set fluxes to 0
-      currentCohort%npp_fnrt   = 0.0_r8
-      currentCohort%npp_sapw   = 0.0_r8
-      currentCohort%npp_dead   = 0.0_r8
-      currentCohort%seed_prod  = 0.0_r8
-      currentCohort%npp_seed  = 0.0_r8 
+      !currentCohort%npp_fnrt   = 0.0_r8
+      !currentCohort%npp_sapw   = 0.0_r8
+      !currentCohort%npp_dead   = 0.0_r8
+      !currentCohort%seed_prod  = 0.0_r8
+      !currentCohort%npp_seed  = 0.0_r8 
 
     ! Initialize rates of change
       currentCohort%dhdt      = 0.0_r8
-      currentCohort%dbdeaddt  = 0.0_r8
+      !currentCohort%dbdeaddt  = 0.0_r8
       currentCohort%ddbhdt    = 0.0_r8
   
        !<---
@@ -1329,24 +1329,25 @@ contains
     
     if( carbon_balance<cbal_prec) then
     
-          !Liang Wei  put original pool values back     --->
+      !Liang Wei  put original pool values back     --->
       currentCohort%dbh   = tempST2_dbh   
-      currentCohort%br    = tempST2_br   
-      currentCohort%bsw   = tempST2_bsw 
-      currentCohort%bdead = tempST2_bdead
+      !currentCohort%br    = tempST2_br   
+      !currentCohort%bsw   = tempST2_bsw 
+      !currentCohort%bdead = tempST2_bdead
       currentCohort%hite  = tempST2_hite
     
     !Liang Wei, set fluxes to 0
-      currentCohort%npp_fnrt   = 0.0_r8
-      currentCohort%npp_sapw   = 0.0_r8
-      currentCohort%npp_dead   = 0.0_r8
-      currentCohort%seed_prod  = 0.0_r8
-      currentCohort%npp_seed  = 0.0_r8 
+      !currentCohort%npp_fnrt   = 0.0_r8
+      !currentCohort%npp_sapw   = 0.0_r8
+      !currentCohort%npp_dead   = 0.0_r8
+      !currentCohort%seed_prod  = 0.0_r8
+      !currentCohort%npp_seed  = 0.0_r8 
 
     ! Initialize rates of change
       currentCohort%dhdt      = 0.0_r8
-      currentCohort%dbdeaddt  = 0.0_r8
+      !currentCohort%dbdeaddt  = 0.0_r8
       currentCohort%ddbhdt    = 0.0_r8
+  
   
        !<---
         
@@ -1406,23 +1407,23 @@ contains
 
     if( carbon_balance<cbal_prec) then
     
-          !Liang Wei  put original pool values back     --->
+      !Liang Wei  put original pool values back     --->
       currentCohort%dbh   = tempST2_dbh   
-      currentCohort%br    = tempST2_br   
-      currentCohort%bsw   = tempST2_bsw 
-      currentCohort%bdead = tempST2_bdead
+      !currentCohort%br    = tempST2_br   
+      !currentCohort%bsw   = tempST2_bsw 
+      !currentCohort%bdead = tempST2_bdead
       currentCohort%hite  = tempST2_hite
     
     !Liang Wei, set fluxes to 0
-      currentCohort%npp_fnrt   = 0.0_r8
-      currentCohort%npp_sapw   = 0.0_r8
-      currentCohort%npp_dead   = 0.0_r8
-      currentCohort%seed_prod  = 0.0_r8
-      currentCohort%npp_seed  = 0.0_r8 
+      !currentCohort%npp_fnrt   = 0.0_r8
+      !currentCohort%npp_sapw   = 0.0_r8
+      !currentCohort%npp_dead   = 0.0_r8
+      !currentCohort%seed_prod  = 0.0_r8
+      !currentCohort%npp_seed  = 0.0_r8 
 
     ! Initialize rates of change
       currentCohort%dhdt      = 0.0_r8
-      currentCohort%dbdeaddt  = 0.0_r8
+      !currentCohort%dbdeaddt  = 0.0_r8
       currentCohort%ddbhdt    = 0.0_r8
   
        !<---
@@ -1450,30 +1451,32 @@ contains
     ! -----------------------------------------------------------------------------------
     !Liang wei 
     !if( carbon_balance<cbal_prec) return !original
-    
     if( carbon_balance<cbal_prec) then
-      !Liang Wei  put original pool values back     
+      !Liang Wei  put original pool values back     --->
       currentCohort%dbh   = tempST2_dbh   
-      currentCohort%br    = tempST2_br   
-      currentCohort%bsw   = tempST2_bsw 
-      currentCohort%bdead = tempST2_bdead
+      !currentCohort%br    = tempST2_br   
+      !currentCohort%bsw   = tempST2_bsw 
+      !currentCohort%bdead = tempST2_bdead
       currentCohort%hite  = tempST2_hite
     
     !Liang Wei, set fluxes to 0
-      currentCohort%npp_fnrt   = 0.0_r8
-      currentCohort%npp_sapw   = 0.0_r8
-      currentCohort%npp_dead   = 0.0_r8
-      currentCohort%seed_prod  = 0.0_r8
-      currentCohort%npp_seed  = 0.0_r8 
+      !currentCohort%npp_fnrt   = 0.0_r8
+      !currentCohort%npp_sapw   = 0.0_r8
+      !currentCohort%npp_dead   = 0.0_r8
+      !currentCohort%seed_prod  = 0.0_r8
+      !currentCohort%npp_seed  = 0.0_r8 
 
     ! Initialize rates of change
       currentCohort%dhdt      = 0.0_r8
-      currentCohort%dbdeaddt  = 0.0_r8
+      !currentCohort%dbdeaddt  = 0.0_r8
       currentCohort%ddbhdt    = 0.0_r8
+  
       return
     end if
 
-
+    
+    return !liang wei, do not grow new tissues
+    
     ! This routine checks that actual carbon is not below the targets. It does
     ! allow actual pools to be above the target, and in these cases, it sends
     ! a false on the "grow_<>" flag, allowing the plant to grow into these pools.
@@ -1654,25 +1657,24 @@ contains
        end if
     end do
     
-   !Liang Wei  put original pool values back     
-    currentCohort%dbh   = tempST2_dbh   
-    currentCohort%br    = tempST2_br   
-    currentCohort%bsw   = tempST2_bsw 
-    currentCohort%bdead = tempST2_bdead
-    currentCohort%hite  = tempST2_hite
+      !Liang Wei  put original pool values back     --->
+      currentCohort%dbh   = tempST2_dbh   
+      !currentCohort%br    = tempST2_br   
+      !currentCohort%bsw   = tempST2_bsw 
+      !currentCohort%bdead = tempST2_bdead
+      currentCohort%hite  = tempST2_hite
     
     !Liang Wei, set fluxes to 0
-    currentCohort%npp_fnrt   = 0.0_r8
-    currentCohort%npp_sapw   = 0.0_r8
-    currentCohort%npp_dead   = 0.0_r8
-    currentCohort%seed_prod  = 0.0_r8
-    currentCohort%npp_seed  = 0.0_r8 
+      !currentCohort%npp_fnrt   = 0.0_r8
+      !currentCohort%npp_sapw   = 0.0_r8
+      !currentCohort%npp_dead   = 0.0_r8
+      !currentCohort%seed_prod  = 0.0_r8
+      !currentCohort%npp_seed  = 0.0_r8 
 
     ! Initialize rates of change
-    currentCohort%dhdt      = 0.0_r8
-    currentCohort%dbdeaddt  = 0.0_r8
-    currentCohort%ddbhdt    = 0.0_r8
-
+      currentCohort%dhdt      = 0.0_r8
+      !currentCohort%dbdeaddt  = 0.0_r8
+      currentCohort%ddbhdt    = 0.0_r8
     return
  end subroutine PlantGrowth
 
