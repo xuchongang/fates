@@ -728,15 +728,15 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
 
     ! Here's the solution for beetles
     Btp1 = Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
-        (1.0 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
+        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
 
     ! Here's the analytic solution for trees
     Ntp1GEQ20 = NtGEQ20/&
-        (1.0 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
+        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
 
     ! Here's the analytic solution for parent beetles
     Ptp1GEQ20 = Bt - Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
-        (1.0 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
+        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
 
     !------------------------------------------------------------------------------------------------
 
