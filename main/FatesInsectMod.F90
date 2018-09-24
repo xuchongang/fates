@@ -717,7 +717,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! Here I compute the solutions
 
     Btp1 = Bt + FA
-    Ptp1GEQ20 = (Btp1 - Bt)*exp(ab)
+    Ptp1GEQ20 = (Btp1 - Bt)*dexp(ab)
     Ntp1GEQ20 = NtGEQ20*dexp(an*(Btp1 - Bt))
 
     !--------------------------------------------------------------------------------------------------
