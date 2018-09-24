@@ -703,7 +703,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
 
     ! input parameters (dbh stands for tree diameter at breast height)
     real(r8), intent(in) :: an                      ! controls the tree loss rate
-    real(r8), intent(in) :: ab                      ! controls proportion of beetles that attack
+    real(r8), intent(in) :: ab                      ! controls proportion of beetles become parents
     real(r8), intent(in) :: FebInPopn               ! February insect population
     real(r8), intent(in) :: EndMPBPopn              ! endemic mountain pine beetle population threshold
 
@@ -713,28 +713,14 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     real(kind = 8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
     real(kind = 8) :: Ptp1GEQ20                 ! updated parent beetles the 20+ cm dbh size class
 
-    ! I add in the beetles that just started flying in the time step.
-    Bt = Bt + FA
-    
-    !---------------------------------------------------------------------------------------------
-    ! Here I compute the analytic solutions
+    !--------------------------------------------------------------------------------------------------
+    ! Here I compute the solutions
 
-    ! To prevent divide by zeros in the analytic solution, I take this precaution.
-    if(dexp(ab)*NtGEQ20 == dexp(an)*Bt) Bt = Bt - Bt*0.01_r8
+    Btp1 = Bt + FA
+    Ptp1GEQ20 = (Btp1 - Bt)*exp(ab)
+    Ntp1GEQ20 = NtGEQ20*dexp(an*(Btp1 - Bt))
 
-    ! Here's the solution for beetles
-    Btp1 = Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
-        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
-
-    ! Here's the analytic solution for trees
-    Ntp1GEQ20 = NtGEQ20/&
-        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
-
-    ! Here's the analytic solution for parent beetles
-    Ptp1GEQ20 = Bt - Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
-        (1.0_r8 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0_r8 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
-
-    !------------------------------------------------------------------------------------------------
+    !--------------------------------------------------------------------------------------------------
     
     ! Now I update all of the state variables. This depends on whether the population is endemic or not.
     ! when populations are in the endemic phase, they only attack weakened
