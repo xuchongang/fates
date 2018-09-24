@@ -246,21 +246,21 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Yellowstone National Park.
-    !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	!FA = 397.6896_r8
-	!FebInPopn = 397.6896_r8
-    !end if
+	FA = 397.6896_r8
+	FebInPopn = 397.6896_r8
+    end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Rocky Mountain National Park.
-    if(hlm_current_year == 2006 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2006 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
-	FA = 3122.808_r8
-	FebInPopn = 3122.808_r8
-    end if
+	!FA = 3122.808_r8
+	!FebInPopn = 3122.808_r8
+    !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
