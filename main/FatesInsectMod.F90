@@ -249,8 +249,8 @@ contains
     !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	!FA = 382.8433_r8
-	!FebInPopn = 382.8433_r8
+	!FA = 397.6896_r8
+	!FebInPopn = 397.6896_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -258,8 +258,8 @@ contains
     !if(hlm_current_year == 2006 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
-	!FA = 2957.478_r8
-	!FebInPopn = 2957.478_r8
+	!FA = 3122.808_r8
+	!FebInPopn = 3122.808_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -267,8 +267,8 @@ contains
     if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	FA = 31940.5_r8
-	FebInPopn = 31940.5_r8
+	FA = 31519.89_r8
+	FebInPopn = 31519.89_r8
     end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
@@ -717,15 +717,29 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     real(kind = 8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
     real(kind = 8) :: Ptp1GEQ20                 ! updated parent beetles the 20+ cm dbh size class
 
-    !--------------------------------------------------------------------------------------------------
-    ! Here I compute the solutions
+    ! I add in the beetles that just started flying in the time step.
+    Bt = Bt + FA
 
-    Btp1 = Bt + FA
-    Ptp1GEQ20 = (Btp1 - Bt)*dexp(ab)
-    Ntp1GEQ20 = NtGEQ20*dexp(an*(Btp1 - Bt))
+    !---------------------------------------------------------------------------------------------
+    ! Here I compute the analytic solutions
 
-    !--------------------------------------------------------------------------------------------------
-    
+    ! To prevent divide by zeros in the analytic solution, I take this precaution.
+    if(dexp(ab)*NtGEQ20 == dexp(an)*Bt) Bt = Bt - Bt*0.01
+
+    ! Here's the solution for beetles
+    Btp1 = Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
+        (1.0 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
+
+    ! Here's the analytic solution for trees
+    Ntp1GEQ20 = NtGEQ20/&
+        (1.0 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
+
+    ! Here's the analytic solution for parent beetles
+    Ptp1GEQ20 = Bt - Bt*dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)/&
+        (1.0 + dexp(an)*Bt/(dexp(ab)*NtGEQ20 - dexp(an)*Bt)*(1.0 - dexp((dexp(an)*Bt - dexp(ab)*NtGEQ20)*timestep)))
+
+    !------------------------------------------------------------------------------------------------
+
     ! Now I update all of the state variables. This depends on whether the population is endemic or not.
     ! when populations are in the endemic phase, they only attack weakened
     ! trees that are already functionally dead from other causes.
