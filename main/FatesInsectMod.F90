@@ -246,7 +246,7 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Yellowstone National Park.
-    if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
 	!FA = 634.7082_r8
