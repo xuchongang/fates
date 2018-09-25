@@ -268,9 +268,9 @@ contains
     if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	FA = 49433.13_r8
-	FebInPopn = 49433.13_r8
-    end if
+	!FA = 49433.13_r8
+	!FebInPopn = 49433.13_r8
+    !end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
