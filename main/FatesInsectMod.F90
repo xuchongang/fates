@@ -241,8 +241,8 @@ contains
     	! We need to apply winter martality to the larvae even though it might not have been applied yet
 	! in the model (it is only applied after larvae develop into pupae to account for all temperatures
 	! experienced by developing larvae).
-        FebInPopn = Fec + E + (L1 + L2 + L3 + L4)/(1.0_r8 + exp(-(ColdestT - alpha3)/Beta3)) + P + Te + A
-	!FebInPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
+        !FebInPopn = Fec + E + (L1 + L2 + L3 + L4)/(1.0_r8 + exp(-(ColdestT - alpha3)/Beta3)) + P + Te + A
+	FebInPopn = Fec + E + L1 + L2 + L3 + L4 + P + Te + A
     end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -250,8 +250,8 @@ contains
     !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	!FA = 1012.672_r8
-	!FebInPopn = 1012.672_r8
+	!FA = 615.4656_r8
+	!FebInPopn = 615.4656_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -259,8 +259,8 @@ contains
     !if(hlm_current_year == 2006 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
-	!FA = 7890.491_r8
-	!FebInPopn = 7890.491_r8
+	!FA = 4812.636_r8
+	!FebInPopn = 4812.636_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -268,8 +268,8 @@ contains
     if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	FA = 82251.59_r8
-	FebInPopn = 82251.59_r8
+	FA = 49433.13_r8
+	FebInPopn = 49433.13_r8
     end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
@@ -672,7 +672,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     ! temperature experienced over an individual's whole larval career. 
     ! Winter survival probability is modeled as a logistic curve function of 
     ! the coldest winter (air) temperature to date.
-    NewP = NewP/(1.0_r8 + exp(-(ColdestT - alpha3)/Beta3))
+    !NewP = NewP/(1.0_r8 + exp(-(ColdestT - alpha3)/Beta3))
 
     ! Simulating pupal development:
     call EPTDev(n, avec, med6, mu6, sigma6, Tmin2, NewP, NewPtm1, OP, P, NewT)
@@ -782,7 +782,8 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     ! internal parameters
     real(r8), parameter :: fmax = 54.66667_r8 ! Regniere et al 2012 estimate that 82 eggs are produced per female (2/3 of these are female)
 
-    real(r8), parameter :: netp = 0.2526481_r8   ! This is one minus the probability of dying from a variety of causes.
+    !real(r8), parameter :: netp = 0.2526481_r8   ! This is one minus the probability of dying from a variety of causes.
+    real(r8), parameter :: netp = 0.1625_r8   ! This is one minus the probability of dying from a variety of causes.
 
     ! Aplying winter mortality to egg laying adults
     if(Tmn2 <= -18.0_r8)then
