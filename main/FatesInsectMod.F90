@@ -616,7 +616,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     
     ! Killing beetles that mistakenly remain in flight during cold temperatures.
     ! This prevents them from killing trees when they shouldn't be.
-    if(Tmin <= 0.0_r8)then
+    if(Tmin < 0.0_r8)then
         FA = 0.0_r8
 	Bt = 0.0_r8
     end if
@@ -782,7 +782,7 @@ subroutine Ovipos(Fec, Parents, med, Tmn2, NewEggs)
     real(r8), parameter :: netp = 0.2526481_r8   ! This is one minus the probability of dying from a variety of causes.
 
     ! Aplying winter mortality to egg laying adults
-    if(Tmn2 <= -18.0)then
+    if(Tmn2 <= -18.0_r8)then
         Fec = 0.0_r8
     end if
 
@@ -882,7 +882,7 @@ subroutine EPTDev(n, avec, med, mu, sigma, Tmn2, NewEPT, NewEPTtm1, OEPT, EPTcur
         end if
 
         ! Just to make sure that silly things don't happen
-        if(NewNext < 0.0 .or. isnan(NewNext))then
+        if(NewNext < 0.0_r8 .or. isnan(NewNext))then
             NewNext = 0.0_r8
         end if
 
