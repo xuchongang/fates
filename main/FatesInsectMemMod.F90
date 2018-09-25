@@ -41,6 +41,7 @@ module FatesInsectMemMod
 	
         ! Variables related to mountain pine beetle winter survival (these are specific to the mountain pine beetle)
         real(r8) :: ColdestT                         			! coldest winter temperature experienced to date (resets on a yearly basis)
+	real(r8) :: FebInPopn                         			! a cencus of population that is used to decide whether insects attack trees
 	
 	! Maximum and minimum daily temperatures in degree C
 	real(r8) :: MaxDailyT                         			
@@ -52,8 +53,6 @@ module FatesInsectMemMod
            procedure  :: ZeroInsectSite
 
     end type ed_site_insect_type
-    
-
 
     contains
 
@@ -81,6 +80,8 @@ module FatesInsectMemMod
 
         this%ColdestT = 15.0_r8
 	
+	this%FebInPopn = 0.0_r8
+	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
 	this%MaxDailyT = 0.0_r8
@@ -107,6 +108,8 @@ module FatesInsectMemMod
 	this%indensity(1:numberInsectTypes, 1:maxNumStages) = 0.0_r8
 
         this%ColdestT = 0.0_r8
+	
+	this%FebInPopn = 0.0_r8
 	
 	! As model runs typically start January 1, 
 	! I have decided to initialize with non-reactive temperatures for insects.
