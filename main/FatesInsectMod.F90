@@ -620,6 +620,9 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
         FA = 0.0_r8
 	Bt = 0.0_r8
     end if
+    
+    ! For testing purposes:
+    NtGEQ20 = 213.17_r8
 
     ! Simulating the attack of host trees. I moved this to the front so that we 
     ! can initialize with an estimate of the number of flying adults.
