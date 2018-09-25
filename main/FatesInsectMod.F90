@@ -616,7 +616,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     
     ! Killing beetles that mistakenly remain in flight during cold temperatures.
     ! This prevents them from killing trees when they shouldn't be.
-    if(Tmin <= 0.0)then
+    if(Tmin <= 0.0_r8)then
         FA = 0.0_r8
 	Bt = 0.0_r8
     end if
