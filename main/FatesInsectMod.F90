@@ -735,7 +735,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
         (1.0_r8 + exp(an)*Bt/(exp(ab)*NtGEQ20 - exp(an)*Bt)*(1.0_r8 - exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)))
 	
     ! Here's a more stable solution for beetles maybe (doesn't involve so many exponential functions).
-    Btp1 = exp(ab)/exp(an)*Ntp1GEQ20 + Bt - exp(ab)/exp(an)*Nt
+    Btp1 = exp(ab)/exp(an)*Ntp1GEQ20 + Bt - exp(ab)/exp(an)*NtGEQ20
 	
     ! Here's the analytic solution for parent beetles
     Ptp1GEQ20 = Bt - Btp1
