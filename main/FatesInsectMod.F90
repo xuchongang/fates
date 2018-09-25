@@ -169,6 +169,7 @@ contains
     Parents = CurrentSite%si_insect%indensity(1,12)
 
     ColdestT = currentSite%si_insect%ColdestT
+    FebInPopn = currentSite%si_insect%FebInPopn
 
     !----------------------------------------------------------------------------------------------------
     ! Calculate the site level average tree density in each of the size classes that we use in the 
@@ -268,10 +269,6 @@ contains
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
 	FA = 51094.05_r8
-    end if
-    
-    ! We need to keep the switch on for tree killing to occur over the intitialization year.
-    if(hlm_current_year == 2009 .and. hlm_current_month >= 7 .and. hlm_current_day > 20) then
 	FebInPopn = 51094.05_r8
     end if
 
@@ -362,6 +359,8 @@ contains
 
     ! The winter survival related variables.
     currentSite%si_insect%ColdestT = ColdestT
+    
+    currentSite%si_insect%FebInPopn = FebInPopn
     
     ! Daily maximum and minimum temperatures for diagnostic purposes
     currentSite%si_insect%MaxDailyT = max_airTC
