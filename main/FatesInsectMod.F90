@@ -218,9 +218,6 @@ contains
     ! Now completing the temperature averaging process.
     max_airTC = max_airTC/NumPatches
     min_airTC = min_airTC/NumPatches
-    
-    ! For testing purposes:
-    NtGEQ20 = 213.17_r8
 
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm1GEQ20 = NtGEQ20
@@ -271,6 +268,10 @@ contains
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
 	FA = 51094.05_r8
+    end if
+    
+    ! We need to keep the switch on for tree killing to occur over the intitialization year.
+    if(hlm_current_year == 2009 .and. hlm_current_month >= 7 .and. hlm_current_day > 20) then
 	FebInPopn = 51094.05_r8
     end if
 
