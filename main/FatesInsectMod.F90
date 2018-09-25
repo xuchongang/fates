@@ -250,8 +250,8 @@ contains
     !if(hlm_current_year == 2001 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2001
 	! according to our attack model.
-	!FA = 634.7082_r8
-	!FebInPopn = 634.7082_r8
+	!FA = 1012.672_r8
+	!FebInPopn = 1012.672_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -259,8 +259,8 @@ contains
     !if(hlm_current_year == 2006 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2006
 	! according to our attack model.
-	!FA = 4959.549_r8
-	!FebInPopn = 4959.549_r8
+	!FA = 7890.491_r8
+	!FebInPopn = 7890.491_r8
     !end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
@@ -268,8 +268,8 @@ contains
     if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
-	FA = 51094.05_r8
-	FebInPopn = 51094.05_r8
+	FA = 82251.59_r8
+	FebInPopn = 82251.59_r8
     end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
