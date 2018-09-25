@@ -265,7 +265,7 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    !if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
 	!FA = 49433.13_r8
