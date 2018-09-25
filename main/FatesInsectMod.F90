@@ -712,10 +712,10 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     real(r8), intent(in) :: EndMPBPopn              ! endemic mountain pine beetle population threshold
 
     ! Here are internal variables and parameters
-    real(kind = 8) :: timestep = 1.0_r8         ! one day time step
-    real(kind = 8) :: Btp1                      ! an updated value for the beetles
-    real(kind = 8) :: Ntp1GEQ20                 ! updated susceptible host trees in the 20+ cm dbh size class
-    real(kind = 8) :: Ptp1GEQ20                 ! updated parent beetles the 20+ cm dbh size class
+    real(r8) :: timestep = 1.0_r8         	    ! one day time step
+    real(r8) :: Btp1                      	    ! an updated value for the beetles
+    real(r8) :: Ntp1GEQ20                 	    ! updated susceptible host trees in the 20+ cm dbh size class
+    real(r8) :: Ptp1GEQ20                 	    ! updated parent beetles the 20+ cm dbh size class
 
     ! I add in the beetles that just started flying in the time step.
     Bt = Bt + FA
@@ -724,7 +724,7 @@ subroutine MPBAttack(NtGEQ20, Bt, FA, Parents, an, ab, FebInPopn, EndMPBPopn)
     ! Here I compute the analytic solutions
 
     ! To prevent divide by zeros in the analytic solution, I take this precaution.
-    if(exp(ab)*NtGEQ20 == exp(an)*Bt) Bt = Bt - Bt*0.01
+    if(exp(ab)*NtGEQ20 == exp(an)*Bt) Bt = Bt - Bt*0.01_r8
 
     ! Here's the solution for beetles
     Btp1 = Bt*exp((exp(an)*Bt - exp(ab)*NtGEQ20)*timestep)/&
