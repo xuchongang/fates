@@ -264,7 +264,7 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    if(hlm_current_year == 1 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    if(hlm_current_year == 2009 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
 	! according to our attack model.
 	FA = 51094.05_r8
@@ -616,7 +616,7 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
     
     ! Killing beetles that mistakenly remain in flight during cold temperatures.
     ! This prevents them from killing trees when they shouldn't be.
-    if(Tmin < 0.0_r8)then
+    if(Tmin < -18.0_r8)then
         FA = 0.0_r8
 	Bt = 0.0_r8
     end if
