@@ -218,6 +218,9 @@ contains
     ! Now completing the temperature averaging process.
     max_airTC = max_airTC/NumPatches
     min_airTC = min_airTC/NumPatches
+    
+    ! For testing purposes:
+    NtGEQ20 = 213.17_r8
 
     ! I record the number of trees in each of the size classes prior to attack.
     Ntm1GEQ20 = NtGEQ20
@@ -620,9 +623,6 @@ Subroutine MPBSim2(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
         FA = 0.0_r8
 	Bt = 0.0_r8
     end if
-    
-    ! For testing purposes:
-    NtGEQ20 = 213.17_r8
 
     ! Simulating the attack of host trees. I moved this to the front so that we 
     ! can initialize with an estimate of the number of flying adults.
