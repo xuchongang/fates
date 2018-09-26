@@ -256,21 +256,21 @@ contains
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Rocky Mountain National Park.
-    !if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+    if(hlm_current_year == 2000 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
         ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2000
 	! according to our attack model.
-	!FA = 1046.373_r8
-	!FebInPopn = 1046.373_r8
-    !end if
+	FA = 1046.373_r8
+	FebInPopn = 1046.373_r8
+    end if
     
     ! Here's a hack to initialize the model with density of insects appropriate for 
     ! Glacier National Park.
-    if(hlm_current_year == 2003 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
-        ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2009
+    !if(hlm_current_year == 2003 .and. hlm_current_month == 7 .and. hlm_current_day == 21) then
+        ! The model is initialized with the number of beetles that is consistent with the size of the outbreak in 2003
 	! according to our attack model.
-	FA = 156.956_r8
-	FebInPopn = 156.956_r8
-    end if
+	!FA = 156.956_r8
+	!FebInPopn = 156.956_r8
+    !end if
 
     if(hlm_current_month == 7 .and. hlm_current_day == 21 .and. FebInPopn < EndMPBPopn) then
         ! The endemic mountain pine beetle population per hectare was estimated by Carroll et al
