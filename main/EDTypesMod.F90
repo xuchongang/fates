@@ -125,11 +125,6 @@ module EDTypesMod
   ! special mode to cause PFTs to create seed mass of all currently-existing PFTs
   logical, parameter :: homogenize_seed_pfts  = .false.
 
-  !Liang Wei May 2018, conflicts 3 lines below no longer used.	
-  !integer, parameter :: nlevmclass_ed = 6      ! nlev "mortality" classes in ED, !6
-  ! Hang ZHOU change from 5 to 6
-  !character(len = 10), parameter,dimension(nlevmclass_ed) :: char_list = (/"background", "hydraulic", "carbon", "impact", "fire", "d13c"/)
-
 
   !************************************
   !** COHORT type structure          **
@@ -210,7 +205,7 @@ module EDTypesMod
      real(r8) ::  resp_acc
      real(r8) ::  resp_acc_hold
 
-     ! <<<<<<< HEAD
+    
      ! Hang ZHOU
      ! carbon d13c discrimination
      real(r8) ::  c13disc_clm                            ! carbon 13 discrimination in new synthesized carbon: part-per-mil, at each indiv/timestep
