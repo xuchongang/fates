@@ -241,6 +241,7 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_ddbh_understory_si_scls
   integer, private :: ih_agb_si_scls
   integer, private :: ih_biomass_si_scls
+  integer, private :: ih_bstore_si_scls
 
   ! mortality vars
   integer, private :: ih_m1_si_scls
@@ -1458,6 +1459,7 @@ end subroutine flush_hvars
                hio_ba_si_scls          => this%hvars(ih_ba_si_scls)%r82d, &
                hio_agb_si_scls          => this%hvars(ih_agb_si_scls)%r82d, &
                hio_biomass_si_scls          => this%hvars(ih_biomass_si_scls)%r82d, &
+	       hio_bstore_si_scls          => this%hvars(ih_bstore_si_scls)%r82d, &
                hio_nplant_si_scls         => this%hvars(ih_nplant_si_scls)%r82d, &
                hio_nplant_canopy_si_scls         => this%hvars(ih_nplant_canopy_si_scls)%r82d, &
                hio_nplant_understory_si_scls     => this%hvars(ih_nplant_understory_si_scls)%r82d, &
@@ -1831,6 +1833,9 @@ end subroutine flush_hvars
 
                     hio_biomass_si_scls(io_si,scls) = hio_biomass_si_scls(io_si,scls) + &
                          ccohort%b_total() * ccohort%n * AREA_INV
+
+                    hio_bstore_si_scls(io_si,scls) = hio_bstore_si_scls(io_si,scls) + &
+                         ccohort%bstore * ccohort%n * AREA_INV			 
 
                     ! update size-class x patch-age related quantities
 
@@ -4115,6 +4120,11 @@ end subroutine flush_hvars
           long='Total biomass by size class', use_default='inactive',   &
           avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_biomass_si_scls )
+	  
+    call this%set_history_var(vname='BSTORE_SCLS', units = 'kgC/m2',               &
+          long='Storage biomass by size class', use_default='inactive',   &
+          avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_bstore_si_scls )	  
 
     call this%set_history_var(vname='DEMOTION_RATE_SCLS', units = 'indiv/ha/yr',               &
           long='demotion rate from canopy to understory by size class', use_default='inactive',   &
