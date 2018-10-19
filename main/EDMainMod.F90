@@ -163,12 +163,12 @@ contains
        
     !call ed_total_balance_check(currentSite,1)
 
-    !if( hlm_use_ed_st3.eq.ifalse ) then 
-    !   currentPatch => currentSite%oldest_patch
-    !   do while (associated(currentPatch))
+    if( hlm_use_ed_st3.eq.ifalse ) then 
+       currentPatch => currentSite%oldest_patch
+       do while (associated(currentPatch))
          
-     !    ! puts cohorts in right order
-     !    call sort_cohorts(currentPatch)            
+         ! puts cohorts in right order
+         call sort_cohorts(currentPatch)            
 
          ! kills cohorts that are too few
      !     call terminate_cohorts(currentSite, currentPatch, 1)
@@ -180,9 +180,9 @@ contains
      !    call terminate_cohorts(currentSite, currentPatch, 2)
           
           
-     !    currentPatch => currentPatch%younger
-     ! enddo
-    !end if
+         currentPatch => currentPatch%younger
+      enddo
+    end if
        
     !call ed_total_balance_check(currentSite,2)
 
