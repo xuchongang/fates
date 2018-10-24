@@ -50,15 +50,16 @@ contains
     use FatesConstantsMod,  only : tfrz => t_water_freeze_k_1atm
    
 
-    type (ed_cohort_type), intent(in) :: cohort_in 
+    type (ed_cohort_type), intent(inout) :: cohort_in 
     type (bc_in_type), intent(in) :: bc_in
     real(r8),intent(out) :: bmort ! background mortality : Fraction per year
     real(r8),intent(out) :: cmort  ! carbon starvation mortality
     real(r8),intent(out) :: hmort  ! hydraulic failure mortality
     real(r8),intent(out) :: frmort ! freezing stress mortality
     real(r8),intent(out) :: d13cmort  ! d13c related drought induced mortality, Hang ZHOU
-
+    
     real(r8) :: frac  ! relativised stored carbohydrate
+    real(r8) :: storage_frac !relativised stored carbohydrate  Liang Wei Oct 2018 
     real(r8) :: b_leaf ! target leaf biomass kgC
     real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold 
     real(r8) :: temp_dep_fraction  ! Temp. function (freezing mortality)
@@ -66,7 +67,7 @@ contains
 
     real(r8), parameter :: frost_mort_buffer = 5.0_r8  ! 5deg buffer for freezing mortality
 
-    logical, parameter :: test_zero_mortality = .false. ! Developer test which
+    logical, parameter :: test_zero_mortality = .true. ! Developer test which
                                                         ! may help to debug carbon imbalances
                                                         ! and the like
 
@@ -100,6 +101,7 @@ contains
     if ( cohort_in%dbh  >  0._r8 ) then
        call bleaf(cohort_in%dbh,cohort_in%pft,cohort_in%canopy_trim,b_leaf)
        call storage_fraction_of_target(b_leaf, cohort_in%bstore, frac)
+       cohort_in%storage_frac = frac !Liang Wei Oct 2018 cohort_in%
        if( frac .lt. 1._r8) then
           cmort = max(0.0_r8,EDPftvarcon_inst%mort_scalar_cstarvation(cohort_in%pft) * &
                (1.0_r8 - frac))
