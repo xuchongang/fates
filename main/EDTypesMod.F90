@@ -125,6 +125,7 @@ module EDTypesMod
   ! special mode to cause PFTs to create seed mass of all currently-existing PFTs
   logical, parameter :: homogenize_seed_pfts  = .false.
   logical, parameter :: init_dense_forest  = .true.
+  logical :: Static_Canopy_Structure  = .true.
 
 
 
@@ -212,11 +213,13 @@ module EDTypesMod
      ! carbon d13c discrimination
      real(r8) ::  c13disc_clm                            ! carbon 13 discrimination in new synthesized carbon: part-per-mil, at each indiv/timestep
      real(r8) ::  c13disc_acc                            ! carbon 13 discrimination in new synthesized carbon: part-per-mil, at each indiv/day, at the end of a day
+     
+     !Liang Wei Oct 2018, for output
+     real(r8) :: storage_frac                            !fraction of storage carbon relative to target leaf biomass
 
      ! Net Primary Production Partitions
 
      ! Plant Tissue Carbon Fluxes
-     !>>>>>>> c39ea07b91747e0eff8d9da17a25df5f1be90edb
 
      ! Fluxes in from Net Primary Production
      real(r8) ::  npp_leaf          ! NPP into leaves (includes replacement of turnover):  KgC/indiv/year
