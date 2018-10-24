@@ -1068,11 +1068,6 @@ contains
     call bdead_allom( bt_agw, bt_bgw, bt_sap, ipft, bt_dead, &
                       dbt_agw_dd, dbt_bgw_dd, dbt_sap_dd, dbt_dead_dd )
 
-    !<<<<<<< HEAD
-    ! Target storage carbon [kgC,kgC/cm]
-    !   call bstore_allom(currentCohort%dbh,ipft,currentCohort%canopy_trim,bt_store,dbt_store_dd)
-    !=======
-
     ! ------------------------------------------------------------------------------------
     ! If structure is larger than target, then we need to correct some integration errors
     ! by slightly increasing dbh to match it.
@@ -1670,9 +1665,9 @@ contains
     
       !Liang Wei  put original pool values back     --->
       currentCohort%dbh   = tempST2_dbh   
-      !currentCohort%br    = tempST2_br   
-      !currentCohort%bsw   = tempST2_bsw 
-      !currentCohort%bdead = tempST2_bdead
+    ! currentCohort%br    = tempST2_br   
+    ! currentCohort%bsw   = tempST2_bsw 
+    ! currentCohort%bdead = tempST2_bdead
       currentCohort%hite  = tempST2_hite
     
     !Liang Wei, set fluxes to 0
