@@ -175,11 +175,14 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_npp_agsw_si_scpf
   integer, private :: ih_npp_agdw_si_scpf
   integer, private :: ih_npp_stor_si_scpf
+  integer, private :: ih_storage_frac_si_scpf      !Liang Wei oct2018
   
   integer, private :: ih_bstor_canopy_si_scpf
   integer, private :: ih_bstor_understory_si_scpf
   integer, private :: ih_bleaf_canopy_si_scpf
   integer, private :: ih_bleaf_understory_si_scpf
+  integer, private :: ih_balive_canopy_si_scpf     !Liang Wei oct2018
+  integer, private :: ih_balive_understory_si_scpf !Liang Wei oct2018
   integer, private :: ih_mortality_canopy_si_scpf
   integer, private :: ih_mortality_understory_si_scpf
   integer, private :: ih_nplant_canopy_si_scpf
@@ -262,6 +265,7 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_resp_m_canopy_si_scls
   integer, private :: ih_leaf_md_canopy_si_scls
   integer, private :: ih_root_md_canopy_si_scls
+  integer, private :: ih_carbon_balance_si_scls
   integer, private :: ih_carbon_balance_canopy_si_scls
   integer, private :: ih_bstore_md_canopy_si_scls
   integer, private :: ih_bdead_md_canopy_si_scls
@@ -1411,11 +1415,15 @@ end subroutine flush_hvars
                hio_npp_froot_si        => this%hvars(ih_npp_froot_si)%r81d, &
                hio_npp_croot_si        => this%hvars(ih_npp_croot_si)%r81d, &
                hio_npp_stor_si         => this%hvars(ih_npp_stor_si)%r81d, &
+	       hio_storage_frac_si_scpf  => this%hvars(ih_storage_frac_si_scpf)%r82d, &   !Liang Wei Oct2018 
 
                hio_bstor_canopy_si_scpf      => this%hvars(ih_bstor_canopy_si_scpf)%r82d, &
                hio_bstor_understory_si_scpf  => this%hvars(ih_bstor_understory_si_scpf)%r82d, &
                hio_bleaf_canopy_si_scpf      => this%hvars(ih_bleaf_canopy_si_scpf)%r82d, &
                hio_bleaf_understory_si_scpf  => this%hvars(ih_bleaf_understory_si_scpf)%r82d, &
+	       hio_balive_canopy_si_scpf      => this%hvars(ih_balive_canopy_si_scpf)%r82d, &   !Liang Wei Oct2018
+               hio_balive_understory_si_scpf  => this%hvars(ih_balive_understory_si_scpf)%r82d, &   !Liang Wei Oct2018
+	        
                hio_mortality_canopy_si_scpf         => this%hvars(ih_mortality_canopy_si_scpf)%r82d, &
                hio_mortality_understory_si_scpf     => this%hvars(ih_mortality_understory_si_scpf)%r82d, &
                hio_nplant_canopy_si_scpf     => this%hvars(ih_nplant_canopy_si_scpf)%r82d, &
@@ -1481,6 +1489,7 @@ end subroutine flush_hvars
                hio_understory_mortality_carbonflux_si => this%hvars(ih_understory_mortality_carbonflux_si)%r81d, &
                hio_leaf_md_canopy_si_scls           => this%hvars(ih_leaf_md_canopy_si_scls)%r82d, &
                hio_root_md_canopy_si_scls           => this%hvars(ih_root_md_canopy_si_scls)%r82d, &
+      	       hio_carbon_balance_si_scls           => this%hvars(ih_carbon_balance_si_scls)%r82d, &
                hio_carbon_balance_canopy_si_scls    => this%hvars(ih_carbon_balance_canopy_si_scls)%r82d, &
                hio_bsw_md_canopy_si_scls            => this%hvars(ih_bsw_md_canopy_si_scls)%r82d, &
                hio_bdead_md_canopy_si_scls          => this%hvars(ih_bdead_md_canopy_si_scls)%r82d, &
@@ -1757,6 +1766,8 @@ end subroutine flush_hvars
                                                        ccohort%npp_seed*n_perm2
                     hio_npp_stor_si_scpf(io_si,scpf) = hio_npp_stor_si_scpf(io_si,scpf) + &
                                                        ccohort%npp_stor*n_perm2
+	            hio_storage_frac_si_scpf(io_si,scpf) = hio_storage_frac_si_scpf(io_si,scpf) + &
+                                                       ccohort%storage_frac*ccohort%n               !Liang Wei Oct 2018	      					       
 
                     ! Liang Wei May 21,2018 temp turn off this for zero growth
 		    !npp_partition_error = abs(ccohort%npp_acc_hold-(ccohort%npp_leaf+ccohort%npp_fnrt+ &
@@ -1800,18 +1811,17 @@ end subroutine flush_hvars
                        if(gpp_cached + ccohort%gpp_acc_hold>0._r8)then
                            hio_c13disc_si_scpf(io_si,scpf) = ((hio_c13disc_si_scpf(io_si,scpf) * gpp_cached) + &
 			     (ccohort%c13disc_acc * ccohort%gpp_acc_hold)) / (gpp_cached + ccohort%gpp_acc_hold)
-			   !hio_d13c_si_scpf(io_si,scpf) = (d13c_background - hio_c13disc_si_scpf(io_si,scpf)) / &
-			   !  (1 + hio_c13disc_si_scpf(io_si,scpf)/1000)
+			   !hio_d13c_si_scpf(io_si,scpf) = (d13c_background - hio_c13disc_si_scpf)) / &
+			   !  (1 + hio_c13disc_si_scpf/1000)
 		       else
 		           hio_c13disc_si_scpf(io_si,scpf) = -999.0_r8
 			   !hio_d13c_si_scpf(io_si,scpf) = -999.0_r8
 		       endif
-                       hio_md13crate_si_scpf(io_si, scpf) = (hio_md13crate_si_scpf(io_si, scpf) * &
-		             hio_nplant_si_scpf(io_si,scpf) + ccohort%d13cmort * ccohort%n) / (hio_nplant_si_scpf(io_si,scpf) + ccohort%n)
+                       !hio_md13crate_si_scpf(io_si, scpf) = (hio_md13crate_si_scpf(io_si, scpf) * &
+		       !      hio_nplant_si_scpf(io_si,scpf) + ccohort%d13cmort * ccohort%n) / (hio_nplant_si_scpf(io_si,scpf) + ccohort%n)
+                       hio_md13crate_si_scpf(io_si, scpf) = hio_md13crate_si_scpf(io_si, scpf)+ ccohort%d13cmort * ccohort%n		       
                        !hio_d13c_si_scpf(io_si,scpf) = ((hio_d13c_si_scpf(io_si,scpf) * hio_gpp_si_scpf(io_si, scpf)) + &
 		       !      (ccohort%d13c * ccohort%gpp_acc)) / (hio_gpp_si_scpf(io_si, scpf) + ccohort%gpp_acc)
-
-
 
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
@@ -1844,6 +1854,9 @@ end subroutine flush_hvars
                     hio_nplant_si_scag(io_si,iscag) = hio_nplant_si_scag(io_si,iscag) + ccohort%n
 
                     hio_nplant_si_scls(io_si,scls) = hio_nplant_si_scls(io_si,scls) + ccohort%n
+		    
+		    hio_carbon_balance_si_scls(io_si,scls) = hio_carbon_balance_si_scls(io_si,scls) + &
+		               ccohort%n*ccohort%npp_acc_hold* AREA_INV
 
                     ! update size, age, and PFT - indexed quantities
 
@@ -1883,6 +1896,8 @@ end subroutine flush_hvars
                             ccohort%bstore * ccohort%n
                        hio_bleaf_canopy_si_scpf(io_si,scpf) = hio_bleaf_canopy_si_scpf(io_si,scpf) + &
                             ccohort%bl * ccohort%n
+		       hio_balive_canopy_si_scpf(io_si,scpf) = hio_balive_canopy_si_scpf(io_si,scpf) + &
+                            (ccohort%bsw + ccohort%br + ccohort%bl) * ccohort%n                   !Liang Wei Oct 2018
 
                        hio_canopy_biomass_pa(io_pa) = hio_canopy_biomass_pa(io_pa) + n_density * ccohort%b_total() * g_per_kg
 
@@ -1976,6 +1991,8 @@ end subroutine flush_hvars
                             ccohort%bstore * ccohort%n
                        hio_bleaf_understory_si_scpf(io_si,scpf) = hio_bleaf_understory_si_scpf(io_si,scpf) + &
                             ccohort%bl * ccohort%n
+		       hio_balive_understory_si_scpf(io_si,scpf) = hio_balive_understory_si_scpf(io_si,scpf) + &
+                            (ccohort%bsw + ccohort%br + ccohort%bl) * ccohort%n               !Liang Wei Oct 2018
                        hio_understory_biomass_pa(io_pa) = hio_understory_biomass_pa(io_pa) + &
                              n_density * ccohort%b_total() * g_per_kg
                        !hio_mortality_understory_si_scpf(io_si,scpf) = hio_mortality_understory_si_scpf(io_si,scpf)+ &
@@ -2207,6 +2224,11 @@ end subroutine flush_hvars
                iscag = i_scls ! since imort is by definition something that only happens in newly disturbed patches, treat as such
                hio_mortality_understory_si_scag(io_si,iscag) = hio_mortality_understory_si_scag(io_si,iscag) + &
                     sites(s)%imort_rate(i_scls, i_pft)
+	       !get the weighted storage fraction
+	       if(hio_nplant_si_scpf(io_si,i_scpf)>0._r8)then
+	        hio_storage_frac_si_scpf(io_si,i_scpf)=hio_storage_frac_si_scpf(io_si,i_scpf)/ hio_nplant_si_scpf(io_si,i_scpf)
+		hio_md13crate_si_scpf(io_si, i_scpf) = hio_md13crate_si_scpf(io_si, i_scpf) / hio_nplant_si_scpf(io_si,i_scpf)
+	       endif
             end do
          end do
          !
@@ -3887,6 +3909,12 @@ end subroutine flush_hvars
          long='NPP flux into storage by pft/size', use_default='inactive',              &
          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_npp_stor_si_scpf )
+   
+   !Liang Wei Oct 2018
+   call this%set_history_var(vname = 'STORAGE_FRAC_SCPF', units='fraction',    &
+         long='fraction of C storage to the target', use_default='inactive',              &
+         avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+         upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_storage_frac_si_scpf )	 
 
     call this%set_history_var(vname='DDBH_SCPF', units = 'cm/yr/ha',         &
           long='diameter growth increment by pft/size',use_default='inactive',          &
@@ -3912,6 +3940,7 @@ end subroutine flush_hvars
           long='stem number density by pft/size', use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_nplant_si_scpf )
+	    
 
     call this%set_history_var(vname='M1_SCPF', units = 'N/ha/yr',          &
           long='background mortality by pft/size', use_default='inactive', &
@@ -3991,6 +4020,12 @@ end subroutine flush_hvars
           long='biomass carbon in leaf of canopy plants by pft/size', use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_bleaf_canopy_si_scpf )
+	  
+    !Liang Wei, Oct 2018
+    call this%set_history_var(vname='BALIVE_CANOPY_SCPF', units = 'kgC/ha',          &
+          long='live biomass of canopy plants by pft/size', use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_balive_canopy_si_scpf )
 
     call this%set_history_var(vname='NPLANT_CANOPY_SCPF', units = 'N/ha',         &
           long='stem number of canopy plants density by pft/size', use_default='inactive', &
@@ -4011,6 +4046,12 @@ end subroutine flush_hvars
           long='biomass carbon in leaf of understory plants by pft/size', use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_bleaf_understory_si_scpf )
+
+    !Liang Wei Oct2018 
+    call this%set_history_var(vname='BALIVE_UNDERSTORY_SCPF', units = 'kgC/ha',          &
+          long='live biomass of understory plants by pft/size', use_default='inactive', &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_balive_understory_si_scpf )
 
     call this%set_history_var(vname='NPLANT_UNDERSTORY_SCPF', units = 'N/ha',         &
           long='stem number of understory plants density by pft/size', use_default='inactive', &
@@ -4124,7 +4165,7 @@ end subroutine flush_hvars
     call this%set_history_var(vname='BSTORE_SCLS', units = 'kgC/m2',               &
           long='Storage biomass by size class', use_default='inactive',   &
           avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
-          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_bstore_si_scls )	  
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_bstore_si_scls )  	  
 
     call this%set_history_var(vname='DEMOTION_RATE_SCLS', units = 'indiv/ha/yr',               &
           long='demotion rate from canopy to understory by size class', use_default='inactive',   &
@@ -4215,7 +4256,12 @@ end subroutine flush_hvars
           long='freezing mortality by size',use_default='active',           &
           avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m8_si_scls )
-    
+  
+     call this%set_history_var(vname='CARBON_BALANCE_SCLS', units = 'kg C / ha / yr', &
+          long='CARBON_BALANCE by size class', use_default='inactive',    &
+          avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_carbon_balance_si_scls )
+	     
     call this%set_history_var(vname='CARBON_BALANCE_CANOPY_SCLS', units = 'kg C / ha / yr', &
           long='CARBON_BALANCE for canopy plants by size class', use_default='inactive',    &
           avgflag='A', vtype=site_size_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
