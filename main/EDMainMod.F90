@@ -40,6 +40,7 @@ module EDMainMod
   use EDtypesMod               , only : ed_cohort_type
   use EDTypesMod               , only : do_ed_phenology
   use EDTypesMod               , only : AREA
+  use EDTypesMod               , only : Static_Canopy_Structure
   use FatesConstantsMod        , only : itrue,ifalse
   use FatesPlantHydraulicsMod  , only : do_growthrecruiteffects
   use FatesPlantHydraulicsMod  , only : updateSizeDepTreeHydProps
@@ -117,20 +118,20 @@ contains
        call phenology(currentSite, bc_in )
     end if
 
-    ! Liang Wei, Temp change May18_2018, this is line 120
     !comment out line  123  
-    !if (hlm_use_ed_st3.eq.ifalse) then   ! Bypass if ST3
-    !  call fire_model(currentSite, bc_in) 
+    if (hlm_use_ed_st3.eq.ifalse.and. (.not. Static_Canopy_Structure)) then   ! Bypass if ST3
+    
+        call fire_model(currentSite, bc_in) 
 
        ! Calculate disturbance and mortality based on previous timestep vegetation.
        ! disturbance_rates calls logging mortality and other mortalities, Yi Xu
-    !   call disturbance_rates(currentSite, bc_in)
-    !end if
+       
+        call disturbance_rates(currentSite, bc_in)
+    end if
 
     if (hlm_use_ed_st3.eq.ifalse) then
        ! Integrate state variables from annual rates to daily timestep
-       !call bypass_dynamics(currentSite) !Liang Wei, temp added
-       call ed_integrate_state_variables(currentSite, bc_in )  !Liang Wei, Original
+       call ed_integrate_state_variables(currentSite, bc_in )  
       
        
     else
@@ -149,16 +150,16 @@ contains
     !******************************************************************************
     ! Liang Wei mannualy turn off for mortality testing May 2018
 
-    !if(hlm_use_ed_st3.eq.ifalse) then 
-    !  currentPatch => currentSite%oldest_patch
-    ! do while (associated(currentPatch))                 
+    if(hlm_use_ed_st3.eq.ifalse.and.(.not.Static_Canopy_Structure)) then 
+      currentPatch => currentSite%oldest_patch
+     do while (associated(currentPatch))                 
         
           ! adds small cohort of each PFT
-    !     call recruitment(currentSite, currentPatch, bc_in)
+         call recruitment(currentSite, currentPatch, bc_in)
         
-    !      currentPatch => currentPatch%younger
-    !   enddo
-    !end if
+          currentPatch => currentPatch%younger
+       enddo
+    end if
     
        
     !call ed_total_balance_check(currentSite,1)
@@ -168,17 +169,20 @@ contains
        do while (associated(currentPatch))
          
          ! puts cohorts in right order
-         call sort_cohorts(currentPatch)            
+         call sort_cohorts(currentPatch)   
+	 
+	 if(.not.Static_Canopy_Structure) then         
 
          ! kills cohorts that are too few
-     !     call terminate_cohorts(currentSite, currentPatch, 1)
+          call terminate_cohorts(currentSite, currentPatch, 1)
     
          ! fuses similar cohorts
-     !    call fuse_cohorts(currentSite,currentPatch, bc_in )
+          call fuse_cohorts(currentSite,currentPatch, bc_in )
          
           ! kills cohorts for various other reasons
-     !    call terminate_cohorts(currentSite, currentPatch, 2)
-          
+          call terminate_cohorts(currentSite, currentPatch, 2)
+	 
+	 endif          
           
          currentPatch => currentPatch%younger
       enddo
@@ -191,9 +195,9 @@ contains
     !*********************************************************************************
     ! Liang Wei mannualy turn off for mortality testing May 2018
     !! make new patches from disturbed land
-    !if ( hlm_use_ed_st3.eq.ifalse ) then
-    !  call spawn_patches(currentSite, bc_in)
-    !end if
+    if ( hlm_use_ed_st3.eq.ifalse .and. (.not.Static_Canopy_Structure) ) then
+      call spawn_patches(currentSite, bc_in)
+    end if
    
     !call ed_total_balance_check(currentSite,3)
 
@@ -218,9 +222,9 @@ contains
     !call ed_total_balance_check(currentSite,4)
 
     ! kill patches that are too small
-    !if ( hlm_use_ed_st3.eq.ifalse ) then
-    !   call terminate_patches(currentSite)   
-    !end if
+    if ( hlm_use_ed_st3.eq.ifalse  .and. (.not.Static_Canopy_Structure)  ) then
+      call terminate_patches(currentSite)   
+    end if
    
     !call ed_total_balance_check(currentSite,5)
 
@@ -275,11 +279,10 @@ contains
 
           ! Calculate the mortality derivatives
 	  ! Liang Wei May 21, 2018 temporarily turn this mortality off for static biomass and n of plant
-          ! call Mortality_Derivative( currentSite, currentCohort, bc_in )
+           call Mortality_Derivative( currentSite, currentCohort, bc_in )  !does not kill tress as we turn on set_zero_mortality
 
 
           ! Apply growth to potentially all carbon pools
-	  ! Liang Wei May 21, 2018 temporarily turn off  1 line below, this is the function for storage
           call PlantGrowth( currentSite, currentCohort, bc_in )
 
           ! Carbon assimilate has been spent at this point
@@ -289,7 +292,6 @@ contains
           currentCohort%gpp_acc  = 0.0_r8
           currentCohort%resp_acc = 0.0_r8
 	  
-      !turn off this?! Liang Wei June 22 currently on
           ! BOC...update tree 'hydraulic geometry' 
           ! (size --> heights of elements --> hydraulic path lengths --> 
 
@@ -304,7 +306,7 @@ contains
 
        enddo
       
-       !call non_canopy_derivs( currentSite, currentPatch, bc_in)
+       if(.not.Static_Canopy_Structure) call non_canopy_derivs( currentSite, currentPatch, bc_in)
 
        !update state variables simultaneously according to derivatives for this time period. 
 
