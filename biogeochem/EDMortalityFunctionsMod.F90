@@ -10,6 +10,7 @@ module EDMortalityFunctionsMod
    use EDTypesMod            , only : ed_cohort_type
    use EDTypesMod            , only : ed_site_type
    use EDTypesMod            , only : ed_patch_type
+   use EDTypesMod            , only : static_canopy_structure
    use FatesConstantsMod     , only : itrue,ifalse
    use FatesAllometryMod     , only : bleaf
    use FatesAllometryMod     , only : storage_fraction_of_target
@@ -124,7 +125,7 @@ contains
        frmort = 0._r8
     endif
 
-    if (test_zero_mortality) then
+    if (test_zero_mortality.or.static_canopy_structure) then
        cmort = 0.0_r8
        hmort = 0.0_r8
        frmort = 0.0_r8

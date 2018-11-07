@@ -40,6 +40,7 @@ module EDMainMod
   use EDtypesMod               , only : ed_cohort_type
   use EDTypesMod               , only : do_ed_phenology
   use EDTypesMod               , only : AREA
+  use EDTypesMod	       , only : static_canopy_structure
   use FatesConstantsMod        , only : itrue,ifalse
   use FatesPlantHydraulicsMod  , only : do_growthrecruiteffects
   use FatesPlantHydraulicsMod  , only : updateSizeDepTreeHydProps
@@ -141,7 +142,7 @@ contains
     ! Reproduction, Recruitment and Cohort Dynamics : controls cohort organisation 
     !******************************************************************************
 
-    if(hlm_use_ed_st3.eq.ifalse) then 
+    if(hlm_use_ed_st3.eq.ifalse.and.(.not.static_canopy_structure)) then 
        currentPatch => currentSite%oldest_patch
        do while (associated(currentPatch))                 
           

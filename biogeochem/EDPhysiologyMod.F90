@@ -30,6 +30,7 @@ module EDPhysiologyMod
   use EDTypesMod          , only : maxpft
   use EDTypesMod          , only : ed_site_type, ed_patch_type, ed_cohort_type
   use EDTypesMod          , only : dump_cohort
+  use EDTypesMod          , only : static_canopy_structure
 
   use shr_log_mod           , only : errMsg => shr_log_errMsg
   use FatesGlobals          , only : fates_log
@@ -1370,13 +1371,17 @@ contains
           call h_allom(dbh_sub,ipft,h_sub)
           
           ! Set derivatives used as diagnostics
-          currentCohort%dhdt      = (h_sub-currentCohort%hite)/hlm_freq_day
+	  if(.not.static_canopy_structure) then
+             currentCohort%dhdt      = (h_sub-currentCohort%hite)/hlm_freq_day
+             currentCohort%ddbhdt    = (dbh_sub-currentCohort%dbh)/hlm_freq_day	     
+	  endif
           currentCohort%dbdeaddt  = bdead_flux/hlm_freq_day
           currentCohort%dbstoredt = bstore_flux/hlm_freq_day
-          currentCohort%ddbhdt    = (dbh_sub-currentCohort%dbh)/hlm_freq_day
           
-          currentCohort%dbh       = dbh_sub
-          currentCohort%hite      = h_sub
+          if(.not.static_canopy_structure) then
+	    currentCohort%dbh       = dbh_sub
+            currentCohort%hite      = h_sub
+	  endif
 
           if( abs(carbon_balance)>calloc_abs_error ) then
              write(fates_log(),*) 'carbon conservation error while integrating pools'

@@ -71,6 +71,8 @@ module EDTypesMod
   ! WAS OUTSIDE THE SCOPE OF THE VERY LARGE CHANGESET WHERE THESE WERE FIRST
   ! INTRODUCED (RGK 03-2017)
   logical, parameter :: do_ed_phenology = .false.
+  logical, parameter :: static_canopy_structure = .true. !this flag allow the model to run with static canopy structure (no dbh growth, 
+                                                         !no recruitment, no mortality)
 
 
   ! MODEL PARAMETERS
