@@ -54,6 +54,11 @@ module EDPftvarcon
      real(r8), allocatable :: slamax(:)
      real(r8), allocatable :: slatop(:)
      real(r8), allocatable :: leaf_long(:)
+     real(r8), allocatable :: expleaf_flong(:)
+     real(r8), allocatable :: youngleaf_flong(:)
+     real(r8), allocatable :: oldleaf_flong(:)
+     real(r8), allocatable :: senleaf_flong(:)
+     real(r8), allocatable :: senleaf_long_fdrought(:)
      real(r8), allocatable :: roota_par(:)
      real(r8), allocatable :: rootb_par(:)
      real(r8), allocatable :: lf_flab(:)
@@ -67,6 +72,10 @@ module EDPftvarcon
                                                 ! of leaf scattering elements decreases light interception
      real(r8), allocatable :: c3psn(:)          ! index defining the photosynthetic pathway C4 = 0,  C3 = 1
      real(r8), allocatable :: vcmax25top(:)
+     real(r8), allocatable :: vcmax25top_fexp(:)
+     real(r8), allocatable :: vcmax25top_fyoung(:)
+     real(r8), allocatable :: vcmax25top_fold(:)
+     real(r8), allocatable :: vcmax25top_fsen(:)          
      real(r8), allocatable :: leafcn(:)
      real(r8), allocatable :: frootcn(:)
      real(r8), allocatable :: woodcn(:)
@@ -370,7 +379,27 @@ contains
     name = 'fates_leaf_long'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 
+    name = 'fates_expleaf_flong'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 	
+    name = 'fates_youngleaf_flong'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 	
+    name = 'fates_oldleaf_flong'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+	 	
+    name = 'fates_senleaf_flong'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
+    name = 'fates_senleaf_long_fdrought'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)	 	 	
+	  
     name = 'fates_roota_par'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -417,6 +446,22 @@ contains
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
     name = 'fates_leaf_vcmax25top'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fexp'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fyoung'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fold'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_leaf_vcmax25top_fsen'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
@@ -803,7 +848,27 @@ contains
     name = 'fates_leaf_long'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%leaf_long)
+	 
+    name = 'fates_expleaf_flong'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%expleaf_flong)
+	 
+    name = 'fates_youngleaf_flong'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%youngleaf_flong)
+	 
+    name = 'fates_oldleaf_flong'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%oldleaf_flong)
+	 
+    name = 'fates_senleaf_flong'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%senleaf_flong)	 	 	 	 
 
+    name = 'fates_senleaf_long_fdrought'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%senleaf_long_fdrought)
+	 
     name = 'fates_roota_par'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%roota_par)
@@ -851,6 +916,22 @@ contains
     name = 'fates_leaf_vcmax25top'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%vcmax25top)
+
+    name = 'fates_leaf_vcmax25top_fexp'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fexp)
+
+    name = 'fates_leaf_vcmax25top_fyoung'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fyoung)
+
+    name = 'fates_leaf_vcmax25top_fold'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fold)
+
+    name = 'fates_leaf_vcmax25top_fsen'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax25top_fsen)
 
     name = 'fates_leaf_cn_ratio'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -1508,6 +1589,11 @@ contains
         write(fates_log(),fmt0) 'slamax = ',EDPftvarcon_inst%slamax
         write(fates_log(),fmt0) 'slatop = ',EDPftvarcon_inst%slatop        
         write(fates_log(),fmt0) 'leaf_long = ',EDPftvarcon_inst%leaf_long
+	write(fates_log(),fmt0) 'expleaf_flong = ',EDPftvarcon_inst%expleaf_flong
+	write(fates_log(),fmt0) 'youngleaf_flong = ',EDPftvarcon_inst%youngleaf_flong
+	write(fates_log(),fmt0) 'oldleaf_flong = ',EDPftvarcon_inst%oldleaf_flong
+	write(fates_log(),fmt0) 'senleaf_flong = ',EDPftvarcon_inst%senleaf_flong
+	write(fates_log(),fmt0) 'senleaf_long_fdrought = ',EDPftvarcon_inst%senleaf_long_fdrought
         write(fates_log(),fmt0) 'roota_par = ',EDPftvarcon_inst%roota_par
         write(fates_log(),fmt0) 'rootb_par = ',EDPftvarcon_inst%rootb_par
         write(fates_log(),fmt0) 'lf_flab = ',EDPftvarcon_inst%lf_flab
@@ -1520,6 +1606,10 @@ contains
         write(fates_log(),fmt0) 'clumping_index = ',EDPftvarcon_inst%clumping_index
         write(fates_log(),fmt0) 'c3psn = ',EDPftvarcon_inst%c3psn
         write(fates_log(),fmt0) 'vcmax25top = ',EDPftvarcon_inst%vcmax25top
+        write(fates_log(),fmt0) 'vcmax25top_fexp = ',EDPftvarcon_inst%vcmax25top_fexp
+        write(fates_log(),fmt0) 'vcmax25top_fyoung = ',EDPftvarcon_inst%vcmax25top_fyoung
+        write(fates_log(),fmt0) 'vcmax25top_fold = ',EDPftvarcon_inst%vcmax25top_fold
+        write(fates_log(),fmt0) 'vcmax25top_fsen = ',EDPftvarcon_inst%vcmax25top_fsen	
         write(fates_log(),fmt0) 'leafcn = ',EDPftvarcon_inst%leafcn
         write(fates_log(),fmt0) 'frootcn = ',EDPftvarcon_inst%frootcn
         write(fates_log(),fmt0) 'woodcn = ',EDPftvarcon_inst%woodcn
@@ -1619,6 +1709,8 @@ contains
      character(len=32),parameter :: fmt0 = '(a,100(F12.4,1X))'
 
      integer :: npft,ipft
+     
+     real(r8):: totalfraction !total fraction of leaf longevity at different ages
 
      npft = size(EDPftvarcon_inst%pft_used,1)
 
@@ -1740,6 +1832,15 @@ contains
            call endrun(msg=errMsg(sourcefile, __LINE__))
 
         end if
+	
+	!check fraction of leaf longevity for leaf age is equal to one
+	totalfraction = EDPftvarcon_inst%expleaf_flong(ipft)+EDPftvarcon_inst%youngleaf_flong(ipft) &
+	     +EDPftvarcon_inst%oldleaf_flong(ipft)+EDPftvarcon_inst%senleaf_flong(ipft) 
+	if(totalfraction < 0.999_r8.or.totalfraction>1.001_r8) then
+	     write(fates_log(),*) 'Error: total fraction longevity of different leaf ages is not add up to 1.0'
+	     call endrun(msg=errMsg(sourcefile, __LINE__))
+	 endif
+	
 
      end do
      

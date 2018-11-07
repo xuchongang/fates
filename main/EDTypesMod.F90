@@ -22,6 +22,8 @@ module EDTypesMod
                                                   ! the parameter file may determine that fewer
                                                   ! are used, but this helps allocate scratch
                                                   ! space and output arrays.
+  						  
+  integer, parameter :: use_leaf_age = 1          ! switch of using leaf age
 
   ! -------------------------------------------------------------------------------------
   ! Radiation parameters
@@ -124,6 +126,7 @@ module EDTypesMod
 
   ! special mode to cause PFTs to create seed mass of all currently-existing PFTs
   logical, parameter :: homogenize_seed_pfts  = .false.
+
 
   !************************************
   !** COHORT type structure          **
@@ -273,6 +276,12 @@ module EDTypesMod
      real(r8) ::  cambial_mort                           ! probability that trees dies due to cambial char:-
      real(r8) ::  crownfire_mort                         ! probability of tree post-fire mortality due to crown scorch:-
      real(r8) ::  fire_mort                              ! post-fire mortality from cambial and crown damage assuming two are independent:-
+     
+     !leaf age
+     real(r8) ::  fracExpLeaves                          ! proportion of new expanding leaves
+     real(r8) ::  fracYoungLeaves                        ! proportion of young adult leaves
+     real(r8) ::  fracOldLeaves                          ! proportion of old adult leaves     
+     real(r8) ::  fracSenLeaves                          ! proportion of senescent leaves     
 
      ! Integration
      real(r8) :: ode_opt_step                            ! What is the current optimum step size

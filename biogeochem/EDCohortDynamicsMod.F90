@@ -22,6 +22,7 @@ module EDCohortDynamicsMod
   use EDTypesMod            , only : min_npm2, min_nppatch
   use EDTypesMod            , only : min_n_safemath
   use EDTypesMod            , only : nlevleaf
+  use EDTypesMod            , only : use_leaf_age
   use FatesInterfaceMod      , only : hlm_use_planthydro
   use FatesPlantHydraulicsMod, only : FuseCohortHydraulics
   use FatesPlantHydraulicsMod, only : CopyCohortHydraulics
@@ -179,6 +180,27 @@ contains
     else
        snull = 1
        patchptr%shortest => new_cohort 
+    endif
+    
+    if(use_leaf_age==itrue) then
+       if(recruitstatus==1)then
+          new_cohort%fracExpLeaves = 1.0_r8
+	  new_cohort%fracYoungLeaves = 0.0_r8
+	  new_cohort%fracOldLeaves = 0.0_r8
+	  new_cohort%fracSenLeaves = 0.0_r8
+       else
+         if(status == 2) then !leaf on
+          new_cohort%fracExpLeaves = 0.25_r8
+	  new_cohort%fracYoungLeaves = 0.25_r8
+	  new_cohort%fracOldLeaves = 0.25_r8
+	  new_cohort%fracSenLeaves = 0.25_r8
+	 else
+          new_cohort%fracExpLeaves = 1.0_r8
+	  new_cohort%fracYoungLeaves = 0.0_r8
+	  new_cohort%fracOldLeaves = 0.0_r8
+	  new_cohort%fracSenLeaves = 0.0_r8	   
+	 endif       
+       endif
     endif
 
     ! Recuits do not have mortality rates, nor have they moved any
@@ -712,6 +734,24 @@ contains
                                 
                                 currentCohort%canopy_trim = (currentCohort%n*currentCohort%canopy_trim &
                                       + nextc%n*nextc%canopy_trim)/newn
+				      
+				if(use_leaf_age) then
+				  if(currentCohort%bl>0)then
+				    currentCohort%fracExpLeaves = (currentCohort%n*currentCohort%fracExpLeaves*currentCohort%bl &
+                                      + nextc%n*nextc%fracExpLeaves*nextc%bl)/(newn*currentCohort%bl)
+				    currentCohort%fracYoungLeaves = (currentCohort%n*currentCohort%fracYoungLeaves*currentCohort%bl   &
+                                      + nextc%n*nextc%fracYoungLeaves*nextc%bl)/(newn*currentCohort%bl)
+				    currentCohort%fracOldLeaves = (currentCohort%n*currentCohort%fracOldLeaves*currentCohort%bl   &
+                                      + nextc%n*nextc%fracOldLeaves*nextc%bl)/(newn*currentCohort%bl)
+				    currentCohort%fracSenLeaves = 1.0_r8-currentCohort%fracExpLeaves-currentCohort%fracYoungLeaves -&
+				      currentCohort%fracOldLeaves 
+	                          else
+				     currentCohort%fracExpLeaves = 1.0_r8
+	                             currentCohort%fracYoungLeaves = 0.0_r8
+	                             currentCohort%fracOldLeaves = 0.0_r8
+	                             currentCohort%fracSenLeaves = 0.0_r8			       
+				  endif 				      				      				      
+				endif
 
                                 ! -----------------------------------------------------------------
                                 ! If fusion pushed structural biomass to be larger than
@@ -834,7 +874,26 @@ contains
                                                nextc%n*nextc%year_net_uptake(i))/newn                
                                       endif
                                    enddo
-                                   
+				   
+				   !leaf age
+				   if(use_leaf_age) then
+				    if(currentCohort%bl>0)then
+				      currentCohort%fracExpLeaves = (currentCohort%n*currentCohort%fracExpLeaves*currentCohort%bl &
+                                       + nextc%n*nextc%fracExpLeaves*nextc%bl)/(newn*currentCohort%bl)
+				      currentCohort%fracYoungLeaves = (currentCohort%n*currentCohort%fracYoungLeaves*currentCohort%bl&
+                                       + nextc%n*nextc%fracYoungLeaves*nextc%bl)/(newn*currentCohort%bl)
+				      currentCohort%fracOldLeaves = (currentCohort%n*currentCohort%fracOldLeaves*currentCohort%bl   &
+                                       + nextc%n*nextc%fracOldLeaves*nextc%bl)/(newn*currentCohort%bl)
+				      currentCohort%fracSenLeaves = 1.0_r8-currentCohort%fracExpLeaves-currentCohort%fracYoungLeaves -&
+				       currentCohort%fracOldLeaves
+				    else
+				       currentCohort%fracExpLeaves = 1.0_r8  
+				       currentCohort%fracYoungLeaves = 0.0_r8
+				       currentCohort%fracOldLeaves = 0.0_r8
+				       currentCohort%fracSenLeaves = 0.0_r8
+				    endif 				      				      				      
+				   endif
+                                     
                                 end if !(currentCohort%isnew)
 
                                 currentCohort%n = newn     
@@ -1203,6 +1262,14 @@ contains
     n%lmort_direct=o%lmort_direct
     n%lmort_collateral =o%lmort_collateral
     n%lmort_infra =o%lmort_infra
+    
+    if(use_leaf_age==itrue) then
+          n%fracExpLeaves = o%fracExpLeaves
+	  n%fracYoungLeaves = o%fracYoungLeaves
+	  n%fracOldLeaves = o%fracOldLeaves
+	  n%fracSenLeaves = o%fracSenLeaves
+    endif
+
 
     ! Flags
     n%isnew = o%isnew
