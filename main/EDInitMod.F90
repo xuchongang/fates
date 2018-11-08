@@ -19,6 +19,7 @@ module EDInitMod
   use EDTypesMod                , only : nuMWaterMem
   use EDTypesMod                , only : maxpft
   use EDTypesMod                , only : AREA
+  use EDTypesMod                , only : init_dense_forest
   use FatesInterfaceMod         , only : bc_in_type
   use FatesInterfaceMod         , only : hlm_use_planthydro
   use FatesInterfaceMod         , only : hlm_use_inventory_init
@@ -221,6 +222,7 @@ contains
        sites(s)%old_stock  = 0.0_r8
 
        sites(s)%spread     = 1.0_r8
+       if(init_dense_forest)sites(s)%spread = 0._r8
     end do
 
     return
