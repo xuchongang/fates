@@ -176,6 +176,7 @@ module FatesHistoryInterfaceMod
   integer, private :: ih_npp_agdw_si_scpf
   integer, private :: ih_npp_stor_si_scpf
   integer, private :: ih_storage_frac_si_scpf      !Liang Wei oct2018
+  integer, private :: ih_carbon_balance_si_scpf    !Liang Wei oct2018
   
   integer, private :: ih_bstor_canopy_si_scpf
   integer, private :: ih_bstor_understory_si_scpf
@@ -1423,6 +1424,7 @@ end subroutine flush_hvars
                hio_bleaf_understory_si_scpf  => this%hvars(ih_bleaf_understory_si_scpf)%r82d, &
 	       hio_balive_canopy_si_scpf      => this%hvars(ih_balive_canopy_si_scpf)%r82d, &   !Liang Wei Oct2018
                hio_balive_understory_si_scpf  => this%hvars(ih_balive_understory_si_scpf)%r82d, &   !Liang Wei Oct2018
+	       hio_carbon_balance_si_scpf     => this%hvars(ih_carbon_balance_si_scpf)%r82d, &  !Liang Wei Oct2018
 	        
                hio_mortality_canopy_si_scpf         => this%hvars(ih_mortality_canopy_si_scpf)%r82d, &
                hio_mortality_understory_si_scpf     => this%hvars(ih_mortality_understory_si_scpf)%r82d, &
@@ -1767,8 +1769,15 @@ end subroutine flush_hvars
                     hio_npp_stor_si_scpf(io_si,scpf) = hio_npp_stor_si_scpf(io_si,scpf) + &
                                                        ccohort%npp_stor*n_perm2
 	            hio_storage_frac_si_scpf(io_si,scpf) = hio_storage_frac_si_scpf(io_si,scpf) + &
-                                                       ccohort%storage_frac*ccohort%n               !Liang Wei Oct 2018	      					       
+                                                    ccohort%storage_frac*ccohort%n              !Liang Wei Oct 2018	      					       
+		    !hio_carbon_balance_si_scpf(io_si,scpf) = hio_carbon_balance_si_scpf(io_si,scpf) + &
+		     !                                  ccohort%npp_acc_hold* n_perm2		  !Liang Wei Oct 2018	
+						       
+		    hio_carbon_balance_si_scpf(io_si,scpf) = hio_carbon_balance_si_scpf(io_si,scpf) + &
+		                                       ccohort%n*ccohort%npp_acc_hold* AREA_INV		  !Liang Wei Oct 2018			       
 
+
+						       
                     ! Liang Wei May 21,2018 temp turn off this for zero growth
 		    !npp_partition_error = abs(ccohort%npp_acc_hold-(ccohort%npp_leaf+ccohort%npp_fnrt+ &
                      !     ccohort%npp_sapw+ccohort%npp_dead+ &
@@ -2226,7 +2235,7 @@ end subroutine flush_hvars
                     sites(s)%imort_rate(i_scls, i_pft)
 	       !get the weighted storage fraction
 	       if(hio_nplant_si_scpf(io_si,i_scpf)>0._r8)then
-	        hio_storage_frac_si_scpf(io_si,i_scpf)=hio_storage_frac_si_scpf(io_si,i_scpf)/ hio_nplant_si_scpf(io_si,i_scpf)
+	       hio_storage_frac_si_scpf(io_si,i_scpf)=hio_storage_frac_si_scpf(io_si,i_scpf)/ hio_nplant_si_scpf(io_si,i_scpf) !Liang Wei
 		hio_md13crate_si_scpf(io_si, i_scpf) = hio_md13crate_si_scpf(io_si, i_scpf) / hio_nplant_si_scpf(io_si,i_scpf)
 	       endif
             end do
@@ -4026,6 +4035,11 @@ end subroutine flush_hvars
           long='live biomass of canopy plants by pft/size', use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_balive_canopy_si_scpf )
+	  	  	  
+     call this%set_history_var(vname='CARBON_BALANCE_SCPF', units = 'kg C / m2 / yr', &
+          long='CARBON_BALANCE by size class/pft', use_default='inactive',    &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_carbon_balance_si_scpf )
 
     call this%set_history_var(vname='NPLANT_CANOPY_SCPF', units = 'N/ha',         &
           long='stem number of canopy plants density by pft/size', use_default='inactive', &
