@@ -1110,7 +1110,7 @@ contains
   end subroutine UpdateH2OVeg
   
   !=====================================================================================
-  subroutine RecruitWUptake(nsites,sites,bc_in,dtime)
+  subroutine RecruitWUptake(nsites,sites,bc_in,dtime,recruitflag)
 
      ! ----------------------------------------------------------------------------------
      ! This subroutine is called to caluate the water requirement for newly recruited cohorts
@@ -1125,6 +1125,7 @@ contains
      type(ed_site_type), intent(inout), target :: sites(nsites)
      type(bc_in_type), intent(in)              :: bc_in(nsites)    
      real(r8), intent(in)                      :: dtime !time (seconds)
+     logical, intent(out)                      :: recruitflag      !flag to check if there is newly recruited cohorts
 
      ! Locals
      type(ed_cohort_type), pointer :: currentCohort
@@ -1137,7 +1138,8 @@ contains
      real(r8) :: rootb !root distriubiton parameter b
      real(r8) :: rootfr !fraction of root in different soil layer
      real(r8) :: recruitw !water for newly recruited cohorts (kg water/m2/s)
-      
+     
+     recruitflag = .false. 
      do s = 1,nsites 
         csite_hydr => sites(s)%si_hydr
         csite_hydr%recruit_w_uptake = 0.0_r8
@@ -1150,6 +1152,7 @@ contains
   	      !-----------------------------------------------------------
               ! recruitment water uptake
 	      if(ccohort_hydr%is_newly_recruited) then
+	        recruitflag = .true.
 	        roota    =  EDPftvarcon_inst%roota_par(ft)
                 rootb    =  EDPftvarcon_inst%rootb_par(ft)
 	        recruitw =  (sum(ccohort_hydr%th_ag(:)*ccohort_hydr%v_ag(:))    + &
@@ -1906,6 +1909,8 @@ contains
      real(r8) :: roota, rootb                  ! parameters for root distribution                                      [m-1]
      real(r8) :: rootfr                        ! root fraction at different soil layers
      real(r8) :: prev_h2oveg                   ! previous time step plant water storage (kg/m2)
+     logical  :: recruitflag                   ! flag to check if there is newly recruited cohorts
+
      type(ed_site_hydr_type), pointer :: site_hydr
      type(ed_cohort_hydr_type), pointer :: ccohort_hydr
      integer  :: err_code = 0
@@ -1925,10 +1930,10 @@ contains
      !nstep = get_nstep()
      
      !For newly recruited cohorts, add the water uptake demand to csite_hydr%recruit_w_uptake
-     call RecruitWUptake(nsites,sites,bc_in,dtime)
+     call RecruitWUptake(nsites,sites,bc_in,dtime,recruitflag)
      
      !update water storage in veg after incorporating newly recuited cohorts
-     call UpdateH2OVeg(nsites,sites,bc_out)
+     if(recruitflag) call UpdateH2OVeg(nsites,sites,bc_out)
 	     
      do s = 1, nsites
           
