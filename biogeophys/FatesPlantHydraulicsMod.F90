@@ -49,6 +49,7 @@ module FatesPlantHydraulicsMod
 
    use FatesInterfaceMod  , only : hlm_use_planthydro
 
+   use FatesAllometryMod, only    : bsap_allom
    
    use FatesHydraulicsMemMod, only: ed_site_hydr_type
    use FatesHydraulicsMemMod, only: ed_cohort_hydr_type
@@ -294,6 +295,8 @@ contains
     real(r8) :: sla                          ! specific leaf area                                                    [cm2/g]
     real(r8) :: depth_canopy                 ! crown (canopy) depth                                                  [m]
     real(r8) :: dz_canopy                    ! vertical canopy discretization                                        [m]
+    real(r8) :: a_sapwood_target             ! sapwood cross-section area at reference height, at target biomass     [m2]
+    real(r8) :: bsw_target                   ! sapwood carbon, at target                                             [kgC]
     real(r8) :: a_leaf_tot                   ! total leaf area                                                       [m2/indiv]
     real(r8) :: b_canopy_carb                ! total leaf (canopy) biomass in carbon units                           [kgC/indiv]
     real(r8) :: b_canopy_biom                ! total leaf (canopy) biomass in dry wt units                           [kg/indiv]
@@ -387,12 +390,22 @@ contains
      b_stem_carb  = b_tot_carb - b_bg_carb - b_canopy_carb
      b_stem_biom  = b_stem_carb * C2B                               ! kg DM
      v_stem       = b_stem_biom / (EDPftvarcon_inst%wood_density(FT)*1.e3_r8) !BOC...may be needed for testing/comparison w/ v_sapwood
+
      !a_leaf_tot   = b_canopy_carb * sla * 1.e3_r8 / 1.e4_r8         ! m2 leaf = kg leaf DM * cm2/g * 1000g/1kg * 1m2/10000cm2
      a_leaf_tot  = cCohort%treelai * cCohort%c_area/cCohort%n        ! calculate the leaf area based on the leaf profile 
-     !a_sapwood    = a_leaf_tot / EDPftvarcon_inst%allom_latosa_int(FT)*1.e-4_r8            ! m2 sapwood = m2 leaf * cm2 sapwood/m2 leaf *1.0e-4m2
-     !a_sapwood    = a_leaf_tot * ( EDPftvarcon_inst%allom_latosa_int(FT) + cCohort%dbh* EDPftvarcon_inst%allom_latosa_slp(FT) ) *1.e-4_r8
-     ! applying Calvo-Alvarado allometry here since using realistic sapwood area in the rest of the model causes trees to die
-     a_sapwood    = a_leaf_tot / ( 0.001_r8 + 0.025_r8 * cCohort%hite ) * 1.e-4_r8 
+
+     call bsap_allom(cCohort%dbh,cCohort%pft,cCohort%canopy_trim,a_sapwood_target,bsw_target)
+     
+     a_sapwood = a_sapwood_target
+
+     ! or ....
+     ! a_sapwood = a_sapwood_target * ccohort%bsw / bsw_target
+
+     !     a_sapwood    = a_leaf_tot / EDPftvarcon_inst%allom_latosa_int(FT)*1.e-4_r8 
+     !      m2 sapwood = m2 leaf * cm2 sapwood/m2 leaf *1.0e-4m2
+     !  applying Calvo-Alvarado allometry here since using realistic sapwood area in the rest of the model causes trees to die
+     !     a_sapwood    = a_leaf_tot / ( 0.001_r8 + 0.025_r8 * cCohort%hite ) * 1.e-4_r8 
+
      v_sapwood    = a_sapwood * z_stem
      ccohort_hydr%v_ag(n_hypool_leaf+1:n_hypool_ag) = v_sapwood / n_hypool_stem
 
@@ -1962,7 +1975,6 @@ contains
            ! ----------------------------------------------------------------------------
 
            patch_wgt = min(1.0_r8,cpatch%total_canopy_area/cpatch%area) * (cpatch%area/AREA)
-	   bc_out(s)%lwp_pa(ifp) = 0.0_r8
 	   total_lai = sum(cpatch%canopy_layer_tlai)
 
            ! Total volume transpired from this patch [mm H2O / m2 /s ] * [m2/patch] = [mm H2O / patch / s]
@@ -2499,11 +2511,6 @@ contains
                                (ccohort_hydr%flc_aroot(j) - ccohort_hydr%flc_min_aroot(j))*exp(-refill_rate*dtime)
                       end if
                    end do
-                   !----------------------------------------------------------------------------------------------
-		   !calculate the leaf water potential at the patch level weighed by leaf area
-		   if(total_lai>0.0_r8)then
-		     bc_out(s)%lwp_pa(ifp) = bc_out(s)%lwp_pa(ifp) + ccohort_hydr%psi_ag(1)*ccohort%lai/total_lai
-		   endif
 		   
                    ccohort => ccohort%shorter
                 enddo !cohort 

@@ -148,13 +148,13 @@ variables:
 		fates_allom_cmode:long_name = "coarse root biomass allometry function index" ;
 	float fates_allom_d2bl1(fates_pft) ;
 		fates_allom_d2bl1:units = "variable" ;
-		fates_allom_d2bl1:long_name = "Parameter 1 for d2bl allometry (intercept)" ;
+		fates_allom_d2bl1:long_name = "Parameter 1 for d2bl allometry" ;
 	float fates_allom_d2bl2(fates_pft) ;
 		fates_allom_d2bl2:units = "variable" ;
-		fates_allom_d2bl2:long_name = "Parameter 2 for d2bl allometry (slope)" ;
+		fates_allom_d2bl2:long_name = "Parameter 2 for d2bl allometry" ;
 	float fates_allom_d2bl3(fates_pft) ;
 		fates_allom_d2bl3:units = "unitless" ;
-		fates_allom_d2bl3:long_name = "Parameter 3 for d2bl allometry (optional)" ;
+		fates_allom_d2bl3:long_name = "Parameter 3 for d2bl allometry" ;
 	float fates_allom_d2ca_coefficient_max(fates_pft) ;
 		fates_allom_d2ca_coefficient_max:units = "m2 cm^(-1/beta)" ;
 		fates_allom_d2ca_coefficient_max:long_name = "max (savanna) dbh to area multiplier factor where: area = n*d2ca_coeff*dbh^beta" ;
@@ -182,12 +182,12 @@ variables:
 	float fates_allom_l2fr(fates_pft) ;
 		fates_allom_l2fr:units = "gC/gC" ;
 		fates_allom_l2fr:long_name = "Allocation parameter: fine root C per leaf C" ;
-	float fates_allom_latosa_int(fates_pft) ;
-		fates_allom_latosa_int:units = "cm2/m2" ;
-		fates_allom_latosa_int:long_name = "Leaf area to sap area conversion, intercept (sapwood area/leaf area)" ;
-	float fates_allom_latosa_slp(fates_pft) ;
-		fates_allom_latosa_slp:units = "cm2/m2/cm" ;
-		fates_allom_latosa_slp:long_name = "Leaf area to sap area conversion, slope (sapwood area/ leaf area / diameter) (optional)" ;
+	float fates_allom_la_per_sa_int(fates_pft) ;
+		fates_allom_la_per_sa_int:units = "m2/cm2" ;
+		fates_allom_la_per_sa_int:long_name = "Leaf area per sapwood area, intercept" ;
+	float fates_allom_la_per_sa_slp(fates_pft) ;
+		fates_allom_la_per_sa_slp:units = "m2/cm2/m" ;
+		fates_allom_la_per_sa_slp:long_name = "Leaf area per sapwood area rate of change with height, slope (optional)" ;
 	float fates_allom_lmode(fates_pft) ;
 		fates_allom_lmode:units = "index" ;
 		fates_allom_lmode:long_name = "leaf biomass allometry function index" ;
@@ -308,6 +308,21 @@ variables:
 	float fates_leaf_long(fates_pft) ;
 		fates_leaf_long:units = "yr" ;
 		fates_leaf_long:long_name = "Leaf longevity (ie turnover timescale)" ;
+	float fates_expleaf_flong(fates_pft) ;
+		fates_expleaf_flong:units = "fraction" ;
+		fates_expleaf_flong:long_name = "Fraction of leaf longevity for expanding leaves(ie turnover timescale)" ;		
+	float fates_youngleaf_flong(fates_pft) ;
+		fates_youngleaf_flong:units = "fraction" ;
+		fates_youngleaf_flong:long_name = "Fraction of leaf longevity for young leaves(ie turnover timescale)" ;		
+	float fates_oldleaf_flong(fates_pft) ;
+		fates_oldleaf_flong:units = "fraction" ;
+		fates_oldleaf_flong:long_name = "Fraction of leaf longevity for old leaves(ie turnover timescale)" ;	
+	float fates_senleaf_flong(fates_pft) ;
+		fates_senleaf_flong:units = "fraction" ;
+		fates_senleaf_flong:long_name = "Fraction of leaf longevity for senescent leaves(ie turnover timescale)" ;	
+	float fates_senleaf_long_fdrought(fates_pft) ;
+		fates_senleaf_long_fdrought:units = "unitless[0-1]" ;
+		fates_senleaf_long_fdrought:long_name = "multiplication factor for leaf longevity of senescent leaves during drought" ;				
 	float fates_leaf_slamax(fates_pft) ;
 		fates_leaf_slamax:units = "m^2/gC" ;
 		fates_leaf_slamax:long_name = "Maximum Specific Leaf Area (SLA), even if under a dense canopy" ;
@@ -329,6 +344,18 @@ variables:
 	float fates_leaf_vcmax25top(fates_pft) ;
 		fates_leaf_vcmax25top:units = "umol CO2/m^2/s" ;
 		fates_leaf_vcmax25top:long_name = "maximum carboxylation rate of Rub. at 25C, canopy top" ;
+	float fates_leaf_vcmax25top_fexp(fates_pft) ;
+		fates_leaf_vcmax25top:units = "unitless" ;
+		fates_leaf_vcmax25top:long_name = "factor of vcmax25 for expanding leaves" ;			
+	float fates_leaf_vcmax25top_fyoung(fates_pft) ;
+		fates_leaf_vcmax25top:units = "unitless" ;
+		fates_leaf_vcmax25top:long_name = "factor of vcmax25 for young leaves" ;
+	float fates_leaf_vcmax25top_fold(fates_pft) ;
+		fates_leaf_vcmax25top:units = "unitless" ;
+		fates_leaf_vcmax25top:long_name = "factor of vcmax25 for old leaves" ;	
+	float fates_leaf_vcmax25top_fsen(fates_pft) ;
+		fates_leaf_vcmax25top:units = "unitless" ;
+		fates_leaf_vcmax25top:long_name = "factor of vcmax25 for senescentleaves" ;			
 	float fates_leaf_vcmaxha(fates_pft) ;
 		fates_leaf_vcmaxha:units = "J/mol" ;
 		fates_leaf_vcmaxha:long_name = "activation energy for vcmax" ;
@@ -558,7 +585,8 @@ variables:
 			" Mon Mar 19 19:05:44 EDT 2018 forced all plants to be evergreen till carbon-imbalances are fixed.\n",
 			" Mon Mar 19 19:05:44 EDT 2018 added entry for fates_history_height_bin_edges.\n",
 			" Thu Apr 12 14:18:46 PDT 2018 updated names on CN recruitment parameters. -- fates_params_14pft.c180412.nc -- \n",
-			"" ;
+			" Wed Aug 29 12:14:41 PDT 2018: (RGK) Updated latosa to la_per_sa (inverts units, invert defaults also)\n" ;
+
 data:
 
  fates_history_height_bin_edges = 0, 0.1, 0.3, 1, 3, 10 ;
@@ -707,10 +735,10 @@ data:
 
  fates_allom_l2fr = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
 
- fates_allom_latosa_int = 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 
-    0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001 ;
+ fates_allom_la_per_sa_int = 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 
+    1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0 ;
 
- fates_allom_latosa_slp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+ fates_allom_la_per_sa_slp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
 
  fates_allom_lmode = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
 
@@ -872,6 +900,21 @@ data:
     495, 495, 495 ;
 
  fates_leaf_long = 1.5, 4, 6, 1, 1.5, 1, 1, 1, 1.5, 1, 1, 1, 1, 1 ;
+ 
+ fates_expleaf_flong = 0.041, 0.041, 0.041, 0.041, 0.041, 0.041, 0.041, 0.041,
+    0.041, 0.041, 0.041, 0.041, 0.041, 0.041;
+ 
+ fates_youngleaf_flong = 0.375, 0.375, 0.375, 0.375, 0.375, 0.375, 0.375, 0.375, 
+    0.375, 0.375, 0.375, 0.375, 0.375, 0.375 ;
+ 
+ fates_oldleaf_flong = 0.167, 0.167, 0.167, 0.167, 0.167, 0.167, 0.167, 0.167, 
+     0.167, 0.167, 0.167, 0.167, 0.167, 0.167 ;
+ 
+ fates_senleaf_flong = 0.417, 0.417, 0.417, 0.417, 0.417, 0.417, 0.417, 0.417,
+     0.417, 0.417, 0.417, 0.417, 0.417, 0.417 ;
+ 
+ fates_senleaf_long_fdrought = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+     1.0, 1.0, 1.0, 1.0, 1.0 ;
 
  fates_leaf_slamax = 0.0954, 0.0954, 0.0954, 0.0954, 0.0954, 0.0954, 0.0954, 0.0954, 
     0.012, 0.03, 0.03, 0.03, 0.03, 0.03 ;
@@ -892,6 +935,18 @@ data:
     490, 490, 490 ;
 
  fates_leaf_vcmax25top = 50, 65, 63, 39, 62, 41, 58, 58, 62, 54, 54, 78, 78, 78 ;
+ 
+ fates_leaf_vcmax25top_fexp = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+    1.0, 1.0, 1.0, 1.0;
+  
+ fates_leaf_vcmax25top_fyoung = 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 
+   1.9, 1.9, 1.9, 1.9;
+   
+ fates_leaf_vcmax25top_fold = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+   1.0, 1.0, 1.0, 1.0 ;
+    
+ fates_leaf_vcmax25top_fsen = 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
+    0.3 , 0.3 , 0.3 , 0.3 , 0.3 ;
 
  fates_leaf_vcmaxha = 65330, 65330, 65330, 65330, 65330, 65330, 65330, 65330, 
     65330, 65330, 65330, 65330, 65330, 65330 ;
@@ -938,11 +993,11 @@ data:
 
  fates_pft_used = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
 
- fates_phen_evergreen = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+ fates_phen_evergreen    = 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0 ;
 
- fates_phen_season_decid = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+ fates_phen_season_decid = 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0 ;
 
- fates_phen_stress_decid = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+ fates_phen_stress_decid = 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1 ;
 
  fates_prescribed_mortality_canopy = 0.0194, 0.0194, 0.0194, 0.0194, 0.0194, 
     0.0194, 0.0194, 0.0194, 0.0194, 0.0194, 0.0194, 0.0194, 0.0194, 0.0194 ;
