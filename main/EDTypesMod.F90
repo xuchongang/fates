@@ -69,11 +69,11 @@ module EDTypesMod
   ! TO-DO: THESE SHOULD BE PARAMETERS IN THE FILE OR NAMELIST - ADDING THESE
   ! WAS OUTSIDE THE SCOPE OF THE VERY LARGE CHANGESET WHERE THESE WERE FIRST
   ! INTRODUCED (RGK 03-2017)
-  logical, parameter :: do_ed_phenology = .false.
-  logical, parameter :: static_canopy_structure = .true. !this flag allow the model to run with static canopy structure (no dbh growth, 
+  logical, parameter :: do_ed_phenology = .true.
+  logical, parameter :: static_canopy_structure = .false. !this flag allow the model to run with static canopy structure (no dbh growth, 
                                                          !no recruitment, no mortality)
   logical, parameter :: init_dense_forest  = .true.
-  integer, parameter :: use_leaf_age = 1          ! switch of using leaf age
+  integer, parameter :: use_leaf_age = 0          ! switch of using leaf age
 
 
   ! MODEL PARAMETERS
