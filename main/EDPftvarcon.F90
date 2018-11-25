@@ -1142,7 +1142,7 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%hf_sm_threshold)
 	 
-    name = 'fates_mort_flc_sm_threshold'
+    name = 'fates_mort_hf_flc_threshold'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%hf_flc_threshold)
 	 
