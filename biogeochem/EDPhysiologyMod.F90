@@ -44,6 +44,7 @@ module EDPhysiologyMod
   use FatesPlantHydraulicsMod  , only : initTreeHydStates
   use FatesPlantHydraulicsMod  , only : InitHydrCohort
   use FatesPlantHydraulicsMod  , only : ConstrainRecruitNumber
+  use FatesPlantHydraulicsMod  , only : DeallocateHydrCohort
   
   use FatesConstantsMod     , only : itrue,ifalse
   use FatesConstantsMod     , only : calloc_abs_error
@@ -1818,7 +1819,9 @@ contains
 
     allocate(temp_cohort) ! create temporary cohort
     call zero_cohort(temp_cohort)
-
+    if( hlm_use_planthydro.eq.itrue ) then
+	call InitHydrCohort(CurrentSite,temp_cohort)
+    endif
     do ft = 1,numpft
 
        temp_cohort%canopy_trim = 0.8_r8  !starting with the canopy not fully expanded 
@@ -1866,7 +1869,6 @@ contains
        if (temp_cohort%n > 0.0_r8 )then
           if ( debug ) write(fates_log(),*) 'EDPhysiologyMod.F90 call create_cohort '
 	  if( hlm_use_planthydro.eq.itrue ) then
-	      call InitHydrCohort(CurrentSite,temp_cohort)
 	      call carea_allom(temp_cohort%dbh,temp_cohort%n,currentSite%spread, &
 				          ft,temp_cohort%c_area)
 	      if(associated(currentPatch%shortest)) then
@@ -1905,7 +1907,7 @@ contains
 
        endif
     enddo  !pft loop
-
+    if (hlm_use_planthydro.eq.itrue) call DeallocateHydrCohort(temp_cohort)
     deallocate(temp_cohort) ! delete temporary cohort
 
   end subroutine recruitment
