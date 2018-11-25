@@ -73,7 +73,7 @@ module EDTypesMod
   logical, parameter :: static_canopy_structure = .false. !this flag allow the model to run with static canopy structure (no dbh growth, 
                                                          !no recruitment, no mortality)
   logical, parameter :: init_dense_forest  = .true.
-  integer, parameter :: use_leaf_age = 0          ! switch of using leaf age
+  integer, parameter :: use_leaf_age = 1          ! switch of using leaf age
 
 
   ! MODEL PARAMETERS
