@@ -14,7 +14,7 @@ module EDCanopyStructureMod
   use FatesGlobals          , only : fates_log
   use EDPftvarcon           , only : EDPftvarcon_inst
   use FatesAllometryMod     , only : carea_allom
-  use EDCohortDynamicsMod   , only : copy_cohort, terminate_cohorts, fuse_cohorts
+  use EDCohortDynamicsMod   , only : copy_cohort, terminate_cohorts, fuse_cohorts, zero_cohort
   use FatesAllometryMod     , only : tree_lai
   use FatesAllometryMod     , only : tree_sai
   use EDtypesMod            , only : ed_site_type, ed_patch_type, ed_cohort_type, ncwd
@@ -25,7 +25,7 @@ module EDCanopyStructureMod
   use FatesInterfaceMod     , only : hlm_days_per_year
   use FatesInterfaceMod     , only : hlm_use_planthydro
   use FatesInterfaceMod     , only : numpft
-  use FatesPlantHydraulicsMod, only : UpdateH2OVeg,InitHydrCohort
+  use FatesPlantHydraulicsMod, only : UpdateH2OVeg,InitHydrCohort, RecruitWaterStorage
 
 
   ! CIME Globals
@@ -40,7 +40,7 @@ module EDCanopyStructureMod
   public :: canopy_summarization
   public :: update_hlm_dynamics
 
-  logical, parameter :: DEBUG=.false.
+  logical, parameter :: debug=.false.
 
   character(len=*), parameter, private :: sourcefile = &
        __FILE__
@@ -485,11 +485,13 @@ contains
                   ! remains in the upper-story.  The original is the one
                   ! demoted to the understory
                   
-                  allocate(copyc)                  
-                  if( hlm_use_planthydro.eq.itrue ) then
-                     call InitHydrCohort(currentSite,copyc)
-                  endif
-		  call copy_cohort(currentCohort, copyc)
+                  allocate(copyc)
+                  if(hlm_use_planthydro.eq.itrue) call InitHydrCohort(CurrentSite,copyc)
+                  call zero_cohort(copyc)
+                  call copy_cohort(currentCohort, copyc)
+                  !if( hlm_use_planthydro.eq.itrue ) then
+                  !   call InitHydrCohort(currentSite,copyc)
+                  !endif
                   
                   newarea = currentCohort%c_area - cc_loss
                   copyc%n = currentCohort%n*newarea/currentCohort%c_area 
@@ -812,11 +814,14 @@ contains
                   elseif ( cc_gain > nearzero .and. cc_gain < currentCohort%c_area) then
                      
                      allocate(copyc)
-                     if( hlm_use_planthydro.eq.itrue ) then
-                        call InitHydrCohort(CurrentSite,copyc)
-                     endif
+
+                     if(hlm_use_planthydro.eq.itrue) call InitHydrCohort(CurrentSite,copyc)
+                     call zero_cohort(copyc)
                      call copy_cohort(currentCohort, copyc) !makes an identical copy...
-		                          
+                     !if( hlm_use_planthydro.eq.itrue ) then
+                     !   call InitHydrCohort(CurrentSite,copyc)
+                     !endif
+                                          
                      newarea = currentCohort%c_area - cc_gain !new area of existing cohort
 
                      call carea_allom(currentCohort%dbh,currentCohort%n,currentSite%spread, &
@@ -972,7 +977,7 @@ contains
 
     !----------------------------------------------------------------------
 
-    if ( DEBUG ) then
+    if ( debug ) then
        write(fates_log(),*) 'in canopy_summarization'
     endif
 
@@ -1280,12 +1285,12 @@ contains
                 ! no m2 of leaf per m2 of ground in each height class
                 ! FIX(SPM,032414) these should be uncommented this and double check
                 
-                if ( DEBUG ) write(fates_log(), *) 'leaf_area_profile()', currentPatch%elai_profile(1,ft,iv)
+                if ( debug ) write(fates_log(), *) 'leaf_area_profile()', currentPatch%elai_profile(1,ft,iv)
                 
                 currentPatch%elai_profile(1,ft,iv) = currentPatch%tlai_profile(1,ft,iv) * fraction_exposed
                 currentPatch%esai_profile(1,ft,iv) = currentPatch%tsai_profile(1,ft,iv) * fraction_exposed
                 
-                if ( DEBUG ) write(fates_log(), *) 'leaf_area_profile()', currentPatch%elai_profile(1,ft,iv)
+                if ( debug ) write(fates_log(), *) 'leaf_area_profile()', currentPatch%elai_profile(1,ft,iv)
                 
              enddo ! (iv) hite bins
              
@@ -1471,7 +1476,7 @@ contains
              do cl = 1,currentPatch%NCL_p
                 do iv = 1,currentPatch%ncan(cl,ft)
                    
-                   if( DEBUG .and. sum(currentPatch%canopy_area_profile(cl,:,iv)) > 1.0001_r8 ) then
+                   if( debug .and. sum(currentPatch%canopy_area_profile(cl,:,iv)) > 1.0001_r8 ) then
                       
                       write(fates_log(), *) 'FATES: A canopy_area_profile exceeded 1.0'
                       write(fates_log(), *) 'cl: ',cl
@@ -1683,7 +1688,7 @@ contains
               call endrun(msg=errMsg(sourcefile, __LINE__))
            end if
            
-           if(DEBUG) then
+           if(debug) then
               write(fates_log(),*) 'imprecise patch areas in update_hlm_dynamics',total_patch_area
            end if
            
@@ -1701,6 +1706,7 @@ contains
 
      ! If hydraulics is turned on, update the amount of water bound in vegetation
      if (hlm_use_planthydro.eq.itrue) then
+        call RecruitWaterStorage(nsites,sites,bc_out)
         call UpdateH2OVeg(nsites,sites,bc_out)
      end if
 

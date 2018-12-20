@@ -5,6 +5,7 @@ module EDTypesMod
   use shr_infnan_mod,        only : nan => shr_infnan_nan, assignment(=)
   use FatesHydraulicsMemMod, only : ed_cohort_hydr_type
   use FatesHydraulicsMemMod, only : ed_site_hydr_type
+  !use FatesInterfaceMod,     only : hlm_use_planthydro
 
   implicit none
   save
@@ -12,7 +13,7 @@ module EDTypesMod
   integer, parameter :: maxPatchesPerSite  = 10   ! maximum number of patches to live on a site
   integer, parameter :: maxCohortsPerPatch = 160  ! maximum number of cohorts per patch
   
-  integer, parameter :: nclmax = 3                ! Maximum number of canopy layers
+  integer, parameter :: nclmax = 4                ! Maximum number of canopy layers
   integer, parameter :: ican_upper = 1            ! Nominal index for the upper canopy
   integer, parameter :: ican_ustory = 2           ! Nominal index for understory in two-canopy system
 
@@ -24,8 +25,6 @@ module EDTypesMod
                                                   ! are used, but this helps allocate scratch
                                                   ! space and output arrays.
   						  
-  integer, parameter :: use_leaf_age = 1          ! switch of using leaf age
-
   ! -------------------------------------------------------------------------------------
   ! Radiation parameters
   ! These should be part of the radiation module, but since we only have one option
@@ -73,6 +72,10 @@ module EDTypesMod
   ! WAS OUTSIDE THE SCOPE OF THE VERY LARGE CHANGESET WHERE THESE WERE FIRST
   ! INTRODUCED (RGK 03-2017)
   logical, parameter :: do_ed_phenology = .true.
+  logical, parameter :: static_canopy_structure = .false. !this flag allow the model to run with static canopy structure (no dbh growth, 
+                                                         !no recruitment, no mortality)
+  logical, parameter :: init_dense_forest  = .true.
+  integer, parameter :: use_leaf_age = 1          ! switch of using leaf age
 
 
   ! MODEL PARAMETERS
@@ -214,7 +217,6 @@ module EDTypesMod
      ! Net Primary Production Partitions
 
      ! Plant Tissue Carbon Fluxes
-     !>>>>>>> c39ea07b91747e0eff8d9da17a25df5f1be90edb
 
      ! Fluxes in from Net Primary Production
      real(r8) ::  npp_leaf          ! NPP into leaves (includes replacement of turnover):  KgC/indiv/year
@@ -284,7 +286,7 @@ module EDTypesMod
      real(r8) ::  dbstoredt                              ! time derivative of stored biomass       : KgC/year
 
      ! FIRE
-     real(r8) ::  cfa                                    ! proportion of crown affected by fire:-
+     real(r8) ::  fraction_crown_burned                  ! proportion of crown affected by fire:-
      real(r8) ::  cambial_mort                           ! probability that trees dies due to cambial char:-
      real(r8) ::  crownfire_mort                         ! probability of tree post-fire mortality due to crown scorch:-
      real(r8) ::  fire_mort                              ! post-fire mortality from cambial and crown damage assuming two are independent:-
@@ -840,14 +842,40 @@ contains
      write(fates_log(),*) 'co%ddbhdt                 = ', ccohort%ddbhdt
      write(fates_log(),*) 'co%dbdeaddt               = ', ccohort%dbdeaddt
      write(fates_log(),*) 'co%dbstoredt              = ', ccohort%dbstoredt
-     write(fates_log(),*) 'co%cfa                    = ', ccohort%cfa
+     write(fates_log(),*) 'co%fraction_crown_burned  = ', ccohort%fraction_crown_burned
      write(fates_log(),*) 'co%fire_mort              = ', ccohort%fire_mort
      write(fates_log(),*) 'co%crownfire_mort         = ', ccohort%crownfire_mort
      write(fates_log(),*) 'co%cambial_mort           = ', ccohort%cambial_mort
      write(fates_log(),*) 'co%size_class             = ', ccohort%size_class
      write(fates_log(),*) 'co%size_by_pft_class      = ', ccohort%size_by_pft_class
+     !if ( hlm_use_planthydro.eq.itrue ) then
+     !  call dump_cohort_hydr(ccohort)
+     !end if
+     write(fates_log(),*) 'ccohort_hydr%th_aroot(:) = ', ccohort%co_hydr%th_aroot(:)
+     !write(fates_log(),*) 'ccohort_hydr%th_aroot_prev(:) = ', ccohort%co_hydr%th_aroot_prev(:)
+     !write(fates_log(),*) 'ccohort_hydr%th_aroot_prev_uncorr(:) = ', ccohort%co_hydr%th_aroot_prev_uncorr(:)
+     write(fates_log(),*) 'ccohort_hydr%v_aroot_layer_init(:) = ', ccohort%co_hydr%v_aroot_layer_init(:)
+     write(fates_log(),*) 'ccohort_hydr%v_aroot_layer(:) = ', ccohort%co_hydr%v_aroot_layer(:)
      write(fates_log(),*) '----------------------------------------'
      return
   end subroutine dump_cohort
+
+  ! =====================================================================================
+  
+  !subroutine dump_cohort_hydr(ccohort)
+!
+!
+ !    type(ed_cohort_type),intent(in),target :: ccohort
+  !  type(ed_cohort_hydr_type), pointer :: ccohort_hydr
+   ! ccohort_hydr => ccohort%co_hydr
+     
+    ! write(fates_log(),*) '--------------------------------------------'
+    ! write(fates_log(),*) ' Dumping Cohort Plant Hydraulic Information '
+    ! write(fates_log(),*) 'ccohort_hydr%th_aroot(:) = ', ccohort_hydr%th_aroot(:)
+    ! write(fates_log(),*) 'ccohort_hydr%v_aroot_layer_init(:) = ', ccohort_hydr%v_aroot_layer_init(:)
+    ! write(fates_log(),*) 'ccohort_hydr%v_aroot_layer(:) = ', ccohort_hydr%v_aroot_layer(:)
+    ! write(fates_log(),*) '--------------------------------------------'
+    ! return
+ ! end subroutine dump_cohort_hydr
 
 end module EDTypesMod

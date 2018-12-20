@@ -40,6 +40,7 @@ module EDMainMod
   use EDtypesMod               , only : ed_cohort_type
   use EDTypesMod               , only : do_ed_phenology
   use EDTypesMod               , only : AREA
+  use EDTypesMod	       , only : static_canopy_structure
   use FatesConstantsMod        , only : itrue,ifalse
   use FatesPlantHydraulicsMod  , only : do_growthrecruiteffects
   use FatesPlantHydraulicsMod  , only : updateSizeDepTreeHydProps
@@ -47,7 +48,7 @@ module EDMainMod
   use FatesPlantHydraulicsMod  , only : initTreeHydStates
   use FatesPlantHydraulicsMod  , only : updateSizeDepRhizHydProps 
   use FatesAllometryMod        , only : h_allom
-!  use FatesPlantHydraulicsMod , only : updateSizeDepRhizHydStates
+  use FatesPlantHydraulicsMod , only : updateSizeDepRhizHydStates
   use EDLoggingMortalityMod    , only : IsItLoggingTime
   use FatesGlobals             , only : endrun => fates_endrun
   use ChecksBalancesMod        , only : SiteCarbonStock
@@ -70,7 +71,7 @@ module EDMainMod
   private :: ed_total_balance_check
   private :: bypass_dynamics
   
-  logical :: DEBUG  = .false.
+  logical :: debug  = .false.
   
   character(len=*), parameter, private :: sourcefile = &
          __FILE__
@@ -100,8 +101,7 @@ contains
 
     ! Call a routine that simply identifies if logging should occur
     ! This is limited to a global event until more structured event handling is enabled
-    !Liang Wei, Temp change May18_2018, off next line
-    !call IsItLoggingTime(hlm_masterproc,currentSite)
+    call IsItLoggingTime(hlm_masterproc,currentSite)
 
     !**************************************************************************
     ! Fire, growth, biogeochemistry. 
@@ -110,29 +110,23 @@ contains
     !FIX(SPM,032414) take this out.  On startup these values are all zero and on restart it
     !zeros out values read in the restart file
    
-    !Liang Wei, Temp change May18_2018, off next line
     call ed_total_balance_check(currentSite, 0)
     
     if (do_ed_phenology) then
        call phenology(currentSite, bc_in )
     end if
 
-    ! Liang Wei, Temp change May18_2018, this is line 120
-    !comment out line  123  
-    !if (hlm_use_ed_st3.eq.ifalse) then   ! Bypass if ST3
-    !  call fire_model(currentSite, bc_in) 
+    if (hlm_use_ed_st3.eq.ifalse) then   ! Bypass if ST3
+       call fire_model(currentSite, bc_in) 
 
        ! Calculate disturbance and mortality based on previous timestep vegetation.
        ! disturbance_rates calls logging mortality and other mortalities, Yi Xu
-    !   call disturbance_rates(currentSite, bc_in)
-    !end if
+       call disturbance_rates(currentSite, bc_in)
+    end if
 
     if (hlm_use_ed_st3.eq.ifalse) then
        ! Integrate state variables from annual rates to daily timestep
-       !call bypass_dynamics(currentSite) !Liang Wei, temp added
-       call ed_integrate_state_variables(currentSite, bc_in )  !Liang Wei, Original
-      
-       
+       call ed_integrate_state_variables(currentSite, bc_in ) 
     else
        ! ed_intergrate_state_variables is where the new cohort flag
        ! is set. This flag designates wether a cohort has
@@ -147,82 +141,81 @@ contains
     !******************************************************************************
     ! Reproduction, Recruitment and Cohort Dynamics : controls cohort organisation 
     !******************************************************************************
-    ! Liang Wei mannualy turn off for mortality testing May 2018
 
-    !if(hlm_use_ed_st3.eq.ifalse) then 
-    !  currentPatch => currentSite%oldest_patch
-    ! do while (associated(currentPatch))                 
-        
+    if(hlm_use_ed_st3.eq.ifalse.and.(.not.static_canopy_structure)) then 
+       currentPatch => currentSite%oldest_patch
+       do while (associated(currentPatch))                 
+          
           ! adds small cohort of each PFT
-    !     call recruitment(currentSite, currentPatch, bc_in)
-        
-    !      currentPatch => currentPatch%younger
-    !   enddo
-    !end if
+          call recruitment(currentSite, currentPatch, bc_in)
+          
+          currentPatch => currentPatch%younger
+       enddo
+    end if
     
        
-    !call ed_total_balance_check(currentSite,1)
+    call ed_total_balance_check(currentSite,1)
 
-    !if( hlm_use_ed_st3.eq.ifalse ) then 
-    !   currentPatch => currentSite%oldest_patch
-    !   do while (associated(currentPatch))
-         
-     !    ! puts cohorts in right order
-     !    call sort_cohorts(currentPatch)            
+    if( hlm_use_ed_st3.eq.ifalse ) then 
+       currentPatch => currentSite%oldest_patch
+       do while (associated(currentPatch))
+          
+          ! puts cohorts in right order
+          call sort_cohorts(currentPatch)            
 
-         ! kills cohorts that are too few
-     !     call terminate_cohorts(currentSite, currentPatch, 1)
-    
-         ! fuses similar cohorts
-     !    call fuse_cohorts(currentSite,currentPatch, bc_in )
-         
+          ! kills cohorts that are too few
+          call terminate_cohorts(currentSite, currentPatch, 1)
+
+          ! fuses similar cohorts
+          call fuse_cohorts(currentSite,currentPatch, bc_in )
+          
           ! kills cohorts for various other reasons
-     !    call terminate_cohorts(currentSite, currentPatch, 2)
+          call terminate_cohorts(currentSite, currentPatch, 2)
           
           
-     !    currentPatch => currentPatch%younger
-     ! enddo
-    !end if
+          currentPatch => currentPatch%younger
+       enddo
+    end if
        
-    !call ed_total_balance_check(currentSite,2)
+    call ed_total_balance_check(currentSite,2)
 
     !*********************************************************************************
     ! Patch dynamics sub-routines: fusion, new patch creation (spwaning), termination.
     !*********************************************************************************
-    ! Liang Wei mannualy turn off for mortality testing May 2018
-    !! make new patches from disturbed land
-    !if ( hlm_use_ed_st3.eq.ifalse ) then
-    !  call spawn_patches(currentSite, bc_in)
-    !end if
+
+    ! make new patches from disturbed land
+    if ( hlm_use_ed_st3.eq.ifalse ) then
+       call spawn_patches(currentSite, bc_in)
+    end if
    
-    !call ed_total_balance_check(currentSite,3)
+    call ed_total_balance_check(currentSite,3)
 
     ! fuse on the spawned patches.
-    !if ( hlm_use_ed_st3.eq.ifalse ) then
-      call fuse_patches(currentSite, bc_in )        
-     
+    if ( hlm_use_ed_st3.eq.ifalse ) then
+       call fuse_patches(currentSite, bc_in )        
+       
        ! If using BC FATES hydraulics, update the rhizosphere geometry
        ! based on the new cohort-patch structure
        ! 'rhizosphere geometry' (column-level root biomass + rootfr --> root length 
        ! density --> node radii and volumes)
-    !   if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
-    !      call updateSizeDepRhizHydProps(currentSite, bc_in)
-          !       call updateSizeDepRhizHydStates(currentSite, bc_in)
+       if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
+          call updateSizeDepRhizHydProps(currentSite, bc_in)
+          call updateSizeDepRhizHydStates(currentSite, bc_in)
           !       if(nshell > 1) then  (THIS BEING CHECKED INSIDE OF the update)
           !          call updateSizeDepRhizHydStates(currentSite, c, soilstate_inst, &
           !                waterstate_inst)
           !       end if
-    !   end if
-    !end if
+       end if
+    end if
 
-    !call ed_total_balance_check(currentSite,4)
+    call ed_total_balance_check(currentSite,4)
 
     ! kill patches that are too small
-    !if ( hlm_use_ed_st3.eq.ifalse ) then
-    !   call terminate_patches(currentSite)   
-    !end if
+    if ( hlm_use_ed_st3.eq.ifalse ) then
+       call terminate_patches(currentSite)   
+    end if
    
-    !call ed_total_balance_check(currentSite,5)
+    call ed_total_balance_check(currentSite,5)
 
   end subroutine ed_ecosystem_dynamics
 
@@ -274,12 +267,10 @@ contains
 
 
           ! Calculate the mortality derivatives
-	  ! Liang Wei May 21, 2018 temporarily turn this mortality off for static biomass and n of plant
-          ! call Mortality_Derivative( currentSite, currentCohort, bc_in )
+          call Mortality_Derivative( currentSite, currentCohort, bc_in )
 
 
           ! Apply growth to potentially all carbon pools
-	  ! Liang Wei May 21, 2018 temporarily turn off  1 line below, this is the function for storage
           call PlantGrowth( currentSite, currentCohort, bc_in )
 
           ! Carbon assimilate has been spent at this point
@@ -288,91 +279,86 @@ contains
           currentCohort%npp_acc  = 0.0_r8
           currentCohort%gpp_acc  = 0.0_r8
           currentCohort%resp_acc = 0.0_r8
-	  
-      !turn off this?! Liang Wei June 22 currently on
+          
           ! BOC...update tree 'hydraulic geometry' 
           ! (size --> heights of elements --> hydraulic path lengths --> 
-
           ! maximum node-to-node conductances)
           if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects) then
              call updateSizeDepTreeHydProps(currentSite,currentCohort, bc_in)
              call updateSizeDepTreeHydStates(currentSite,currentCohort)
           end if
-
   
           currentCohort => currentCohort%taller
 
        enddo
       
-       !call non_canopy_derivs( currentSite, currentPatch, bc_in)
+       call non_canopy_derivs( currentSite, currentPatch, bc_in)
 
        !update state variables simultaneously according to derivatives for this time period. 
 
        ! first update the litter variables that are tracked at the patch level
-       !do c = 1,ncwd
-       !   currentPatch%cwd_ag(c) =  currentPatch%cwd_ag(c) + currentPatch%dcwd_ag_dt(c)* hlm_freq_day
-      !    currentPatch%cwd_bg(c) =  currentPatch%cwd_bg(c) + currentPatch%dcwd_bg_dt(c)* hlm_freq_day
-      ! enddo
+       do c = 1,ncwd
+          currentPatch%cwd_ag(c) =  currentPatch%cwd_ag(c) + currentPatch%dcwd_ag_dt(c)* hlm_freq_day
+          currentPatch%cwd_bg(c) =  currentPatch%cwd_bg(c) + currentPatch%dcwd_bg_dt(c)* hlm_freq_day
+       enddo
 
-      ! do ft = 1,numpft
-      !    currentPatch%leaf_litter(ft) = currentPatch%leaf_litter(ft) + currentPatch%dleaf_litter_dt(ft)* hlm_freq_day
-       !   currentPatch%root_litter(ft) = currentPatch%root_litter(ft) + currentPatch%droot_litter_dt(ft)* hlm_freq_day
-      ! enddo
+       do ft = 1,numpft
+          currentPatch%leaf_litter(ft) = currentPatch%leaf_litter(ft) + currentPatch%dleaf_litter_dt(ft)* hlm_freq_day
+          currentPatch%root_litter(ft) = currentPatch%root_litter(ft) + currentPatch%droot_litter_dt(ft)* hlm_freq_day
+       enddo
 
-       !do c = 1,ncwd
-       !   if(currentPatch%cwd_ag(c)<small_no)then
-       !     write(fates_log(),*) 'negative CWD_AG', currentPatch%cwd_ag(c),CurrentSite%lat,currentSite%lon
-       !     currentPatch%cwd_ag(c) = small_no
-       !   endif
-       !   if(currentPatch%cwd_bg(c)<small_no)then
-       !     write(fates_log(),*) 'negative CWD_BG', currentPatch%cwd_bg(c),CurrentSite%lat,CurrentSite%lon
-       !     currentPatch%cwd_bg(c) = small_no
-       !   endif
-      ! enddo
+       do c = 1,ncwd
+          if(currentPatch%cwd_ag(c)<small_no)then
+            write(fates_log(),*) 'negative CWD_AG', currentPatch%cwd_ag(c),CurrentSite%lat,currentSite%lon
+            currentPatch%cwd_ag(c) = small_no
+          endif
+          if(currentPatch%cwd_bg(c)<small_no)then
+            write(fates_log(),*) 'negative CWD_BG', currentPatch%cwd_bg(c),CurrentSite%lat,CurrentSite%lon
+            currentPatch%cwd_bg(c) = small_no
+          endif
+       enddo
 
-       !do ft = 1,numpft
-       !   if(currentPatch%leaf_litter(ft)<small_no)then
-       !     write(fates_log(),*) 'negative leaf litter numerical error', &
-       !           currentPatch%leaf_litter(ft),CurrentSite%lat,CurrentSite%lon,&
-        !    currentPatch%dleaf_litter_dt(ft),currentPatch%leaf_litter_in(ft), &
-       !     currentPatch%leaf_litter_out(ft),currentpatch%age
-       !     currentPatch%leaf_litter(ft) = small_no
-        !  endif
-        !  if(currentPatch%root_litter(ft)<small_no)then
-        !       write(fates_log(),*) 'negative root litter numerical error', currentPatch%root_litter(ft), &
-        !       currentPatch%droot_litter_dt(ft)* hlm_freq_day, &
-        !       CurrentSite%lat,CurrentSite%lon
-        !    currentPatch%root_litter(ft) = small_no
-        !  endif
-      ! enddo
+       do ft = 1,numpft
+          if(currentPatch%leaf_litter(ft)<small_no)then
+            write(fates_log(),*) 'negative leaf litter numerical error', &
+                  currentPatch%leaf_litter(ft),CurrentSite%lat,CurrentSite%lon,&
+            currentPatch%dleaf_litter_dt(ft),currentPatch%leaf_litter_in(ft), &
+            currentPatch%leaf_litter_out(ft),currentpatch%age
+            currentPatch%leaf_litter(ft) = small_no
+          endif
+          if(currentPatch%root_litter(ft)<small_no)then
+               write(fates_log(),*) 'negative root litter numerical error', currentPatch%root_litter(ft), &
+               currentPatch%droot_litter_dt(ft)* hlm_freq_day, &
+               CurrentSite%lat,CurrentSite%lon
+            currentPatch%root_litter(ft) = small_no
+          endif
+       enddo
 
      
        ! update cohort number. This needs to happen after the CWD_input and seed_input calculations as they 
        ! assume the pre-mortality currentCohort%n. 
-     !  currentCohort => currentPatch%shortest
-     !  do while(associated(currentCohort)) 
-       !  currentCohort%n = max(small_no,currentCohort%n + currentCohort%dndt * hlm_freq_day )  
-       !  currentCohort => currentCohort%taller
-      ! enddo
+       currentCohort => currentPatch%shortest
+       do while(associated(currentCohort)) 
+         currentCohort%n = max(small_no,currentCohort%n + currentCohort%dndt * hlm_freq_day )  
+         currentCohort => currentCohort%taller
+       enddo
 
        currentPatch => currentPatch%older
 
     enddo
 
     ! at the site level, update the seed bank mass
-    !Liang Wei turned off
-    
-    !do ft = 1,numpft
-    !   currentSite%seed_bank(ft) = currentSite%seed_bank(ft) + currentSite%dseed_dt(ft)*hlm_freq_day
-    !enddo
+    do ft = 1,numpft
+       currentSite%seed_bank(ft) = currentSite%seed_bank(ft) + currentSite%dseed_dt(ft)*hlm_freq_day
+    enddo
 
     ! Check for negative values. Write out warning to show carbon balance. 
-    !do ft = 1,numpft
-    !   if(currentSite%seed_bank(ft)<small_no)then
-    !      write(fates_log(),*) 'negative seedbank', currentSite%seed_bank(ft)
-    !      currentSite%seed_bank(ft) = small_no
-    !   endif
-    !enddo
+    do ft = 1,numpft
+       if(currentSite%seed_bank(ft)<small_no)then
+          write(fates_log(),*) 'negative seedbank', currentSite%seed_bank(ft)
+          currentSite%seed_bank(ft) = small_no
+       endif
+    enddo
 
   end subroutine ed_integrate_state_variables
 
@@ -398,54 +384,49 @@ contains
     integer :: cohort_number ! To print out the number of cohorts.  
     integer :: g             ! Counter for sites
     !-----------------------------------------------------------------------
-     !Liang Wei, Temp change May18_2018, off next next 4 lines for balance check
-    call canopy_spread(currentSite)  !Liang Wei, off temp
-  
-    !call ed_total_balance_check(currentSite,6)
-    call ed_total_balance_check(currentSite,2)
 
-    !liang wei
-    call canopy_structure(currentSite, bc_in)  
+    call canopy_spread(currentSite)
 
-    !call ed_total_balance_check(currentSite,7)  !Liang Wei, off
-    call ed_total_balance_check(currentSite,3)
+    call ed_total_balance_check(currentSite,6)
 
-    
-    !Liang Wei  off
-    !currentPatch => currentSite%oldest_patch
-    !do while(associated(currentPatch))
+    call canopy_structure(currentSite, bc_in)
 
-    !   ! Is termination really needed here? canopy_structure just called it several times! (rgk)
-    !   call terminate_cohorts(currentSite, currentPatch, 1) 
-    !   call terminate_cohorts(currentSite, currentPatch, 2) 
+    call ed_total_balance_check(currentSite,7)
 
-    !   ! FIX(SPM,040314) why is this needed for BFB restarts? Look into this at some point
-    !   cohort_number = count_cohorts(currentPatch)  
-    !   if ( DEBUG ) then
-    !      write(fates_log(),*) 'tempCount ',cohort_number
-    !   endif
+    currentPatch => currentSite%oldest_patch
+    do while(associated(currentPatch))
 
-    !   ! Note (RF)
-    !   ! This breaks the balance check, but if we leave it out, then 
-    !   ! the first new patch that isn't fused has no cohorts at the end of the spawn process
-    !   ! and so there are radiation errors instead. 
-    !   ! Fixing this would likely require a re-work of how seed germination works which would be tricky. 
-    !   if(currentPatch%countcohorts < 1)then
-    !      !write(fates_log(),*) 'ED: calling recruitment for no cohorts',currentSite%clmgcell,currentPatch%patchno
-    !      !call recruitment(1, currentSite, currentPatch)
-    !      ! write(fates_log(),*) 'patch empty',currentPatch%area,currentPatch%age
-    !   endif
+       ! Is termination really needed here? canopy_structure just called it several times! (rgk)
+       call terminate_cohorts(currentSite, currentPatch, 1) 
+       call terminate_cohorts(currentSite, currentPatch, 2) 
 
-    !   currentPatch => currentPatch%younger    
+       ! FIX(SPM,040314) why is this needed for BFB restarts? Look into this at some point
+       cohort_number = count_cohorts(currentPatch)  
+       if ( debug ) then
+          write(fates_log(),*) 'tempCount ',cohort_number
+       endif
 
-    !enddo
-    !Liang Wei  off
-    !! FIX(RF,032414). This needs to be monthly, not annual
-    !! If this is the second to last day of the year, then perform trimming
+       ! Note (RF)
+       ! This breaks the balance check, but if we leave it out, then 
+       ! the first new patch that isn't fused has no cohorts at the end of the spawn process
+       ! and so there are radiation errors instead. 
+       ! Fixing this would likely require a re-work of how seed germination works which would be tricky. 
+       if(currentPatch%countcohorts < 1)then
+          !write(fates_log(),*) 'ED: calling recruitment for no cohorts',currentSite%clmgcell,currentPatch%patchno
+          !call recruitment(1, currentSite, currentPatch)
+          ! write(fates_log(),*) 'patch empty',currentPatch%area,currentPatch%age
+       endif
+
+       currentPatch => currentPatch%younger    
+
+    enddo
+
+    ! FIX(RF,032414). This needs to be monthly, not annual
+    ! If this is the second to last day of the year, then perform trimming
     if( hlm_day_of_year == hlm_days_per_year-1) then
 
        write(fates_log(),*) 'calling trim canopy' 
-      call trim_canopy(currentSite)  
+       call trim_canopy(currentSite)  
     endif
 
   end subroutine ed_update_site
@@ -514,7 +495,7 @@ contains
     !               burned_litter * new_patch%area !kG/site/day
     ! -----------------------------------------------------------------------------------
     
-    if ( error_frac > 10e-3 ) then  !Liang Wei original : 10e-6
+    if ( error_frac > 10e-6 ) then
        write(fates_log(),*) 'carbon balance error detected'
        write(fates_log(),*) 'error fraction relative to biomass stock:',error_frac
        write(fates_log(),*) 'call index: ',call_index
@@ -528,14 +509,12 @@ contains
        write(fates_log(),*) 'seeds',seed_stock
        write(fates_log(),*) 'previous total',currentSite%old_stock  
 
-       if(DEBUG)then
+       if(debug)then
           change_in_stock = 0.0_r8
           biomass_stock   = 0.0_r8
           litter_stock    = 0.0_r8
           
-	  ! Liang Wei May 21, 2018 temporarily turn off  1 line below
-          !seed_stock   =  sum(currentSite%seed_bank)*AREA
-	  seed_stock = 0.0_r8 !Liang Wei
+          seed_stock   =  sum(currentSite%seed_bank)*AREA
           currentPatch => currentSite%oldest_patch 
           do while(associated(currentPatch))
              write(fates_log(),*) '---------------------------------------'
@@ -577,7 +556,7 @@ contains
     ! WARNING: Turning off things like dynamics is experimental. The setting of
     ! variables to trivial values may not be complete, use at your own risk.
     ! ----------------------------------------------------------------------------------
-    
+
     ! Arguments
     type(ed_site_type)      , intent(inout), target  :: currentSite
     
@@ -605,16 +584,13 @@ contains
           currentCohort%npp_sapw = 0.0_r8
           currentCohort%npp_dead = 0.0_r8
           currentCohort%npp_seed = 0.0_r8
-          currentCohort%npp_stor = 0.0_r8  !Liang Wei,will allow calculation of stored C 
-          
-	  ! Liang Wei, Temp change May18_2018, will let mortality calculate
-	  ! Liang Wei, Temp: als set currentCohort%dmort  = 0  in DpatchDynamicsMod
-          !currentCohort%bmort = 0.0_r8
-          !currentCohort%hmort = 0.0_r8
-          !currentCohort%cmort = 0.0_r8
-          !currentCohort%fmort = 0.0_r8
-          !currentCohort%frmort = 0.0_r8
-	  !currentCohort%d13cmort = 0.0_r8
+          currentCohort%npp_stor = 0.0_r8
+
+          currentCohort%bmort = 0.0_r8
+          currentCohort%hmort = 0.0_r8
+          currentCohort%cmort = 0.0_r8
+          currentCohort%fmort = 0.0_r8
+          currentCohort%frmort = 0.0_r8
 
           currentCohort%dndt      = 0.0_r8
 	  currentCohort%dhdt      = 0.0_r8

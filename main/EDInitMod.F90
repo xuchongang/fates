@@ -19,6 +19,7 @@ module EDInitMod
   use EDTypesMod                , only : nuMWaterMem
   use EDTypesMod                , only : maxpft
   use EDTypesMod                , only : AREA
+  use EDTypesMod                , only : init_dense_forest
   use FatesInterfaceMod         , only : bc_in_type
   use FatesInterfaceMod         , only : hlm_use_planthydro
   use FatesInterfaceMod         , only : hlm_use_inventory_init
@@ -40,7 +41,7 @@ module EDInitMod
   implicit none
   private
 
-  logical   ::  DEBUG = .false.
+  logical   ::  debug = .false.
 
   character(len=*), parameter, private :: sourcefile = &
         __FILE__
@@ -221,6 +222,7 @@ contains
        sites(s)%old_stock  = 0.0_r8
 
        sites(s)%spread     = 1.0_r8
+       if(init_dense_forest)sites(s)%spread = 0._r8
     end do
 
     return
@@ -354,6 +356,7 @@ contains
     real(r8) :: b_leaf     ! biomass in leaves [kgC]
     real(r8) :: b_fineroot ! biomass in fine roots [kgC]
     real(r8) :: b_sapwood  ! biomass in sapwood [kgC]
+    real(r8) :: a_sapwood  ! area in sapwood (dummy) [m2]
     integer, parameter :: rstatus = 0
 
     !----------------------------------------------------------------------
@@ -397,7 +400,7 @@ contains
        call bfineroot(temp_cohort%dbh,pft,temp_cohort%canopy_trim,b_fineroot)
 
        ! Calculate sapwood biomass
-       call bsap_allom(temp_cohort%dbh,pft,temp_cohort%canopy_trim,b_sapwood)
+       call bsap_allom(temp_cohort%dbh,pft,temp_cohort%canopy_trim,a_sapwood,b_sapwood)
        
        call bdead_allom( b_agw, b_bgw, b_sapwood, pft, temp_cohort%bdead )
 
@@ -428,7 +431,7 @@ contains
           cstatus = site_in%dstatus
        endif
 
-       if ( DEBUG ) write(fates_log(),*) 'EDInitMod.F90 call create_cohort '
+       if ( debug ) write(fates_log(),*) 'EDInitMod.F90 call create_cohort '
 
        call create_cohort(site_in, patch_in, pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
             b_leaf, b_fineroot, b_sapwood, temp_cohort%bdead, temp_cohort%bstore, &

@@ -21,7 +21,7 @@ module EDAccumulateFluxesMod
   !
   public :: AccumulateFluxes_ED
 
-  logical :: DEBUG = .false.  ! for debugging this module
+  logical :: debug = .false.  ! for debugging this module
 
   character(len=*), parameter, private :: sourcefile = &
         __FILE__
@@ -88,8 +88,9 @@ contains
                 ! Accumulate fluxes from hourly to daily values.
                 ! _tstep fluxes are KgC/indiv/timestep _acc are KgC/indiv/day
 
-                if ( DEBUG ) then
 
+                
+                if ( debug ) then
                    write(fates_log(),*) 'EDAccumFlux 64 ',ccohort%npp_tstep
                    write(fates_log(),*) 'EDAccumFlux 66 ',ccohort%gpp_tstep
                    write(fates_log(),*) 'EDAccumFlux 67 ',ccohort%resp_tstep

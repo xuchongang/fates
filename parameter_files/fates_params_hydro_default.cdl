@@ -726,7 +726,7 @@ data:
 
  fates_allom_l2fr = 1, 1 ;
 
- fates_allom_la_per_sa_int = 1000.0, 1000.0 ;
+ fates_allom_la_per_sa_int = 0.8, 0.8 ;
 
  fates_allom_la_per_sa_slp = 0.0, 0.0 ;
 
@@ -920,7 +920,7 @@ data:
 
  fates_trim_limit = 0.3, 0.3 ;
 
- fates_wood_cn_ratio = 210, 210 ;
+ fates_wood_cn_ratio = 210000, 210000 ;
 
  fates_wood_density = 0.7, 0.7 ;
 

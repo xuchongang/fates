@@ -10,12 +10,14 @@ module EDMortalityFunctionsMod
    use EDTypesMod            , only : ed_cohort_type
    use EDTypesMod            , only : ed_site_type
    use EDTypesMod            , only : ed_patch_type
+   use EDTypesMod            , only : static_canopy_structure
    use FatesConstantsMod     , only : itrue,ifalse
    use FatesAllometryMod     , only : bleaf
    use FatesAllometryMod     , only : storage_fraction_of_target
    use FatesInterfaceMod     , only : bc_in_type
    use FatesInterfaceMod     , only : hlm_use_ed_prescribed_phys
    use FatesInterfaceMod     , only : hlm_freq_day
+   use FatesInterfaceMod     , only : hlm_use_planthydro
    use EDLoggingMortalityMod , only : LoggingMortality_frac
    use EDParamsMod           , only : fates_mortality_disturbance_fraction
    use FatesInterfaceMod     , only : bc_in_type
@@ -28,7 +30,6 @@ module EDMortalityFunctionsMod
    public :: mortality_rates
    public :: Mortality_Derivative
    
-   logical :: DEBUG_growth = .false.
    
    ! ============================================================================
    ! 10/30/09: Created by Rosie Fisher
@@ -61,9 +62,14 @@ contains
     real(r8) :: frac  ! relativised stored carbohydrate
     real(r8) :: b_leaf ! target leaf biomass kgC
     real(r8) :: hf_sm_threshold    ! hydraulic failure soil moisture threshold 
+    real(r8) :: hf_flc_threshold   ! hydraulic failure fractional loss of conductivity threshold
     real(r8) :: temp_dep_fraction  ! Temp. function (freezing mortality)
     real(r8) :: temp_in_C          ! Daily averaged temperature in Celcius
-
+    real(r8) :: min_fmc_ag         ! minimum fraction of maximum conductivity for aboveground
+    real(r8) :: min_fmc_tr         ! minimum fraction of maximum conductivity for transporting root
+    real(r8) :: min_fmc_ar         ! minimum fraction of maximum conductivity for absorbing root
+    real(r8) :: min_fmc            ! minimum fraction of maximum conductivity for whole plant
+    real(r8) :: flc                ! fractional loss of conductivity 
     real(r8), parameter :: frost_mort_buffer = 5.0_r8  ! 5deg buffer for freezing mortality
 
     logical, parameter :: test_zero_mortality = .false. ! Developer test which
@@ -89,12 +95,28 @@ contains
 
     ! Proxy for hydraulic failure induced mortality. 
     hf_sm_threshold = EDPftvarcon_inst%hf_sm_threshold(cohort_in%pft)
-
-    if(cohort_in%patchptr%btran_ft(cohort_in%pft) <= hf_sm_threshold)then 
+    hf_flc_threshold = EDPftvarcon_inst%hf_flc_threshold(cohort_in%pft)
+    if(hlm_use_planthydro.eq.itrue)then
+     !note the flc is set as the fraction of max conductivity in hydro
+     min_fmc_ag = minval(cohort_in%co_hydr%flc_ag(:))
+     min_fmc_tr = minval(cohort_in%co_hydr%flc_troot(:))
+     min_fmc_ar = minval(cohort_in%co_hydr%flc_aroot(:))
+     min_fmc = min(min_fmc_ag, min_fmc_tr)
+     min_fmc = min(min_fmc, min_fmc_ar)
+     flc = 1.0_r8-min_fmc
+     if(flc >= hf_flc_threshold .and. hf_flc_threshold < 1.0_r8 )then 
+       hmort = (flc-hf_flc_threshold)/(1.0_r8-hf_flc_threshold) * &
+           EDPftvarcon_inst%mort_scalar_hydrfailure(cohort_in%pft)
+     else
+       hmort = 0.0_r8
+     endif      
+    else
+     if(cohort_in%patchptr%btran_ft(cohort_in%pft) <= hf_sm_threshold)then 
        hmort = EDPftvarcon_inst%mort_scalar_hydrfailure(cohort_in%pft)
      else
        hmort = 0.0_r8
-     endif 
+     endif
+    endif 
     
     ! Carbon Starvation induced mortality.
     if ( cohort_in%dbh  >  0._r8 ) then
@@ -161,7 +183,7 @@ contains
        frmort = 0._r8
     endif
 
-    if (test_zero_mortality) then
+    if (test_zero_mortality.or.static_canopy_structure) then
        cmort = 0.0_r8
        hmort = 0.0_r8
        frmort = 0.0_r8
