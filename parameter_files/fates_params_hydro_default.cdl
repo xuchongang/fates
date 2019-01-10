@@ -858,11 +858,11 @@ data:
 
  fates_pft_used = 1, 1 ;
 
- fates_phen_evergreen = 1, 1 ;
+ fates_phen_evergreen = 1, 0 ;
 
  fates_phen_season_decid = 0, 0 ;
 
- fates_phen_stress_decid = 0, 0 ;
+ fates_phen_stress_decid = 0, 1 ;
 
  fates_prescribed_mortality_canopy = 0.0194, 0.0194 ;
 
@@ -946,7 +946,7 @@ data:
 
  fates_fire_nignitions = 15 ;
  
- fates_hydr_kmax_rsurf = 0.001;
+ fates_hydr_kmax_rsurf = 20;
 
  fates_hydr_psi0 = 0 ;
 
