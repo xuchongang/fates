@@ -727,9 +727,9 @@ data:
 
  fates_allom_d2bl3 = 0.0, 0.0 ;
 
- fates_allom_d2ca_coefficient_max = 0.03, 0.03 ;
+ fates_allom_d2ca_coefficient_max = 0.004, 0.004 ;
 
- fates_allom_d2ca_coefficient_min = 0.01, 0.01 ;
+ fates_allom_d2ca_coefficient_min = 0.002, 0.002 ;
 
  fates_allom_d2h1 = 1.0, 1.0 ;
 
@@ -737,7 +737,7 @@ data:
 
  fates_allom_d2h3 = -999.9, -999.9 ;
 
- fates_allom_dbh_maxheight = 1, 1 ;
+ fates_allom_dbh_maxheight = 1.8, 1.8 ;
 
  fates_allom_fmode = 1, 1 ;
 
@@ -915,9 +915,9 @@ data:
 
  fates_mort_bmort = 0.9, 0.9 ;
  
- fates_mort_phmort_rate = 1.0, 1.0;
+ fates_mort_phmort_rate = 300, 300 ;
  
- fates_mort_phmort_size_threshold = 0.2, 0.2;
+ fates_mort_phmort_size_threshold = 0.5, 0.5 ;
 
  fates_mort_freezetol = -25, -25 ;
 
@@ -965,15 +965,15 @@ data:
  
  fates_senleaf_long_fdrought = 1.0, 1.0 ;
 
- fates_roota_par = 7, 7 ;
+ fates_roota_par = 11, 11 ;
 
- fates_rootb_par = 1, 1 ;
+ fates_rootb_par = 3, 3 ;
 
  fates_seed_alloc = 0.1, 0.1 ;
 
  fates_seed_alloc_mature = 0, 0 ;
 
- fates_seed_dbh_repro_threshold = 0.02, 0.02;
+ fates_seed_dbh_repro_threshold = 0.5, 0.5;
 
  fates_seed_decay_turnover = 0.51, 0.51 ;
 
@@ -999,7 +999,7 @@ data:
 
  fates_wood_density = 0.01, 0.01 ;
 
- fates_woody = 1, 1 ;
+ fates_woody = 0, 0 ;
 
  fates_z0mr = 0.055, 0.055 ;
 
@@ -1049,15 +1049,15 @@ data:
 
  fates_patch_fusion_tol = 0.05 ;
 
- fates_phen_a = -68 ;
+ fates_phen_a = -108;
 
- fates_phen_b = 638 ;
+ fates_phen_b = 238 ;
 
  fates_phen_c = -0.001 ;
 
  fates_phen_chiltemp = 5 ;
 
- fates_phen_coldtemp = 7.5 ;
+ fates_phen_coldtemp = 17.5 ;
 
  fates_phen_doff_time = 100 ;
 
@@ -1065,7 +1065,7 @@ data:
 
  fates_phen_mindayson = 30 ;
 
- fates_phen_ncolddayslim = 5 ;
+ fates_phen_ncolddayslim = 3 ;
 
  fates_drying_ratio = 13000 ;
 
