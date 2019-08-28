@@ -524,6 +524,8 @@ contains
           
              if ((currentPatch%disturbance_rates(dtype_ilog) > &
                   currentPatch%disturbance_rates(dtype_ifall)) .and. &
+                 (currentPatch%disturbance_rates(dtype_ilog) > &
+                  currentPatch%disturbance_rates(dtype_inmort)) .and. &		  
                   (currentPatch%disturbance_rates(dtype_ilog) > &
                    currentPatch%disturbance_rates(dtype_ifire)) ) then 
                 
@@ -533,6 +535,8 @@ contains
 
              elseif ((currentPatch%disturbance_rates(dtype_ifire) > &
                       currentPatch%disturbance_rates(dtype_ifall)) .and. &
+                     (currentPatch%disturbance_rates(dtype_ifire) > &
+                      currentPatch%disturbance_rates(dtype_inmort)) .and. &		      
                      (currentPatch%disturbance_rates(dtype_ifire) > &
                       currentPatch%disturbance_rates(dtype_ilog)) ) then
                 
@@ -1489,7 +1493,7 @@ contains
 	     ! If the insect model is turned on, we need to account for insect-killed trees going to litter.
 	     if(hlm_use_insect.eq.itrue)then
 	     	canopy_dead = currentCohort%n * &
-			min(1.0_r8,(currentCohort%dmort + currentCohort%inmort) * hlm_freq_day)
+			min(1.0_r8,(currentCohort%dmort + currentCohort%inmort) * hlm_freq_day * fates_mortality_disturbance_fraction)
 	     end if	     
 
              canopy_mortality_woody_litter(p)= canopy_mortality_woody_litter(p) + &
