@@ -45,7 +45,12 @@ module EDLoggingMortalityMod
    use FatesGlobals      , only : fates_log
    use shr_log_mod       , only : errMsg => shr_log_errMsg
    use FatesPlantHydraulicsMod, only : AccumulateMortalityWaterStorage
-   
+
+   use PRTGenericMod     , only : all_carbon_elements
+   use PRTGenericMod     , only : sapw_organ, struct_organ, leaf_organ
+   use PRTGenericMod     , only : fnrt_organ, store_organ, repro_organ
+
+
    implicit none
    private
 
@@ -54,7 +59,8 @@ module EDLoggingMortalityMod
 
    character(len=*), parameter, private :: sourcefile = &
          __FILE__
-   
+
+
    public :: LoggingMortality_frac
    public :: logging_litter_fluxes
    public :: logging_time
@@ -107,7 +113,7 @@ contains
 
       else if(icode < 0 .and. icode > -366) then
          ! Logging event every year on specific day of year
-         if(hlm_day_of_year .eq. icode  ) then
+         if(hlm_day_of_year .eq. abs(icode)  ) then
             logging_time = .true.
          end if
 
@@ -146,50 +152,71 @@ contains
 
    ! ======================================================================================
 
-   subroutine LoggingMortality_frac( pft_i, dbh, lmort_direct,lmort_collateral,lmort_infra )
+   subroutine LoggingMortality_frac( pft_i, dbh, canopy_layer, lmort_direct, &
+        lmort_collateral, lmort_infra, l_degrad )
 
       ! Arguments
       integer,  intent(in)  :: pft_i            ! pft index 
       real(r8), intent(in)  :: dbh              ! diameter at breast height (cm)
+      integer,  intent(in)  :: canopy_layer     ! canopy layer of this cohort
       real(r8), intent(out) :: lmort_direct     ! direct (harvestable) mortality fraction
       real(r8), intent(out) :: lmort_collateral ! collateral damage mortality fraction
       real(r8), intent(out) :: lmort_infra      ! infrastructure mortality fraction
+      real(r8), intent(out) :: l_degrad         ! fraction of trees that are not killed
+                                                ! but suffer from forest degradation (i.e. they
+                                                ! are moved to newly-anthro-disturbed secondary
+                                                ! forest patch)
 
       ! Parameters
       real(r8), parameter   :: adjustment = 1.0 ! adjustment for mortality rates
  
       if (logging_time) then 
+
+         
          if(EDPftvarcon_inst%woody(pft_i) == 1)then ! only set logging rates for trees
 
             ! Pass logging rates to cohort level 
 
             if (dbh >= logging_dbhmin ) then
                lmort_direct = logging_direct_frac * adjustment
-               lmort_collateral = logging_collateral_frac * adjustment
+               l_degrad = 0._r8
             else
                lmort_direct = 0.0_r8 
-               lmort_collateral = 0.0_r8
+               l_degrad = logging_direct_frac * adjustment
             end if
            
             if (dbh >= logging_dbhmax_infra) then
                lmort_infra      = 0.0_r8
+               l_degrad         = l_degrad + logging_mechanical_frac * adjustment
             else
                lmort_infra      = logging_mechanical_frac * adjustment
             end if
             !damage rates for size class < & > threshold_size need to be specified seperately
 
-            ! Collateral damage to smaller plants below the direct logging size threshold
+            ! Collateral damage to smaller plants below the canopy layer
             ! will be applied via "understory_death" via the disturbance algorithm
+            ! Important: Degredation rates really only have an impact when
+            ! applied to the canopy layer. So we don't add to degredation
+            ! for collateral damage, even understory collateral damage.
+
+            if (canopy_layer .eq. 1) then
+               lmort_collateral = logging_collateral_frac * adjustment
+            else
+               lmort_collateral = 0._r8
+            endif
 
          else
             lmort_direct    = 0.0_r8
             lmort_collateral = 0.0_r8
             lmort_infra      = 0.0_r8
+            l_degrad         = 0.0_r8
          end if
+
       else 
          lmort_direct    = 0.0_r8
          lmort_collateral = 0.0_r8
          lmort_infra      = 0.0_r8
+         l_degrad         = 0.0_r8
       end if
 
    end subroutine LoggingMortality_frac
@@ -220,15 +247,17 @@ contains
       !        the mortality rates governing the fluxes, follow a different rule set.
       !        We also compute an export flux (product) that does not go to litter.  
       !
-      !  Trunk Product Flux: Only usable wood is exported from a site.  This is the above-ground
-      !                      portion of the bole, and only boles associated with direct-logging,
-      !                      not inftrastructure or collateral damage mortality.
+      !  Trunk Product Flux: Only usable wood is exported from a site, substracted by a 
+      !        transportation loss fraction. This is the above-ground portion of the bole, 
+      !        and only boles associated with direct-logging, not inftrastructure or 
+      !        collateral damage mortality.
       !        
       ! -------------------------------------------------------------------------------------------
 
 
       !USES:
       use SFParamsMod,  only : SF_val_cwd_frac
+      use EDParamsMod,  only : logging_export_frac
       use EDtypesMod,   only : area
       use EDtypesMod,   only : ed_site_type
       use EDtypesMod,   only : ed_patch_type
@@ -260,6 +289,11 @@ contains
       real(r8) :: leaf_litter         ! Leafy biomass transferred through mortality [kgC/site]
       real(r8) :: root_litter         ! Rooty + storage biomass transferred through mort [kgC/site]
       real(r8) :: agb_frac            ! local copy of the above ground biomass fraction [fraction]
+      real(r8) :: leaf_c              ! leaf carbon [kg]
+      real(r8) :: fnrt_c              ! fineroot carbon [kg]
+      real(r8) :: sapw_c              ! sapwood carbon [kg]
+      real(r8) :: store_c             ! storage carbon [kg]
+      real(r8) :: struct_c            ! structure carbon [kg]
       integer  :: p                   ! pft index
       integer  :: c                   ! cwd index
 
@@ -274,18 +308,32 @@ contains
       currentCohort => currentPatch%shortest
       do while(associated(currentCohort))       
          p = currentCohort%pft
+
+         sapw_c   = currentCohort%prt%GetState(sapw_organ, all_carbon_elements)
+         struct_c = currentCohort%prt%GetState(struct_organ, all_carbon_elements)
+         leaf_c   = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+         fnrt_c   = currentCohort%prt%GetState(fnrt_organ, all_carbon_elements)
+         store_c  = currentCohort%prt%GetState(store_organ, all_carbon_elements)
          
-        
          if(currentCohort%canopy_layer == 1)then         
             direct_dead   = currentCohort%n * currentCohort%lmort_direct
             indirect_dead = currentCohort%n * &
                   (currentCohort%lmort_collateral + currentCohort%lmort_infra)
 
          else
+
+            ! This routine is only called during disturbance.  The litter
+            ! fluxes from non-disturbance generating mortality are 
+            ! handled in EDPhysiology.  Disturbance generating mortality
+            ! are those cohorts in the top canopy layer, or those
+            ! plants that were impacted. Thus, no direct dead can occur
+            ! here, and indirect are impacts.
+
             if(EDPftvarcon_inst%woody(currentCohort%pft) == 1)then
                direct_dead   = 0.0_r8
-               indirect_dead = logging_coll_under_frac * currentCohort%n * &
-                     (patch_site_areadis/currentPatch%area)  !kgC/site/day
+               indirect_dead = logging_coll_under_frac * &
+                    (1._r8-currentPatch%fract_ldist_not_harvested) * currentCohort%n * &
+                    (patch_site_areadis/currentPatch%area)   !kgC/site/day
             else
                ! If the cohort of interest is grass, it will not experience
                ! any mortality associated with the logging disturbance
@@ -315,7 +363,7 @@ contains
          
          do c = 1,ncwd-1
             woody_litter = (direct_dead+indirect_dead) * &
-                  (currentCohort%bdead+currentCohort%bsw)
+                  (struct_c + sapw_c ) 
             cwd_litter_density = SF_val_CWD_frac(c) * woody_litter / litter_area
             
             newPatch%cwd_ag(c)     = newPatch%cwd_ag(c)     + agb_frac * cwd_litter_density * np_mult
@@ -344,7 +392,7 @@ contains
          ! collateral damange and infrastructure logging is applied to bole litter
          ! ----------------------------------------------------------------------------------------
 
-         woody_litter =  indirect_dead * (currentCohort%bdead+currentCohort%bsw)
+         woody_litter =  indirect_dead * (struct_c + sapw_c)
          
          cwd_litter_density = SF_val_CWD_frac(ncwd) * woody_litter / litter_area
          
@@ -368,7 +416,7 @@ contains
          ! Handle litter flux for the belowground portion of directly logged boles
          ! ----------------------------------------------------------------------------------------
 
-         woody_litter =  direct_dead * (currentCohort%bdead+currentCohort%bsw)
+         woody_litter =  direct_dead * (struct_c + sapw_c)
          cwd_litter_density = SF_val_CWD_frac(ncwd) * woody_litter / litter_area
          
          newPatch%cwd_bg(ncwd)     = newPatch%cwd_bg(ncwd)     + &
@@ -384,25 +432,41 @@ contains
          
          ! ----------------------------------------------------------------------------------------
          ! Handle harvest (export, flux-out) flux for the above ground boles 
-         ! In this case the boles from direct logging are exported off-site and are not added 
-         ! to the litter pools.  That is why we handle this outside the loop above. Only the 
-         ! collateral damange and infrastructure logging is applied to litter
+         ! In this case a fraction (export_frac) of the boles from direct logging are 
+         ! exported off-site, while the remainder (1-export_frac) is added to the litter pools.   
          ! 
          ! Losses to the system as a whole, for C-balancing (kGC/site/day)
          ! Site level product, (kgC/site, accumulated over simulation)
          ! ----------------------------------------------------------------------------------------
-         
-         trunk_product_site = trunk_product_site + &
-               SF_val_CWD_frac(ncwd) * agb_frac * direct_dead * (currentCohort%bdead+currentCohort%bsw)
 
+         ! CWD contributed by logged boles due to losses in transportation
+         newPatch%cwd_ag(ncwd)     = newPatch%cwd_ag(ncwd)     + agb_frac * &
+               (1.0_r8-logging_export_frac) * cwd_litter_density * np_mult
+         currentPatch%cwd_ag(ncwd) = currentPatch%cwd_ag(ncwd) + &
+               (1.0_r8 - logging_export_frac) * agb_frac * cwd_litter_density 
+
+         currentSite%CWD_AG_diagnostic_input_carbonflux(ncwd) =       &
+               currentSite%CWD_AG_diagnostic_input_carbonflux(ncwd) + &
+               (1.0_r8-logging_export_frac) * SF_val_CWD_frac(ncwd) * &
+               woody_litter * hlm_days_per_year * agb_frac/ AREA
+
+         delta_litter_stock  = delta_litter_stock  + (1.0_r8-logging_export_frac) *&
+               woody_litter * SF_val_CWD_frac(ncwd)
+
+         ! Send export_frac * AGB component of boles from direct-logging activities to
+         ! export/harvest pool
+         ! Generate trunk product (kgC/day/site)
+         trunk_product_site = trunk_product_site + &
+               logging_export_frac * SF_val_CWD_frac(ncwd) * agb_frac * &
+               direct_dead * (struct_c + sapw_c)
 
          ! ----------------------------------------------------------------------------------------
          ! Handle fluxes of leaf, root and storage carbon into litter pools. 
          !  (none of these are exported)
          ! ----------------------------------------------------------------------------------------
 
-         leaf_litter = (direct_dead+indirect_dead)*currentCohort%bl
-         root_litter = (direct_dead+indirect_dead)*(currentCohort%br+currentCohort%bstore)
+         leaf_litter = (direct_dead+indirect_dead) * leaf_c
+         root_litter = (direct_dead+indirect_dead) * (fnrt_c + store_c)
 
          newPatch%leaf_litter(p) = newPatch%leaf_litter(p) + leaf_litter / litter_area * np_mult
          newPatch%root_litter(p) = newPatch%root_litter(p) + root_litter / litter_area * np_mult 
@@ -431,7 +495,7 @@ contains
          delta_biomass_stock = delta_biomass_stock + &
                                leaf_litter         + &
                                root_litter         + &
-                               (direct_dead+indirect_dead) * (currentCohort%bdead+currentCohort%bsw)
+                               (direct_dead+indirect_dead) * (struct_c + sapw_c)
 
          delta_individual    = delta_individual    + &
                                direct_dead         + &

@@ -7,6 +7,8 @@ module EDInitMod
   use FatesConstantsMod         , only : r8 => fates_r8
   use FatesConstantsMod         , only : ifalse
   use FatesConstantsMod         , only : itrue
+  use FatesConstantsMod         , only : fates_unset_int
+  use FatesConstantsMod         , only : primaryforest
   use FatesGlobals              , only : endrun => fates_endrun
   use EDTypesMod                , only : nclmax
   use FatesGlobals              , only : fates_log
@@ -16,14 +18,27 @@ module EDInitMod
   use EDPatchDynamicsMod        , only : create_patch
   use EDTypesMod                , only : ed_site_type, ed_patch_type, ed_cohort_type
   use EDTypesMod                , only : ncwd
-  use EDTypesMod                , only : nuMWaterMem
+  use EDTypesMod                , only : numWaterMem
+  use EDTypesMod                , only : num_vegtemp_mem
   use EDTypesMod                , only : maxpft
   use EDTypesMod                , only : AREA
+  use EDTypesMod                , only : init_spread_near_bare_ground
+  use EDTypesMod                , only : init_spread_inventory
+  use EDTypesMod                , only : first_leaf_aclass
+  use EDTypesMod                , only : leaves_on
+  use EDTypesMod                , only : leaves_off
+  use EDTypesMod                , only : phen_cstat_nevercold
+  use EDTypesMod                , only : phen_cstat_iscold
+  use EDTypesMod                , only : phen_dstat_timeoff
+  use EDTypesMod                , only : phen_dstat_moistoff
+  use EDTypesMod                , only : phen_cstat_notcold
+  use EDTypesMod                , only : phen_dstat_moiston
   use FatesInterfaceMod         , only : bc_in_type
   use FatesInterfaceMod         , only : hlm_use_planthydro
   use FatesInterfaceMod         , only : hlm_use_inventory_init
   use FatesInterfaceMod         , only : numpft
   use FatesInterfaceMod         , only : hlm_use_insect
+  use FatesInterfaceMod         , only : nleafage
   use ChecksBalancesMod         , only : SiteCarbonStock
   use FatesInterfaceMod         , only : nlevsclass
   use FatesAllometryMod         , only : h2d_allom
@@ -43,7 +58,7 @@ module EDInitMod
   implicit none
   private
 
-  logical   ::  DEBUG = .false.
+  logical   ::  debug = .false.
 
   character(len=*), parameter, private :: sourcefile = &
         __FILE__
@@ -74,7 +89,8 @@ contains
     ! !LOCAL VARIABLES:
     !----------------------------------------------------------------------
     !
-    allocate(site_in%terminated_nindivs(1:nlevsclass,1:numpft,2))
+    allocate(site_in%term_nindivs_canopy(1:nlevsclass,1:numpft))
+    allocate(site_in%term_nindivs_ustory(1:nlevsclass,1:numpft))
     allocate(site_in%demotion_rate(1:nlevsclass))
     allocate(site_in%promotion_rate(1:nlevsclass))
     allocate(site_in%imort_rate(1:nlevsclass,1:numpft))
@@ -86,6 +102,13 @@ contains
     !    call InitInsectSite(site_in%si_insect)
     !endif
     
+    allocate(site_in%fmort_rate_canopy(1:nlevsclass,1:numpft))
+    allocate(site_in%fmort_rate_ustory(1:nlevsclass,1:numpft))
+    allocate(site_in%fmort_rate_cambial(1:nlevsclass,1:numpft))
+    allocate(site_in%fmort_rate_crown(1:nlevsclass,1:numpft))
+    allocate(site_in%growthflux_fusion(1:nlevsclass,1:numpft))
+
+    !
     end subroutine init_site_vars
 
   ! ============================================================================
@@ -109,17 +132,18 @@ contains
     site_in%total_burn_flux_to_atm = 0._r8
 
     ! PHENOLOGY 
-    site_in%status           = 0    ! are leaves in this pixel on or off?
-    site_in%dstatus          = 0
-    site_in%ED_GDD_site      = nan  ! growing degree days
-    site_in%ncd              = nan  ! no chilling days
-    site_in%last_n_days(:)   = 999  ! record of last 10 days temperature for senescence model.
-    site_in%leafondate       = 999  ! doy of leaf on
-    site_in%leafoffdate      = 999  ! doy of leaf off
-    site_in%dleafondate      = 999  ! doy of leaf on drought
-    site_in%dleafoffdate     = 999  ! doy of leaf on drought
-    site_in%water_memory(:)  = nan
 
+    site_in%cstatus          = fates_unset_int    ! are leaves in this pixel on or off?
+    site_in%dstatus          = fates_unset_int
+    site_in%grow_deg_days    = nan  ! growing degree days
+    site_in%nchilldays       = fates_unset_int
+    site_in%ncolddays        = fates_unset_int
+    site_in%cleafondate      = fates_unset_int  ! doy of leaf on
+    site_in%cleafoffdate     = fates_unset_int  ! doy of leaf off
+    site_in%dleafondate      = fates_unset_int  ! doy of leaf on drought
+    site_in%dleafoffdate     = fates_unset_int  ! doy of leaf on drought
+    site_in%water_memory(:)  = nan
+    site_in%vegtemp_memory(:) = nan              ! record of last 10 days temperature for senescence model.
 
     ! SEED
     site_in%seed_bank(:)     = 0._r8
@@ -133,11 +157,22 @@ contains
     site_in%fates_to_bgc_last_ts = 0.0_r8
 
     ! termination and recruitment info
-    site_in%terminated_nindivs(:,:,:) = 0._r8
-    site_in%termination_carbonflux(:) = 0._r8
+    site_in%term_nindivs_canopy(:,:) = 0._r8
+    site_in%term_nindivs_ustory(:,:) = 0._r8
+    site_in%term_carbonflux_canopy = 0._r8
+    site_in%term_carbonflux_ustory = 0._r8
     site_in%recruitment_rate(:) = 0._r8
     site_in%imort_rate(:,:) = 0._r8
     site_in%imort_carbonflux = 0._r8
+    site_in%fmort_rate_canopy(:,:) = 0._r8
+    site_in%fmort_rate_ustory(:,:) = 0._r8
+    site_in%fmort_carbonflux_canopy = 0._r8
+    site_in%fmort_carbonflux_ustory = 0._r8
+    site_in%fmort_rate_cambial(:,:) = 0._r8
+    site_in%fmort_rate_crown(:,:) = 0._r8
+
+    ! fusoin-induced growth flux of individuals
+    site_in%growthflux_fusion(:,:) = 0._r8
 
     ! demotion/promotion info
     site_in%demotion_rate(:) = 0._r8
@@ -178,68 +213,61 @@ contains
     !
     ! !LOCAL VARIABLES:
     integer  :: s
-    real(r8) :: leafon
-    real(r8) :: leafoff
-    real(r8) :: stat
-    real(r8) :: NCD
+    integer  :: cstat      ! cold status phenology flag
     real(r8) :: GDD
-    real(r8) :: dstat
+    integer  :: dstat      ! drought status phenology flag
     real(r8) :: acc_NI
-    real(r8) :: watermem
-    integer  :: dleafoff
-    integer  :: dleafon
+    real(r8) :: watermem 
+    integer  :: cleafon    ! DOY for cold-decid leaf-on, initial guess
+    integer  :: cleafoff   ! DOY for cold-decid leaf-off, initial guess
+    integer  :: dleafoff   ! DOY for drought-decid leaf-off, initial guess
+    integer  :: dleafon    ! DOY for drought-decid leaf-on, initial guess
     !----------------------------------------------------------------------
 
+
+    ! If this is not a restart, we need to start with some reasonable
+    ! starting points. If this is a restart, we leave the values
+    ! as unset ints and reals, and let the restart values be read in
+    ! after this routine
+
     if ( hlm_is_restart == ifalse ) then
-       !initial guess numbers for site condition.
-       NCD      = 0.0_r8
+
        GDD      = 30.0_r8
-       leafon   = 100.0_r8
-       leafoff  = 300.0_r8
-       stat     = 2
+       cleafon  = 100
+       cleafoff = 300 
+       cstat    = phen_cstat_notcold     ! Leaves are on
        acc_NI   = 0.0_r8
-       dstat    = 2
+       dstat    = phen_dstat_moiston     ! Leaves are on
        dleafoff = 300
        dleafon  = 100
        watermem = 0.5_r8
 
-    else ! assignements for restarts
+       do s = 1,nsites
+          sites(s)%nchilldays    = 0
+          sites(s)%ncolddays     = 0        ! recalculated in phenology
+                                            ! immediately, so yes this
+                                            ! is memory-less, but needed
+                                            ! for first value in history file
 
-       NCD      = 1.0_r8 ! NCD should be 1 on restart
-       GDD      = 0.0_r8
-       leafon   = 0.0_r8
-       leafoff  = 0.0_r8
-       stat     = 1
-       acc_NI   = 0.0_r8
-       dstat    = 2
-       dleafoff = 300
-       dleafon  = 100
-       watermem = 0.5_r8
-
-    endif
-
-    do s = 1,nsites
-       sites(s)%ncd          = NCD
-       sites(s)%leafondate   = leafon
-       sites(s)%leafoffdate  = leafoff
-       sites(s)%dleafoffdate = dleafoff
-       sites(s)%dleafondate  = dleafon
-       sites(s)%ED_GDD_site  = GDD
-
-       if ( hlm_is_restart == ifalse ) then
+          sites(s)%cleafondate   = cleafon
+          sites(s)%cleafoffdate  = cleafoff
+          sites(s)%dleafoffdate  = dleafoff
+          sites(s)%dleafondate   = dleafon
+          sites(s)%grow_deg_days = GDD
+          
           sites(s)%water_memory(1:numWaterMem) = watermem
-       end if
+          sites(s)%vegtemp_memory(1:num_vegtemp_mem) = 0._r8
+          
+          sites(s)%cstatus = cstat
+          sites(s)%dstatus = dstat
+          
+          sites(s)%acc_NI     = acc_NI
+          sites(s)%frac_burnt = 0.0_r8
+          sites(s)%old_stock  = 0.0_r8
+          
+       end do
 
-       sites(s)%status = stat
-       !start off with leaves off to initialise
-       sites(s)%dstatus= dstat
-       
-       sites(s)%acc_NI     = acc_NI
-       sites(s)%frac_burnt = 0.0_r8
-       sites(s)%old_stock  = 0.0_r8
-
-       sites(s)%spread     = 1.0_r8
-    end do
+    end if
 
     return
   end subroutine set_site_properties
@@ -302,6 +330,13 @@ contains
 
      if ( hlm_use_inventory_init.eq.itrue ) then
 
+        ! Initialize the site-level crown area spread factor (0-1)
+        ! It is likely that closed canopy forest inventories
+        ! have smaller spread factors than bare ground (they are crowded)
+        do s = 1, nsites
+           sites(s)%spread     = init_spread_inventory
+        enddo
+
         call initialize_sites_by_inventory(nsites,sites,bc_in)
 
         do s = 1, nsites
@@ -328,6 +363,11 @@ contains
         	call InitInsectSite(sites(s)%si_insect)
            endif
 
+           ! Initialize the site-level crown area spread factor (0-1)
+           ! It is likely that closed canopy forest inventories
+           ! have smaller spread factors than bare ground (they are crowded)
+           sites(s)%spread     = init_spread_near_bare_ground
+
            allocate(newp)
 
            newp%patchno = 1
@@ -341,7 +381,7 @@ contains
            ! make new patch...
            call create_patch(sites(s), newp, age, AREA, &
                  cwd_ag_local, cwd_bg_local, leaf_litter_local,  &
-                 root_litter_local, bc_in(s)%nlevsoil ) 
+                 root_litter_local, bc_in(s)%nlevsoil, primaryforest ) 
            
            sitep => sites(s)
            call init_cohorts(sitep, newp, bc_in(s))
@@ -390,6 +430,11 @@ contains
     real(r8) :: b_leaf     ! biomass in leaves [kgC]
     real(r8) :: b_fineroot ! biomass in fine roots [kgC]
     real(r8) :: b_sapwood  ! biomass in sapwood [kgC]
+    real(r8) :: b_dead     ! biomass in structure (dead) [kgC]
+    real(r8) :: b_store    ! biomass in storage [kgC]
+    real(r8) :: a_sapwood  ! area in sapwood (dummy) [m2]
+    real(r8) :: stem_drop_fraction
+
     integer, parameter :: rstatus = 0
 
     !----------------------------------------------------------------------
@@ -427,49 +472,57 @@ contains
        call bfineroot(temp_cohort%dbh,pft,temp_cohort%canopy_trim,b_fineroot)
 
        ! Calculate sapwood biomass
-       call bsap_allom(temp_cohort%dbh,pft,temp_cohort%canopy_trim,b_sapwood)
+       call bsap_allom(temp_cohort%dbh,pft,temp_cohort%canopy_trim,a_sapwood,b_sapwood)
        
-       call bdead_allom( b_agw, b_bgw, b_sapwood, pft, temp_cohort%bdead )
+       call bdead_allom( b_agw, b_bgw, b_sapwood, pft, b_dead )
 
-       call bstore_allom(temp_cohort%dbh, pft, temp_cohort%canopy_trim,temp_cohort%bstore)
+       call bstore_allom(temp_cohort%dbh, pft, temp_cohort%canopy_trim, b_store)
 
-
-       if( EDPftvarcon_inst%evergreen(pft) == 1) then
-          temp_cohort%laimemory = 0._r8
-          cstatus = 2
+       temp_cohort%laimemory = 0._r8
+       temp_cohort%sapwmemory = 0._r8
+       temp_cohort%structmemory = 0._r8
+       cstatus = leaves_on
+       
+       stem_drop_fraction = EDPftvarcon_inst%phen_stem_drop_fraction(temp_cohort%pft)
+       
+       if( EDPftvarcon_inst%season_decid(pft) == itrue .and. &
+            any(site_in%cstatus == [phen_cstat_nevercold,phen_cstat_iscold])) then
+          temp_cohort%laimemory = b_leaf
+	  temp_cohort%sapwmemory = b_sapwood * stem_drop_fraction
+          temp_cohort%structmemory = b_dead * stem_drop_fraction
+          b_leaf = 0._r8
+          b_sapwood = (1.0_r8-stem_drop_fraction) * b_sapwood
+	  b_dead  = (1.0_r8-stem_drop_fraction) * b_dead
+	  cstatus = leaves_off
        endif
 
-       if( EDPftvarcon_inst%season_decid(pft) == 1 ) then !for dorment places
-          if(site_in%status == 2)then 
-             temp_cohort%laimemory = 0.0_r8
-          else
-             temp_cohort%laimemory = b_leaf
-          endif
-          ! reduce biomass according to size of store, this will be recovered when elaves com on.
-          cstatus = site_in%status
+       if ( EDPftvarcon_inst%stress_decid(pft) == itrue .and. &
+            any(site_in%dstatus == [phen_dstat_timeoff,phen_dstat_moistoff])) then
+          temp_cohort%laimemory = b_leaf
+          b_leaf = 0._r8
+          cstatus = leaves_off
        endif
 
-       if ( EDPftvarcon_inst%stress_decid(pft) == 1 ) then
-          if(site_in%dstatus == 2)then 
-             temp_cohort%laimemory = 0.0_r8
-          else
-             temp_cohort%laimemory = b_leaf
-          endif
-          cstatus = site_in%dstatus
-       endif
-
-       if ( DEBUG ) write(fates_log(),*) 'EDInitMod.F90 call create_cohort '
+       if ( debug ) write(fates_log(),*) 'EDInitMod.F90 call create_cohort '
 
        call create_cohort(site_in, patch_in, pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
-            b_leaf, b_fineroot, b_sapwood, temp_cohort%bdead, temp_cohort%bstore, &
-            temp_cohort%laimemory, cstatus, rstatus, temp_cohort%canopy_trim, 1, site_in%spread, bc_in)
-
+            b_leaf, b_fineroot, b_sapwood, b_dead, b_store, & 
+            temp_cohort%laimemory,temp_cohort%sapwmemory,temp_cohort%structmemory, &
+	    cstatus, rstatus, temp_cohort%canopy_trim, 1, &
+            site_in%spread, first_leaf_aclass, bc_in)
 
        deallocate(temp_cohort) ! get rid of temporary cohort
 
        endif
 
     enddo !numpft
+
+    ! Zero the mass flux pools of the new cohorts
+!    temp_cohort => patch_in%tallest
+!    do while(associated(temp_cohort)) 
+!       call temp_cohort%prt%ZeroRates()
+!       temp_cohort => temp_cohort%shorter
+!    end do
 
     call fuse_cohorts(site_in, patch_in,bc_in)
     call sort_cohorts(patch_in)

@@ -25,8 +25,7 @@ module FatesInventoryInitMod
    ! FATES GLOBALS
    use FatesConstantsMod, only : r8 => fates_r8
    use FatesConstantsMod, only : pi_const
-   use FatesConstantsMod         , only : ifalse
-   use FatesConstantsMod         , only : itrue
+   use FatesConstantsMod, only : itrue
    use FatesGlobals     , only : endrun => fates_endrun
    use FatesGlobals     , only : fates_log
    use FatesInterfaceMod, only : bc_in_type
@@ -35,7 +34,16 @@ module FatesInventoryInitMod
    use EDTypesMod       , only : ed_patch_type
    use EDTypesMod       , only : ed_cohort_type 
    use EDTypesMod       , only : area
+   use EDTypesMod       , only : equal_leaf_aclass
+   use EDTypesMod       , only : leaves_on
+   use EDTypesMod       , only : leaves_off
+   use EDTypesMod       , only : phen_cstat_nevercold
+   use EDTypesMod       , only : phen_cstat_iscold
+   use EDTypesMod       , only : phen_dstat_timeoff
+   use EDTypesMod       , only : phen_dstat_moistoff
    use EDPftvarcon      , only : EDPftvarcon_inst
+   use FatesConstantsMod, only : primaryforest
+
 
    implicit none
    private
@@ -64,6 +72,9 @@ module FatesInventoryInitMod
                                                            ! allowed between a site's coordinate
                                                            ! defined in model memory and a physical
                                                            ! site listed in the file
+
+   logical, parameter :: do_inventory_out = .false.
+
 
    public :: initialize_sites_by_inventory
 
@@ -116,6 +127,7 @@ contains
       integer,                         allocatable :: inv_format_list(:)   ! list of format specs
       character(len=path_strlen),      allocatable :: inv_css_list(:)      ! list of css file names
       character(len=path_strlen),      allocatable :: inv_pss_list(:)      ! list of pss file names
+ 
       real(r8),                        allocatable :: inv_lat_list(:)      ! list of lat coords
       real(r8),                        allocatable :: inv_lon_list(:)      ! list of lon coords
       integer                                      :: invsite              ! index of inventory site 
@@ -127,13 +139,12 @@ contains
       real(r8)                                     :: basal_area_postf     ! basal area before fusion (m2/ha)
       real(r8)                                     :: basal_area_pref      ! basal area after fusion (m2/ha)
 
-      real(r8), parameter                          :: max_ba_diff = 1.0e-2 ! 1% is the maximum allowable
-                                                                           ! change in BA due to fusion
-
       ! I. Load the inventory list file, do some file handle checks
       ! ------------------------------------------------------------------------------------------
 
       sitelist_file_unit = shr_file_getUnit()
+     
+
       inquire(file=trim(hlm_inventory_ctrl_file),exist=lexist,opened=lopen)
       if( .not.lexist ) then   ! The inventory file list DNE
          write(fates_log(), *) 'An inventory Initialization was requested.'
@@ -255,7 +266,7 @@ contains
 
             call create_patch(sites(s), newpatch, age_init, area_init, &
                   cwd_ag_init, cwd_bg_init, &
-                  leaf_litter_init, root_litter_init, bc_in(s)%nlevsoil )
+                  leaf_litter_init, root_litter_init, bc_in(s)%nlevsoil, primaryforest )
 
             if( inv_format_list(invsite) == 1 ) then
                call set_inventory_edpatch_type1(newpatch,pss_file_unit,ipa,ios,patch_name)
@@ -430,18 +441,14 @@ contains
          write(fates_log(),*) basal_area_postf,' [m2/ha]'
          write(fates_log(),*) '-------------------------------------------------------'
 
-         ! Check to see if the fusion process has changed too much
-         ! We are sensitive to fusion in inventories because we may be asking for a massive amount
-         ! of fusion. For instance some init files are directly from inventory, where a cohort
-         ! is synomomous with a single plant.
-
-         if( abs(basal_area_postf-basal_area_pref)/basal_area_pref > max_ba_diff ) then
-            write(fates_log(),*) 'Inventory Fusion Changed total biomass beyond reasonable limit'
-            call endrun(msg=errMsg(sourcefile, __LINE__))
-         end if
          
-      end do
+         ! If this is flagged as true, the post-fusion inventory will be written to file
+         ! in the run directory.
+         if(do_inventory_out)then
+             call write_inventory_type1(sites(s))
+         end if
 
+      end do
       deallocate(inv_format_list, inv_pss_list, inv_css_list, inv_lat_list, inv_lon_list)
 
       return
@@ -798,6 +805,12 @@ contains
       real(r8) :: b_leaf     ! biomass in leaves [kgC]
       real(r8) :: b_fineroot ! biomass in fine roots [kgC]
       real(r8) :: b_sapwood  ! biomass in sapwood [kgC]
+      real(r8) :: b_dead
+      real(r8) :: b_store 
+      real(r8) :: a_sapwood  ! area of sapwood at reference height [m2]
+      real(r8) :: stem_drop_fraction
+      integer                                     :: i_pft, ncohorts_to_create
+
 
       character(len=128),parameter    :: wr_fmt = &
            '(F7.1,2X,A20,2X,A20,2X,F5.2,2X,F5.2,2X,I4,2X,F5.2,2X,F5.2,2X,F5.2,2X,F5.2)'
@@ -845,9 +858,9 @@ contains
          call endrun(msg=errMsg(sourcefile, __LINE__))
       end if
 
-      if (c_pft <= 0 ) then
+      if (c_pft < 0 ) then
          write(fates_log(), *) 'inventory pft: ',c_pft
-         write(fates_log(), *) 'The inventory produced a cohort with <=0 pft index'
+         write(fates_log(), *) 'The inventory produced a cohort with <0 pft index'
          call endrun(msg=errMsg(sourcefile, __LINE__))
       end if
 
@@ -874,70 +887,201 @@ contains
          write(fates_log(), *) 'The inventory produced a cohort with very large density /m2'
          call endrun(msg=errMsg(sourcefile, __LINE__))
       end if
-      
-      allocate(temp_cohort)   ! A temporary cohort is needed because we want to make
-                              ! use of the allometry functions
 
-      temp_cohort%pft         = c_pft
-      temp_cohort%n           = c_nplant * cpatch%area
-      temp_cohort%dbh         = c_dbh
-      call h_allom(c_dbh,c_pft,temp_cohort%hite)
-      temp_cohort%canopy_trim = 1.0_r8
+      if (c_pft .eq. 0 ) then
+         write(fates_log(), *) 'inventory pft: ',c_pft
+         write(fates_log(), *) 'SPECIAL CASE TRIGGERED: PFT == 0 and therefore this subroutine'
+         write(fates_log(), *) 'will assign a cohort with n = n_orig/numpft to every cohort in range 1 to numpft'
+         ncohorts_to_create = numpft
+      else
+         ncohorts_to_create = 1
+      end if
 
-      ! Calculate total above-ground biomass from allometry
+      do i_pft = 1,ncohorts_to_create
+         allocate(temp_cohort)   ! A temporary cohort is needed because we want to make
+         ! use of the allometry functions
+         ! Don't need to allocate leaf age classes (not used)
 
-      call bagw_allom(temp_cohort%dbh,c_pft,b_agw)
-      ! Calculate coarse root biomass from allometry
-      call bbgw_allom(temp_cohort%dbh,c_pft,b_bgw)
-      
-      ! Calculate the leaf biomass (calculates a maximum first, then applies canopy trim
-      ! and sla scaling factors)
-      call bleaf(temp_cohort%dbh,c_pft,temp_cohort%canopy_trim,b_leaf)
-      
-      ! Calculate fine root biomass
-      call bfineroot(temp_cohort%dbh,c_pft,temp_cohort%canopy_trim,b_fineroot)
-      
-      ! Calculate sapwood biomass
-      call bsap_allom(temp_cohort%dbh,c_pft,temp_cohort%canopy_trim,b_sapwood)
-      
-      call bdead_allom( b_agw, b_bgw, b_sapwood, c_pft, temp_cohort%bdead )
+         if (c_pft .ne. 0 ) then
+            ! normal case: assign each cohort to its specified PFT
+            temp_cohort%pft         = c_pft
+         else
+            ! special case, make an identical cohort for each PFT
+            temp_cohort%pft         = i_pft
+         endif
 
-      call bstore_allom(temp_cohort%dbh, c_pft, temp_cohort%canopy_trim,temp_cohort%bstore)
-      
-      if( EDPftvarcon_inst%evergreen(c_pft) == 1) then
+         temp_cohort%n           = c_nplant * cpatch%area / real(ncohorts_to_create,r8)
+         temp_cohort%dbh         = c_dbh
+
+         call h_allom(c_dbh,temp_cohort%pft,temp_cohort%hite)
+         temp_cohort%canopy_trim = 1.0_r8
+
+         ! Calculate total above-ground biomass from allometry
+
+         call bagw_allom(temp_cohort%dbh,temp_cohort%pft,b_agw)
+         ! Calculate coarse root biomass from allometry
+         call bbgw_allom(temp_cohort%dbh,temp_cohort%pft,b_bgw)
+
+         ! Calculate the leaf biomass (calculates a maximum first, then applies canopy trim
+         ! and sla scaling factors)
+         call bleaf(temp_cohort%dbh,temp_cohort%pft,temp_cohort%canopy_trim,b_leaf)
+
+         ! Calculate fine root biomass
+         call bfineroot(temp_cohort%dbh,temp_cohort%pft,temp_cohort%canopy_trim,b_fineroot)
+
+         ! Calculate sapwood biomass
+         call bsap_allom(temp_cohort%dbh,temp_cohort%pft,temp_cohort%canopy_trim, a_sapwood, b_sapwood)
+
+         call bdead_allom( b_agw, b_bgw, b_sapwood, temp_cohort%pft, b_dead )
+
+         call bstore_allom(temp_cohort%dbh, temp_cohort%pft, temp_cohort%canopy_trim, b_store)
+
          temp_cohort%laimemory = 0._r8
-         cstatus = 2
-      endif
-      
-      if( EDPftvarcon_inst%season_decid(c_pft) == 1 ) then !for dorment places
-         if(csite%status == 2)then 
-            temp_cohort%laimemory = 0.0_r8
-         else
-            temp_cohort%laimemory = b_leaf
-         endif
-         ! reduce biomass according to size of store, this will be recovered when elaves com on.
-         cstatus = csite%status
-      endif
-      
-      if ( EDPftvarcon_inst%stress_decid(c_pft) == 1 ) then
-         if(csite%dstatus == 2)then 
-            temp_cohort%laimemory = 0.0_r8
-         else
-            temp_cohort%laimemory = b_leaf
-         endif
-         cstatus = csite%dstatus
-      endif
+         temp_cohort%sapwmemory = 0._r8
+         temp_cohort%structmemory = 0._r8	 
+         cstatus = leaves_on
+         
+	 stem_drop_fraction = EDPftvarcon_inst%phen_stem_drop_fraction(temp_cohort%pft)
 
-      ! Since spread is a canopy level calculation, we need to provide an initial guess here.
-      site_spread = 0.5_r8
-      call create_cohort(csite, cpatch, c_pft, temp_cohort%n, temp_cohort%hite, temp_cohort%dbh, &
-            b_leaf, b_fineroot, b_sapwood, temp_cohort%bdead, temp_cohort%bstore, &
-            temp_cohort%laimemory, cstatus, rstatus, temp_cohort%canopy_trim, 1, site_spread, bc_in)
+         if( EDPftvarcon_inst%season_decid(temp_cohort%pft) == itrue .and. &
+              any(csite%cstatus == [phen_cstat_nevercold,phen_cstat_iscold])) then
+            temp_cohort%laimemory = b_leaf
+            temp_cohort%sapwmemory = b_sapwood * stem_drop_fraction
+            temp_cohort%structmemory = b_dead * stem_drop_fraction	    
+            b_leaf  = 0._r8
+	    b_sapwood = (1._r8 - stem_drop_fraction) * b_sapwood
+	    b_dead  = (1._r8 - stem_drop_fraction) * b_dead
+            cstatus = leaves_off
+         endif
+         
+         if ( EDPftvarcon_inst%stress_decid(temp_cohort%pft) == itrue .and. &
+              any(csite%dstatus == [phen_dstat_timeoff,phen_dstat_moistoff])) then
+            temp_cohort%laimemory = b_leaf
+            temp_cohort%sapwmemory = b_sapwood * stem_drop_fraction
+            temp_cohort%structmemory = b_dead * stem_drop_fraction	    
+            b_leaf  = 0._r8
+	    b_sapwood = (1._r8 - stem_drop_fraction) * b_sapwood
+	    b_dead  = (1._r8 - stem_drop_fraction) * b_dead	    
+            cstatus = leaves_off
+         endif
 
-      
-      deallocate(temp_cohort) ! get rid of temporary cohort
+         ! Since spread is a canopy level calculation, we need to provide an initial guess here.
+         if( debug_inv) then
+            write(fates_log(),*) 'calling create_cohort: ', temp_cohort%pft, temp_cohort%n, &
+                 temp_cohort%hite, temp_cohort%dbh, &
+                 b_leaf, b_fineroot, b_sapwood, b_dead, b_store, &
+                 temp_cohort%laimemory, temp_cohort%sapwmemory, temp_cohort%structmemory, &
+		 cstatus, rstatus, temp_cohort%canopy_trim, &
+                 1, csite%spread
+         endif
+
+         call create_cohort(csite, cpatch, temp_cohort%pft, temp_cohort%n, temp_cohort%hite, &
+              temp_cohort%dbh, b_leaf, b_fineroot, b_sapwood, b_dead, b_store, &
+              temp_cohort%laimemory, temp_cohort%sapwmemory, temp_cohort%structmemory, &
+	      cstatus, rstatus, temp_cohort%canopy_trim, &
+              1, csite%spread, equal_leaf_aclass, bc_in)
+
+         deallocate(temp_cohort) ! get rid of temporary cohort
+      end do
 
       return
-   end subroutine set_inventory_edcohort_type1
+    end subroutine set_inventory_edcohort_type1
+
+   ! ====================================================================================
+
+   subroutine write_inventory_type1(currentSite)
+
+       ! --------------------------------------------------------------------------------
+       ! This subroutine writes the cohort/patch inventory type files in the "type 1"
+       ! format.  Note that for compatibility with ED2, we chose an old type that has
+       ! both extra unused fields and is missing fields from FATES. THis is not
+       ! a recommended file type for restarting a run.
+       ! The files will have a lat/long tag added to their name, and will be
+       ! generated in the run folder.
+       ! --------------------------------------------------------------------------------
+
+       use shr_file_mod, only        : shr_file_getUnit
+       use shr_file_mod, only        : shr_file_freeUnit
+       
+       ! Arguments
+       type(ed_site_type), target :: currentSite
+       
+       ! Locals
+       type(ed_patch_type), pointer          :: currentpatch
+       type(ed_cohort_type), pointer         :: currentcohort
+       
+       character(len=128)                    :: pss_name_out         ! output file string
+       character(len=128)                    :: css_name_out         ! output file string
+       integer                               :: pss_file_out
+       integer                               :: css_file_out
+       integer                               :: ilat_int,ilat_dec    ! for output string parsing
+       integer                               :: ilon_int,ilon_dec    ! for output string parsing
+       character(len=32)                     :: patch_str
+       character(len=32)                     :: cohort_str
+       integer                               :: ipatch
+       integer                               :: icohort
+       character(len=1)                      :: ilat_sign,ilon_sign
+
+       ! Generate pss/css file name based on the location of the site
+       ilat_int = abs(int(currentSite%lat))
+       ilat_dec = int(100000*(abs(currentSite%lat) - real(ilat_int,r8)))
+       ilon_int = abs(int(currentSite%lon))
+       ilon_dec = int(100000*(abs(currentSite%lon) - real(ilon_int,r8)))
+       
+       if(currentSite%lat>=0._r8)then
+           ilat_sign = 'N'
+       else
+           ilat_sign = 'S'
+       end if
+       if(currentSite%lon>=0._r8)then
+           ilon_sign = 'E'
+       else
+           ilon_sign = 'W'
+       end if
+
+       write(pss_name_out,'(A8,I2.2,A1,I5.5,A1,A1,I3.3,A1,I5.5,A1,A4)') &
+             'pss_out_',ilat_int,'.',ilat_dec,ilat_sign,'_',ilon_int,'.',ilon_dec,ilon_sign,'.txt'
+       write(css_name_out,'(A8,I2.2,A1,I5.5,A1,A1,I3.3,A1,I5.5,A1,A4)') &
+             'css_out_',ilat_int,'.',ilat_dec,ilat_sign,'_',ilon_int,'.',ilon_dec,ilon_sign,'.txt'
+
+       pss_file_out       = shr_file_getUnit()
+       css_file_out       = shr_file_getUnit()
+       
+       open(unit=pss_file_out,file=trim(pss_name_out), status='UNKNOWN',action='WRITE',form='FORMATTED')
+       open(unit=css_file_out,file=trim(css_name_out), status='UNKNOWN',action='WRITE',form='FORMATTED')
+       
+       write(pss_file_out,*) 'time patch trk age area water fsc stsc stsl ssc psc msn fsn'
+       write(css_file_out,*) 'time patch cohort dbh hite pft nplant bdead alive Avgrg'
+             
+       ipatch=0
+       currentpatch => currentSite%youngest_patch
+       do while(associated(currentpatch))
+           ipatch=ipatch+1
+           
+           write(patch_str,'(A7,i4.4,A)') '<patch_',ipatch,'>'
+           
+           write(pss_file_out,*) '0000 ',trim(patch_str),' 2 ',currentPatch%age,currentPatch%area/AREA, &
+                 '0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000'
+           
+           icohort=0
+           currentcohort => currentpatch%tallest
+           do while(associated(currentcohort))
+               icohort=icohort+1
+               write(cohort_str,'(A7,i4.4,A)') '<coh_',icohort,'>'
+               write(css_file_out,*) '0000 ',trim(patch_str),' ',trim(cohort_str), &
+                     currentCohort%dbh,0.0,currentCohort%pft,currentCohort%n/currentPatch%area,0.0,0.0,0.0
+               
+               currentcohort => currentcohort%shorter
+           end do
+           currentPatch => currentpatch%older
+       enddo
+       
+       close(css_file_out)
+       close(pss_file_out)
+       
+       call shr_file_freeUnit(css_file_out)
+       call shr_file_freeUnit(pss_file_out)
+       
+   end subroutine write_inventory_type1
 
 end module FatesInventoryInitMod

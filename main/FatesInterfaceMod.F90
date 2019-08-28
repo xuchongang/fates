@@ -18,6 +18,9 @@ module FatesInterfaceMod
    use EDTypesMod          , only : nclmax
    use EDTypesMod          , only : nlevleaf
    use EDTypesMod          , only : maxpft
+   use EDTypesMod          , only : do_fates_salinity
+   use EDTypesMod          , only : ncwd
+   use EDTypesMod          , only : numWaterMem
    use FatesConstantsMod   , only : r8 => fates_r8
    use FatesConstantsMod   , only : itrue,ifalse
    use FatesGlobals        , only : fates_global_verbose
@@ -27,6 +30,11 @@ module FatesInterfaceMod
    use EDPftvarcon         , only : FatesCheckParams
    use EDPftvarcon         , only : EDPftvarcon_inst
    use EDParamsMod         , only : FatesReportParams
+   use EDParamsMod         , only : bgc_soil_salinity
+   use PRTGenericMod         , only : prt_carbon_allom_hyp
+   use PRTGenericMod         , only : prt_cnp_flex_allom_hyp
+   use PRTAllometricCarbonMod, only : InitPRTGlobalAllometricCarbon
+   !   use PRTAllometricCNPMod, only    : InitPRTGlobalAllometricCNP
 
 
    ! CIME Globals
@@ -35,11 +43,7 @@ module FatesInterfaceMod
 
    implicit none
 
-   public :: FatesInterfaceInit
-   public :: set_fates_ctrlparms
-   public :: SetFatesTime
-   public :: set_fates_global_elements
-   public :: FatesReportParameters
+   private        ! By default everything is private
 
    character(len=*), parameter, private :: sourcefile = &
          __FILE__
@@ -50,114 +54,118 @@ module FatesInterfaceMod
    ! -------------------------------------------------------------------------------------
 
   
-   integer, protected :: hlm_numSWb  ! Number of broad-bands in the short-wave radiation
-                                     ! specturm to track 
-                                     ! (typically 2 as a default, VIS/NIR, in ED variants <2016)
+   integer, public, protected :: hlm_numSWb  ! Number of broad-bands in the short-wave radiation
+                                             ! specturm to track 
+                                             ! (typically 2 as a default, VIS/NIR, in ED variants <2016)
 
-   integer, protected :: hlm_ivis    ! The HLMs assumption of the array index associated with the 
-                                     ! visible portion of the spectrum in short-wave radiation arrays
+   integer, public, protected :: hlm_ivis    ! The HLMs assumption of the array index associated with the 
+                                             ! visible portion of the spectrum in short-wave radiation arrays
 
-   integer, protected :: hlm_inir    ! The HLMs assumption of the array index associated with the 
-                                     ! NIR portion of the spectrum in short-wave radiation arrays
+   integer, public, protected :: hlm_inir    ! The HLMs assumption of the array index associated with the 
+                                             ! NIR portion of the spectrum in short-wave radiation arrays
 
 
-   integer, protected :: hlm_numlevgrnd   ! Number of ground layers
-                                          ! NOTE! SOIL LAYERS ARE NOT A GLOBAL, THEY 
-                                          ! ARE VARIABLE BY SITE
+   integer, public, protected :: hlm_numlevgrnd   ! Number of ground layers
+                                                  ! NOTE! SOIL LAYERS ARE NOT A GLOBAL, THEY 
+                                                  ! ARE VARIABLE BY SITE
 
-   integer, protected :: hlm_is_restart   ! Is the HLM signalling that this is a restart
-                                          ! type simulation?
-                                          ! 1=TRUE, 0=FALSE
+   integer, public, protected :: hlm_is_restart   ! Is the HLM signalling that this is a restart
+                                                  ! type simulation?
+                                                  ! 1=TRUE, 0=FALSE
    
-   character(len=16), protected :: hlm_name ! This character string passed by the HLM
-                                            ! is used during the processing of IO data, 
-                                            ! so that FATES knows which IO variables it 
-                                            ! should prepare.  For instance
-                                            ! ATS, ALM and CLM will only want variables 
-                                            ! specficially packaged for them.
-                                            ! This string sets which filter is enacted.
+   character(len=16), public, protected :: hlm_name ! This character string passed by the HLM
+                                                    ! is used during the processing of IO data, 
+                                                    ! so that FATES knows which IO variables it 
+                                                    ! should prepare.  For instance
+                                                    ! ATS, ALM and CLM will only want variables 
+                                                    ! specficially packaged for them.
+                                                    ! This string sets which filter is enacted.
    
   
-   real(r8), protected :: hlm_hio_ignore_val  ! This value can be flushed to history 
-                                              ! diagnostics, such that the
-                                              ! HLM will interpret that the value should not 
-                                              ! be included in the average.
+   real(r8), public, protected :: hlm_hio_ignore_val  ! This value can be flushed to history 
+                                                      ! diagnostics, such that the
+                                                      ! HLM will interpret that the value should not 
+                                                      ! be included in the average.
    
-   integer, protected :: hlm_masterproc  ! Is this the master processor, typically useful
-                                         ! for knowing if the current machine should be 
-                                         ! printing out messages to the logs or terminals
-                                         ! 1 = TRUE (is master) 0 = FALSE (is not master)
+   integer, public, protected :: hlm_masterproc  ! Is this the master processor, typically useful
+                                                 ! for knowing if the current machine should be 
+                                                 ! printing out messages to the logs or terminals
+                                                 ! 1 = TRUE (is master) 0 = FALSE (is not master)
 
-   integer, protected :: hlm_ipedof      ! The HLM pedotransfer index
-                                         ! this is only used by the plant hydraulics
-                                         ! submodule to check and/or enable consistency
-                                         ! between the pedotransfer functions of the HLM
-                                         ! and how it moves and stores water in its
-                                         ! rhizosphere shells
+   integer, public, protected :: hlm_ipedof      ! The HLM pedotransfer index
+                                                 ! this is only used by the plant hydraulics
+                                                 ! submodule to check and/or enable consistency
+                                                 ! between the pedotransfer functions of the HLM
+                                                 ! and how it moves and stores water in its
+                                                 ! rhizosphere shells
    
-   integer, protected :: hlm_max_patch_per_site ! The HLM needs to exchange some patch
-                                                ! level quantities with FATES
-                                                ! FATES does not dictate those allocations
-                                                ! since it happens pretty early in
-                                                ! the model initialization sequence.
-                                                ! So we want to at least query it,
-                                                ! compare it to our maxpatchpersite,
-                                                ! and gracefully halt if we are over-allocating
+   integer, public, protected :: hlm_max_patch_per_site ! The HLM needs to exchange some patch
+                                                        ! level quantities with FATES
+                                                        ! FATES does not dictate those allocations
+                                                        ! since it happens pretty early in
+                                                        ! the model initialization sequence.
+                                                        ! So we want to at least query it,
+                                                        ! compare it to our maxpatchpersite,
+                                                        ! and gracefully halt if we are over-allocating
 
-   integer, protected :: hlm_use_vertsoilc ! This flag signals whether or not the 
-                                           ! host model is using vertically discretized
-                                           ! soil carbon
-                                           ! 1 = TRUE,  0 = FALSE
+   integer, public, protected :: hlm_parteh_mode   ! This flag signals which Plant Allocation and Reactive
+                                                   ! Transport (exensible) Hypothesis (PARTEH) to use
+
+
+   integer, public, protected :: hlm_use_vertsoilc ! This flag signals whether or not the 
+                                                   ! host model is using vertically discretized
+                                                   ! soil carbon
+                                                   ! 1 = TRUE,  0 = FALSE
    
-   integer, protected :: hlm_use_spitfire  ! This flag signals whether or not to use SPITFIRE
-                                           ! 1 = TRUE, 0 = FALSE
+
+   integer, public, protected :: hlm_use_spitfire  ! This flag signals whether or not to use SPITFIRE
+                                                   ! 1 = TRUE, 0 = FALSE
 
 
-   integer, protected :: hlm_use_logging       ! This flag signals whether or not to use
-                                               ! the logging module
+   integer, public, protected :: hlm_use_logging       ! This flag signals whether or not to use
+                                                       ! the logging module
 
-   integer, protected :: hlm_use_planthydro    ! This flag signals whether or not to use
-                                               ! plant hydraulics (bchristo/xu methods)
-                                               ! 1 = TRUE, 0 = FALSE
-                                               ! THIS IS CURRENTLY NOT SUPPORTED 
-   
+   integer, public, protected :: hlm_use_planthydro    ! This flag signals whether or not to use
+                                                       ! plant hydraulics (bchristo/xu methods)
+                                                       ! 1 = TRUE, 0 = FALSE
+                                                       ! THIS IS CURRENTLY NOT SUPPORTED 
    integer, protected :: hlm_use_insect        ! This flag signals whether or not to use
                                                ! insect dynamics (currently mostly MPB)
                                                ! 1 = TRUE, 0 = FALSE
-                                               ! THIS IS CURRENTLY NOT SUPPORTED 
+                                               ! THIS IS CURRENTLY NOT SUPPORTED 						       
 
-   integer, protected :: hlm_use_ed_st3        ! This flag signals whether or not to use
-                                               ! (ST)atic (ST)and (ST)ructure mode (ST3)
-                                               ! Essentially, this gives us the ability
-                                               ! to turn off "dynamics", ie growth, disturbance
-                                               ! recruitment and mortality.
-                                               ! (EXPERIMENTAL!!!!! - RGK 07-2017)
-                                               ! 1 = TRUE, 0 = FALSE
-                                               ! default should be FALSE (dynamics on)
-                                               ! cannot be true with prescribed_phys
+   integer, public, protected :: hlm_use_ed_st3        ! This flag signals whether or not to use
+                                                       ! (ST)atic (ST)and (ST)ructure mode (ST3)
+                                                       ! Essentially, this gives us the ability
+                                                       ! to turn off "dynamics", ie growth, disturbance
+                                                       ! recruitment and mortality.
+                                                       ! (EXPERIMENTAL!!!!! - RGK 07-2017)
+                                                       ! 1 = TRUE, 0 = FALSE
+                                                       ! default should be FALSE (dynamics on)
+                                                       ! cannot be true with prescribed_phys
 
-   integer, protected :: hlm_use_ed_prescribed_phys ! This flag signals whether or not to use
-                                                    ! prescribed physiology, somewhat the opposite
-                                                    ! to ST3, in this case can turn off
-                                                    ! fast processes like photosynthesis and respiration
-                                                    ! and prescribe NPP
-                                                    ! (NOT CURRENTLY IMPLEMENTED - PLACEHOLDER)
-                                                    ! 1 = TRUE, 0 = FALSE
-                                                    ! default should be FALSE (biophysics on)
-                                                    ! cannot be true with st3 mode
+   integer, public, protected :: hlm_use_ed_prescribed_phys ! This flag signals whether or not to use
+                                                            ! prescribed physiology, somewhat the opposite
+                                                            ! to ST3, in this case can turn off
+                                                            ! fast processes like photosynthesis and respiration
+                                                            ! and prescribe NPP
+                                                            ! (NOT CURRENTLY IMPLEMENTED - PLACEHOLDER)
+                                                            ! 1 = TRUE, 0 = FALSE
+                                                            ! default should be FALSE (biophysics on)
+                                                            ! cannot be true with st3 mode
 
-   integer, protected :: hlm_use_inventory_init     ! Initialize this simulation from
-                                                    ! an inventory file. If this is toggled on
-                                                    ! an inventory control file must be specified
-                                                    ! as well.
-                                                    ! 1 = TRUE, 0 = FALSE
+   integer, public, protected :: hlm_use_inventory_init     ! Initialize this simulation from
+                                                            ! an inventory file. If this is toggled on
+                                                            ! an inventory control file must be specified
+                                                            ! as well.
+                                                            ! 1 = TRUE, 0 = FALSE
    
-   character(len=256), protected :: hlm_inventory_ctrl_file ! This is the full path to the
-                                                            ! inventory control file that
-                                                            ! specifieds the availabel inventory datasets
-                                                            ! there locations and their formats
-                                                            ! This need only be defined when
-                                                            ! hlm_use_inventory_init = 1
+   character(len=256), public, protected :: hlm_inventory_ctrl_file ! This is the full path to the
+                                                                    ! inventory control file that
+                                                                    ! specifieds the availabel inventory datasets
+                                                                    ! there locations and their formats
+                                                                    ! This need only be defined when
+                                                                    ! hlm_use_inventory_init = 1
 
    ! -------------------------------------------------------------------------------------
    ! Parameters that are dictated by FATES and known to be required knowledge
@@ -166,19 +174,19 @@ module FatesInterfaceMod
 
    ! Variables mostly used for dimensioning host land model (HLM) array spaces
    
-   integer, protected :: fates_maxElementsPerPatch ! maxElementsPerPatch is the value that is ultimately
-                                                   ! used to set the size of the largest arrays necessary
-                                                   ! in things like restart files (probably hosted by the 
-                                                   ! HLM). The size of these arrays are not a parameter
-                                                   ! because it is simply the maximum of several different
-                                                   ! dimensions. It is possible that this would be the
-                                                   ! maximum number of cohorts per patch, but
-                                                   ! but it could be other things.
+   integer, public, protected :: fates_maxElementsPerPatch ! maxElementsPerPatch is the value that is ultimately
+                                                           ! used to set the size of the largest arrays necessary
+                                                           ! in things like restart files (probably hosted by the 
+                                                           ! HLM). The size of these arrays are not a parameter
+                                                           ! because it is simply the maximum of several different
+                                                           ! dimensions. It is possible that this would be the
+                                                           ! maximum number of cohorts per patch, but
+                                                           ! but it could be other things.
 
-   integer, protected :: fates_maxElementsPerSite  ! This is the max number of individual items one can store per 
-                                                   ! each grid cell and effects the striding in the ED restart 
-                                                   ! data as some fields are arrays where each array is
-                                                   ! associated with one cohort
+   integer, public, protected :: fates_maxElementsPerSite  ! This is the max number of individual items one can store per 
+                                                           ! each grid cell and effects the striding in the ED restart 
+                                                           ! data as some fields are arrays where each array is
+                                                           ! associated with one cohort
 
    ! -------------------------------------------------------------------------------------
    ! These vectors are used for history output mapping
@@ -189,27 +197,27 @@ module FatesInterfaceMod
    ! well.
    ! -------------------------------------------------------------------------------------
    
-   real(r8), allocatable :: fates_hdim_levsclass(:)        ! plant size class lower bound dimension
-   integer , allocatable :: fates_hdim_pfmap_levscpf(:)    ! map of pfts into size-class x pft dimension
-   integer , allocatable :: fates_hdim_scmap_levscpf(:)    ! map of size-class into size-class x pft dimension
-   real(r8), allocatable :: fates_hdim_levage(:)           ! patch age lower bound dimension
-   real(r8), allocatable :: fates_hdim_levheight(:)           ! height lower bound dimension
-   integer , allocatable :: fates_hdim_levpft(:)           ! plant pft dimension
-   integer , allocatable :: fates_hdim_levfuel(:)          ! fire fuel class dimension
-   integer , allocatable :: fates_hdim_levcwdsc(:)         ! cwd class dimension
-   integer , allocatable :: fates_hdim_levcan(:)           ! canopy-layer dimension 
-   integer , allocatable :: fates_hdim_canmap_levcnlf(:)   ! canopy-layer map into the canopy-layer x leaf-layer dim
-   integer , allocatable :: fates_hdim_lfmap_levcnlf(:)    ! leaf-layer map into the can-layer x leaf-layer dimension
-   integer , allocatable :: fates_hdim_canmap_levcnlfpf(:) ! can-layer map into the can-layer x pft x leaf-layer dim
-   integer , allocatable :: fates_hdim_lfmap_levcnlfpf(:)  ! leaf-layer map into the can-layer x pft x leaf-layer dim
-   integer , allocatable :: fates_hdim_pftmap_levcnlfpf(:) ! pft map into the canopy-layer x pft x leaf-layer dim
-   integer , allocatable :: fates_hdim_scmap_levscag(:)    ! map of size-class into size-class x patch age dimension
-   integer , allocatable :: fates_hdim_agmap_levscag(:)    ! map of patch-age into size-class x patch age dimension
-   integer , allocatable :: fates_hdim_scmap_levscagpft(:)     ! map of size-class into size-class x patch age x pft dimension
-   integer , allocatable :: fates_hdim_agmap_levscagpft(:)     ! map of patch-age into size-class x patch age x pft dimension
-   integer , allocatable :: fates_hdim_pftmap_levscagpft(:)    ! map of pft into size-class x patch age x pft dimension
-   integer , allocatable :: fates_hdim_agmap_levagepft(:)      ! map of patch-age into patch age x pft dimension
-   integer , allocatable :: fates_hdim_pftmap_levagepft(:)     ! map of pft into patch age x pft dimension
+   real(r8), public, allocatable :: fates_hdim_levsclass(:)        ! plant size class lower bound dimension
+   integer , public, allocatable :: fates_hdim_pfmap_levscpf(:)    ! map of pfts into size-class x pft dimension
+   integer , public, allocatable :: fates_hdim_scmap_levscpf(:)    ! map of size-class into size-class x pft dimension
+   real(r8), public, allocatable :: fates_hdim_levage(:)           ! patch age lower bound dimension
+   real(r8), public, allocatable :: fates_hdim_levheight(:)        ! height lower bound dimension
+   integer , public, allocatable :: fates_hdim_levpft(:)           ! plant pft dimension
+   integer , public, allocatable :: fates_hdim_levfuel(:)          ! fire fuel class dimension
+   integer , public, allocatable :: fates_hdim_levcwdsc(:)         ! cwd class dimension
+   integer , public, allocatable :: fates_hdim_levcan(:)           ! canopy-layer dimension 
+   integer , public, allocatable :: fates_hdim_canmap_levcnlf(:)   ! canopy-layer map into the canopy-layer x leaf-layer dim
+   integer , public, allocatable :: fates_hdim_lfmap_levcnlf(:)    ! leaf-layer map into the can-layer x leaf-layer dimension
+   integer , public, allocatable :: fates_hdim_canmap_levcnlfpf(:) ! can-layer map into the can-layer x pft x leaf-layer dim
+   integer , public, allocatable :: fates_hdim_lfmap_levcnlfpf(:)  ! leaf-layer map into the can-layer x pft x leaf-layer dim
+   integer , public, allocatable :: fates_hdim_pftmap_levcnlfpf(:) ! pft map into the canopy-layer x pft x leaf-layer dim
+   integer , public, allocatable :: fates_hdim_scmap_levscag(:)    ! map of size-class into size-class x patch age dimension
+   integer , public, allocatable :: fates_hdim_agmap_levscag(:)    ! map of patch-age into size-class x patch age dimension
+   integer , public, allocatable :: fates_hdim_scmap_levscagpft(:)     ! map of size-class into size-class x patch age x pft dimension
+   integer , public, allocatable :: fates_hdim_agmap_levscagpft(:)     ! map of patch-age into size-class x patch age x pft dimension
+   integer , public, allocatable :: fates_hdim_pftmap_levscagpft(:)    ! map of pft into size-class x patch age x pft dimension
+   integer , public, allocatable :: fates_hdim_agmap_levagepft(:)      ! map of patch-age into patch age x pft dimension
+   integer , public, allocatable :: fates_hdim_pftmap_levagepft(:)     ! map of pft into patch age x pft dimension
 
    ! ------------------------------------------------------------------------------------
    !                              DYNAMIC BOUNDARY CONDITIONS
@@ -221,18 +229,18 @@ module FatesInterfaceMod
    ! It is assumed that all of the sites on a given machine will be synchronous.
    ! It is also assumed that the HLM will control time.
    ! -------------------------------------------------------------------------------------
-   integer, protected  :: hlm_current_year    ! Current year
-   integer, protected  :: hlm_current_month   ! month of year
-   integer, protected  :: hlm_current_day     ! day of month
-   integer, protected  :: hlm_current_tod     ! time of day (seconds past 0Z)
-   integer, protected  :: hlm_current_date    ! time of day (seconds past 0Z)
-   integer, protected  :: hlm_reference_date  ! YYYYMMDD
-   real(r8), protected :: hlm_model_day       ! elapsed days between current date and ref
-   integer, protected  :: hlm_day_of_year     ! The integer day of the year
-   integer, protected  :: hlm_days_per_year   ! The HLM controls time, some HLMs may 
-                                              ! include a leap
-   real(r8), protected :: hlm_freq_day        ! fraction of year for daily time-step 
-                                              ! (1/days_per_year_, this is a frequency
+   integer, public, protected  :: hlm_current_year    ! Current year
+   integer, public, protected  :: hlm_current_month   ! month of year
+   integer, public, protected  :: hlm_current_day     ! day of month
+   integer, public, protected  :: hlm_current_tod     ! time of day (seconds past 0Z)
+   integer, public, protected  :: hlm_current_date    ! time of day (seconds past 0Z)
+   integer, public, protected  :: hlm_reference_date  ! YYYYMMDD
+   real(r8), public, protected :: hlm_model_day       ! elapsed days between current date and ref
+   integer, public, protected  :: hlm_day_of_year     ! The integer day of the year
+   integer, public, protected  :: hlm_days_per_year   ! The HLM controls time, some HLMs may 
+                                                      ! include a leap
+   real(r8), public, protected :: hlm_freq_day        ! fraction of year for daily time-step 
+                                                      ! (1/days_per_year_, this is a frequency
    
 
    ! -------------------------------------------------------------------------------------
@@ -241,11 +249,11 @@ module FatesInterfaceMod
    !
    ! -------------------------------------------------------------------------------------
 
-   integer, protected :: numpft       ! The total number of PFTs defined in the simulation
-   integer, protected :: nlevsclass   ! The total number of cohort size class bins output to history
-   integer, protected :: nlevage      ! The total number of patch age bins output to history
-   integer, protected :: nlevheight   ! The total number of height bins output to history
-   
+   integer, public, protected :: numpft           ! The total number of PFTs defined in the simulation
+   integer, public, protected :: nlevsclass       ! The total number of cohort size class bins output to history
+   integer, public, protected :: nlevage          ! The total number of patch age bins output to history
+   integer, public, protected :: nlevheight       ! The total number of height bins output to history
+   integer, public, protected :: nleafage         ! The total number of leaf age classes
 
    ! -------------------------------------------------------------------------------------
    ! Structured Boundary Conditions (SITE/PATCH SCALE)
@@ -405,6 +413,9 @@ module FatesInterfaceMod
 
       ! Soil suction potential of layers in each site, negative, [mm]
       real(r8), allocatable :: smp_sl(:)
+      
+      !soil salinity of layers in each site [ppt]
+      real(r8), allocatable :: salinity_sl(:)
 
       ! Effective porosity = porosity - vol_ic, of layers in each site [-]
       real(r8), allocatable :: eff_porosity_sl(:)
@@ -583,11 +594,20 @@ module FatesInterfaceMod
    contains
       
       procedure, public :: zero_bcs
+      procedure, public :: set_bcs
 
    end type fates_interface_type
 
-  
-
+ 
+   ! Make public necessary subroutines and functions
+   public :: FatesInterfaceInit
+   public :: set_fates_ctrlparms
+   public :: SetFatesTime
+   public :: set_fates_global_elements
+   public :: FatesReportParameters
+   public :: InitPARTEHGlobals
+   public :: allocate_bcin
+   public :: allocate_bcout
 
 contains
 
@@ -602,7 +622,7 @@ contains
     logical, intent(in) :: global_verbose
 
     call FatesGlobalsInit(log_unit,global_verbose)
-
+    
   end subroutine FatesInterfaceInit
 
    ! ====================================================================================
@@ -669,6 +689,11 @@ contains
       allocate(bc_in%watsat_sl(nlevsoil_in))
       allocate(bc_in%tempk_sl(nlevsoil_in))
       allocate(bc_in%h2o_liqvol_sl(nlevsoil_in))
+      
+      !BGC
+      if(do_fates_salinity) then
+         allocate(bc_in%salinity_sl(nlevsoil_in))	 
+      endif
 
       ! Photosynthesis
       allocate(bc_in%filter_photo_pa(maxPatchesPerSite))
@@ -813,6 +838,10 @@ contains
       this%bc_in(s)%tot_litc            = 0.0_r8
       this%bc_in(s)%snow_depth_si       = 0.0_r8
       this%bc_in(s)%frac_sno_eff_si     = 0.0_r8
+      
+      if(do_fates_salinity)then
+         this%bc_in(s)%salinity_sl(:)   = 0.0_r8
+      endif
 
       if (hlm_use_planthydro.eq.itrue) then
   
@@ -870,6 +899,34 @@ contains
 
       return
    end subroutine zero_bcs
+   
+   subroutine set_bcs(this,s)
+
+       ! --------------------------------------------------------------------------------
+       !
+       ! This subroutine is called directly from the HLM to set boundary condition not yet 
+       !     functional from hlm. This allows flexibility for model testing.
+       !
+       ! This subroutine MUST BE CALLED AFTER the FATES PFT parameter file has been read in,
+       ! and the EDPftvarcon_inst structure has been made.
+       ! This subroutine must ALSO BE CALLED BEFORE the history file dimensions
+       ! are set.
+       ! 
+       ! --------------------------------------------------------------------------------
+      implicit none
+      class(fates_interface_type), intent(inout) :: this
+      integer, intent(in) :: s
+
+      ! Input boundaries
+      ! Warning: these "z" type variables
+      ! are written only once at the beginning
+      ! so THIS ROUTINE SHOULD NOT BE CALLED AFTER
+      ! INITIALIZATION
+      if(do_fates_salinity)then
+           this%bc_in(s)%salinity_sl(:)     = bgc_soil_salinity
+      endif
+
+    end subroutine set_bcs
 
 
     ! ===================================================================================
@@ -925,13 +982,29 @@ contains
             write(fates_log(), *) 'FatesInterfaceMod.F90:maxpft accordingly'
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
-         
 
+         ! Identify the number of leaf age-classes
+         
+         if( (lbound(EDPftvarcon_inst%leaf_long(:,:),dim=2) .eq. 0) .or. &
+             (ubound(EDPftvarcon_inst%leaf_long(:,:),dim=2) .eq. 0) ) then
+            write(fates_log(), *) 'While assessing the number of FATES leaf age classes,'
+            write(fates_log(), *) 'The second dimension of leaf_long was 0?'
+            call endrun(msg=errMsg(sourcefile, __LINE__))
+         else
+            nleafage = size(EDPftvarcon_inst%leaf_long,dim=2)
+         end if
+         
          ! These values are used to define the restart file allocations and general structure
          ! of memory for the cohort arrays
          
-         fates_maxElementsPerPatch = max(maxCohortsPerPatch, &
-               numpft * nclmax * nlevleaf)
+         fates_maxElementsPerPatch = max(maxCohortsPerPatch, numpft, ncwd )
+
+         if (maxPatchesPerSite * fates_maxElementsPerPatch <  numWaterMem) then
+            write(fates_log(), *) 'By using such a tiny number of maximum patches and maximum cohorts'
+            write(fates_log(), *) ' this could create problems for indexing in restart files'
+            write(fates_log(), *) ' The multiple of the two has to be greater than numWaterMem'
+            call endrun(msg=errMsg(sourcefile, __LINE__))
+         end if
          
          fates_maxElementsPerSite = maxPatchesPerSite * fates_maxElementsPerPatch
 
@@ -1225,6 +1298,7 @@ contains
          hlm_ipedof       = unset_int
          hlm_max_patch_per_site = unset_int
          hlm_use_vertsoilc = unset_int
+         hlm_parteh_mode   = unset_int
          hlm_use_spitfire  = unset_int
          hlm_use_planthydro = unset_int
 	 hlm_use_insect = unset_int
@@ -1394,6 +1468,13 @@ contains
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
 
+         if(hlm_parteh_mode .eq. unset_int) then
+            if (fates_global_verbose()) then
+               write(fates_log(), *) 'switch deciding which plant reactive transport model to use is unset, hlm_parteh_mode, exiting'
+            end if
+            call endrun(msg=errMsg(sourcefile, __LINE__))
+         end if
+
          if(hlm_use_vertsoilc .eq. unset_int) then
             if (fates_global_verbose()) then
                write(fates_log(), *) 'switch for the HLMs soil carbon discretization unset: hlm_use_vertsoilc, exiting'
@@ -1470,6 +1551,12 @@ contains
                hlm_use_vertsoilc = ival
                if (fates_global_verbose()) then
                   write(fates_log(),*) 'Transfering hlm_use_vertsoilc= ',ival,' to FATES'
+               end if
+               
+            case('parteh_mode')
+               hlm_parteh_mode = ival
+               if (fates_global_verbose()) then
+                  write(fates_log(),*) 'Transfering hlm_parteh_mode= ',ival,' to FATES'
                end if
 
             case('use_spitfire')
@@ -1579,9 +1666,43 @@ contains
 
       call FatesReportPFTParams(masterproc)
       call FatesReportParams(masterproc)
-      call FatesCheckParams(masterproc)
+      call FatesCheckParams(masterproc,hlm_parteh_mode)
       
       return
    end subroutine FatesReportParameters
+
+   ! ====================================================================================
+
+   subroutine InitPARTEHGlobals()
+   
+     ! Initialize the Plant Allocation and Reactive Transport
+     ! global functions and mapping tables
+     
+     select case(hlm_parteh_mode)
+     case(prt_carbon_allom_hyp)
+
+        call InitPRTGlobalAllometricCarbon()
+
+     case(prt_cnp_flex_allom_hyp)
+        
+        !call InitPRTGlobalAllometricCNP()
+        write(fates_log(),*) 'You specified the allometric CNP mode'
+        write(fates_log(),*) 'with relaxed target stoichiometry.'
+        write(fates_log(),*) 'I.e., namelist parametre fates_parteh_mode = 2'
+        write(fates_log(),*) 'This mode is not available yet. Please set it to 1.'
+        call endrun(msg=errMsg(sourcefile, __LINE__))
+        
+     case DEFAULT
+        write(fates_log(),*) 'You specified an unknown PRT module'
+        write(fates_log(),*) 'Check your setting for fates_parteh_mode'
+        write(fates_log(),*) 'in the CLM namelist. The only valid value now is 1'
+        write(fates_log(),*) 'Aborting'
+        call endrun(msg=errMsg(sourcefile, __LINE__))
+       
+    end select
+
+
+
+   end subroutine InitPARTEHGlobals
 
 end module FatesInterfaceMod
