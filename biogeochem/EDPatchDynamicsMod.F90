@@ -740,7 +740,7 @@ contains
                    nc%bmort            = currentCohort%bmort
                    nc%frmort           = currentCohort%frmort
                    nc%dmort            = currentCohort%dmort
-		   nc%inmort            = currentCohort%inmort
+		   nc%inmort           = currentCohort%inmort
                    nc%lmort_direct     = currentCohort%lmort_direct
                    nc%lmort_collateral = currentCohort%lmort_collateral
                    nc%lmort_infra      = currentCohort%lmort_infra
