@@ -291,6 +291,7 @@ module FatesHistoryInterfaceMod
   integer :: ih_m6_si_scpf
   integer :: ih_m7_si_scpf  
   integer :: ih_m8_si_scpf
+  integer :: ih_m9_si_scpf  
   integer :: ih_crownfiremort_si_scpf
   integer :: ih_cambialfiremort_si_scpf
 
