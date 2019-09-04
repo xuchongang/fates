@@ -693,7 +693,9 @@ module EDTypesMod
      real(r8), allocatable :: promotion_rate(:)                  ! rate of individuals promoted from understory to canopy per FATES timestep
      real(r8) :: promotion_carbonflux                            ! biomass of promoted individuals from understory to canopy [kgC/ha/day]
      real(r8), allocatable :: imort_rate(:,:)                    ! rate of individuals killed due to impact mortality per year.  on size x pft array
+     real(r8), allocatable :: inmort_rate(:,:)                   ! rate of individuals killed due to insect mortality per year.  on size x pft array
      real(r8) :: imort_carbonflux                                ! biomass of individuals killed due to impact mortality per year. [kgC/ha/day]
+     real(r8) :: inmort_carbonflux                               ! biomass of individuals killed due to insect mortality per year. [kgC/ha/day]
 
      real(r8), allocatable :: fmort_rate_canopy(:,:)             ! rate of canopy individuals killed due to fire mortality per year.  
                                                                  ! on size x pft array  (1:nlevsclass,1:numpft)
