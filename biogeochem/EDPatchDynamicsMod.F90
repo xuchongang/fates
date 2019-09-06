@@ -178,7 +178,7 @@ contains
        
        currentPatch%disturbance_rates(dtype_ifall) = 0.0_r8
        currentPatch%disturbance_rates(dtype_ilog)  = 0.0_r8
-       currentPatch%disturbance_rates(dtype_inmort)= 0.0_r8
+       currentPatch%disturbance_rates(dtype_inmort) = 0.0_r8
        currentPatch%disturbance_rates(dtype_ifire) = 0.0_r8
 
        dist_rate_ldist_notharvested = 0.0_r8
