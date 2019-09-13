@@ -58,6 +58,8 @@
 ! allom_agb2
 ! allom_agb3
 ! allom_dbh_maxheight, dbh at maximum height [cm]
+! allom_dbh_maxbleaf, dbh at maximum bleaf [cm]
+! allom_dbh_maxCA, dbh at maximum crown area [cm]
 ! h_min, the height associated with newly recruited plant [m]
 !
 ! Note - i4 types are expressed explicitly to accomodate unit testing calls
@@ -423,7 +425,7 @@ contains
     real(r8),intent(out)   :: blmax     ! plant leaf biomass [kg]
     real(r8),intent(out),optional :: dblmaxdd  ! change leaf bio per diameter [kgC/cm]
 
-    associate( dbh_maxh    => EDPftvarcon_inst%allom_dbh_maxheight(ipft), &
+    associate( dbh_maxh    => EDPftvarcon_inst%allom_dbh_maxbleaf(ipft), &
                rho         => EDPftvarcon_inst%wood_density(ipft), &
                c2b         => EDPftvarcon_inst%c2b(ipft),          &
                allom_lmode => EDPftvarcon_inst%allom_lmode(ipft),  &
@@ -469,7 +471,7 @@ contains
                                             ! crown area at height, we need to make
                                             ! special considerations
      
-     associate( dbh_maxh    => EDPftvarcon_inst%allom_dbh_maxheight(ipft), &
+     associate( dbh_maxh    => EDPftvarcon_inst%allom_dbh_maxCA(ipft), &
                 allom_lmode => EDPftvarcon_inst%allom_lmode(ipft),  &
                 d2bl_p2     => EDPftvarcon_inst%allom_d2bl2(ipft),  &
                 d2bl_ediff  => EDPftvarcon_inst%allom_blca_expnt_diff(ipft), &
@@ -757,7 +759,9 @@ contains
        write(fates_log(),*) 'call id: ',call_id
        write(fates_log(),*) 'n: ',nplant
        write(fates_log(),*) 'c_area: ',c_area
-       write(fates_log(),*) 'dbh: ',dbh,' dbh_max: ',EDPftvarcon_inst%allom_dbh_maxheight(pft)
+       write(fates_log(),*) 'dbh: ',dbh,' dbh_max_height: ',EDPftvarcon_inst%allom_dbh_maxheight(pft)
+       write(fates_log(),*) 'dbh_max_CA',EDPftvarcon_inst%allom_dbh_maxCA(pft)
+       write(fates_log(),*) 'dbh_max_bleaf',EDPftvarcon_inst%allom_dbh_maxbleaf(pft)
        write(fates_log(),*) 'h: ',h
        write(fates_log(),*) 'canopy_trim: ',canopy_trim
        write(fates_log(),*) 'target_bleaf: ',target_bleaf
