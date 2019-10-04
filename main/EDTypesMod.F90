@@ -112,7 +112,7 @@ module EDTypesMod
   integer , parameter, public :: num_vegtemp_mem      = 10         ! Window of time over which we track temp for cold sensecence (days)
   real(r8), parameter, public :: dinc_ed              = 1.0_r8     ! size of VAI bins (LAI+SAI)  [CHANGE THIS NAME WITH NEXT INTERFACE
                                                            ! UPDATE]
-  integer , parameter, public :: N_DIST_TYPES         = 3          ! Disturbance Modes 1) tree-fall, 2) fire, 3) logging
+  integer , parameter, public :: N_DIST_TYPES         = 4          ! Disturbance Modes 1) tree-fall, 2) fire, 3) logging, 4) insect
   integer , parameter, public :: dtype_ifall          = 1          ! index for naturally occuring tree-fall generated event
   integer , parameter, public :: dtype_ifire          = 2          ! index for fire generated disturbance event
   integer , parameter, public :: dtype_ilog           = 3          ! index for logging generated disturbance event
