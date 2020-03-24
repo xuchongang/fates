@@ -82,10 +82,10 @@ variables:
 		fates_allom_dbh_maxheight:units = "cm" ;
 		fates_allom_dbh_maxheight:long_name = "the diameter (if any) corresponding to maximum height, diameters may increase beyond this" ;
 	double fates_allom_dbh_maxCA(fates_pft) ;
-		fates_allom_dbh_maxheight:units = "cm" ;
+		fates_allom_dbh_maxCA:units = "cm" ;
 		fates_allom_dbh_maxCA:long_name = "the diameter (if any) corresponding to maximum CA, diameters may increase beyond this" ;
 	double fates_allom_dbh_maxbleaf(fates_pft) ;
-		fates_allom_dbh_maxheight:units = "cm" ;
+		fates_allom_dbh_maxbleaf:units = "cm" ;
 		fates_allom_dbh_maxbleaf:long_name = "the diameter (if any) corresponding to maximum bleaf, diameters may increase beyond this" ;					
 	double fates_allom_fmode(fates_pft) ;
 		fates_allom_fmode:units = "index" ;
