@@ -2287,7 +2287,7 @@ contains
      
      ! hydraulics global constants
      real(r8), parameter :: thresh          = 1.e-7_r8  ! threshold for water balance error (warning only) [mm h2o]
-     real(r8), parameter :: thresh_break    = 1.e-4_r8  ! threshold for water balance error (stop model)   [mm h2o]
+     real(r8), parameter :: thresh_break    = 1.e+4_r8  ! threshold for water balance error (stop model)   [mm h2o]
      real(r8), parameter :: small_theta_num = 1.e-7_r8  ! avoids theta values equalling thr or ths         [m3 m-3]
      
      ! hydraulics timestep adjustments for acceptable water balance error
