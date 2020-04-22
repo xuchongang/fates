@@ -994,7 +994,7 @@ contains
           call d2bagw_2pwr(d,p1,p2,c2b,bagw1,dbagwdd)
          case (3) !"chave14") 
            call h_allom(dbh_maxh,ipft,h,dhdd)
-           call dh2bagw_chave2014(d,h,dhdd,p1,p2,wood_density,c2b,bagw0,dbagwdd)	 
+           call dh2bagw_chave2014(dbh_maxh,h,dhdd,p1,p2,wood_density,c2b,bagw0,dbagwdd)	 
            call h_allom(d,ipft,h,dhdd)
            call dh2bagw_chave2014(d,h,dhdd,p1,p2,wood_density,c2b,bagw1,dbagwdd)
          case DEFAULT
