@@ -554,7 +554,7 @@ contains
     use EDParamsMod, only : ED_val_phen_drought_threshold, ED_val_phen_doff_time
     use EDParamsMod, only : ED_val_phen_a, ED_val_phen_b, ED_val_phen_c, ED_val_phen_chiltemp
     use EDParamsMod, only : ED_val_phen_mindayson, ED_val_phen_ncolddayslim, ED_val_phen_coldtemp
-         
+    use EDParamsMod, only : ED_val_phen_mindaysoff     
 
     !
     ! !ARGUMENTS:
@@ -716,7 +716,7 @@ contains
     if ( (currentSite%cstatus == phen_cstat_iscold .or. &
           currentSite%cstatus == phen_cstat_nevercold) .and. &
          (currentSite%grow_deg_days > gdd_threshold) .and. &
-         (dayssincecleafoff > ED_val_phen_mindayson) .and. &
+         (dayssincecleafoff > ED_val_phen_mindaysoff) .and. &
          (currentSite%nchilldays >= 1)) then
        currentSite%cstatus = phen_cstat_notcold  ! Set to not-cold status (leaves can come on)
        currentSite%cleafondate = model_day_int  
