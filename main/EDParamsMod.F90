@@ -38,6 +38,7 @@ module EDParamsMod
    real(r8),protected, public :: ED_val_phen_c
    real(r8),protected, public :: ED_val_phen_chiltemp
    real(r8),protected, public :: ED_val_phen_mindayson
+   real(r8),protected, public :: ED_val_phen_mindaysoff
    real(r8),protected, public :: ED_val_phen_ncolddayslim
    real(r8),protected, public :: ED_val_phen_coldtemp
    real(r8),protected, public :: ED_val_cohort_fusion_tol
@@ -77,6 +78,7 @@ module EDParamsMod
    character(len=param_string_length),parameter,public :: ED_name_phen_c= "fates_phen_c"   
    character(len=param_string_length),parameter,public :: ED_name_phen_chiltemp= "fates_phen_chiltemp"   
    character(len=param_string_length),parameter,public :: ED_name_phen_mindayson= "fates_phen_mindayson"   
+   character(len=param_string_length),parameter,public :: ED_name_phen_mindaysoff= "fates_phen_mindaysoff" 
    character(len=param_string_length),parameter,public :: ED_name_phen_ncolddayslim= "fates_phen_ncolddayslim"   
    character(len=param_string_length),parameter,public :: ED_name_phen_coldtemp= "fates_phen_coldtemp"   
    character(len=param_string_length),parameter,public :: ED_name_cohort_fusion_tol= "fates_cohort_size_fusion_tol"   
@@ -178,6 +180,7 @@ contains
     ED_val_phen_c                         = nan
     ED_val_phen_chiltemp                  = nan
     ED_val_phen_mindayson                 = nan
+    ED_val_phen_mindaysoff                = nan
     ED_val_phen_ncolddayslim              = nan
     ED_val_phen_coldtemp                  = nan
     ED_val_cohort_fusion_tol              = nan
@@ -274,6 +277,9 @@ contains
 
     call fates_params%RegisterParameter(name=ED_name_phen_mindayson, dimension_shape=dimension_shape_scalar, &
          dimension_names=dim_names_scalar)
+	 
+    call fates_params%RegisterParameter(name=ED_name_phen_mindaysoff, dimension_shape=dimension_shape_scalar, &
+         dimension_names=dim_names_scalar)	 
 
     call fates_params%RegisterParameter(name=ED_name_phen_ncolddayslim, dimension_shape=dimension_shape_scalar, &
          dimension_names=dim_names_scalar)
@@ -416,6 +422,9 @@ contains
 
     call fates_params%RetreiveParameter(name=ED_name_phen_mindayson, &
          data=ED_val_phen_mindayson)
+	 
+    call fates_params%RetreiveParameter(name=ED_name_phen_mindaysoff, &
+         data=ED_val_phen_mindaysoff)	 
 
     call fates_params%RetreiveParameter(name=ED_name_phen_ncolddayslim, &
          data=ED_val_phen_ncolddayslim)
@@ -526,6 +535,7 @@ contains
         write(fates_log(),fmt0) 'ED_val_phen_c = ',ED_val_phen_c
         write(fates_log(),fmt0) 'ED_val_phen_chiltemp = ',ED_val_phen_chiltemp
         write(fates_log(),fmt0) 'ED_val_phen_mindayson = ',ED_val_phen_mindayson
+	write(fates_log(),fmt0) 'ED_val_phen_mindaysoff = ',ED_val_phen_mindaysoff
         write(fates_log(),fmt0) 'ED_val_phen_ncolddayslim = ',ED_val_phen_ncolddayslim
         write(fates_log(),fmt0) 'ED_val_phen_coldtemp = ',ED_val_phen_coldtemp
         write(fates_log(),fmt0) 'ED_val_cohort_fusion_tol = ',ED_val_cohort_fusion_tol
