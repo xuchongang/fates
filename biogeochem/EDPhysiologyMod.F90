@@ -612,7 +612,8 @@ contains
     !Parameters: defaults from Botta et al. 2000 GCB,6 709-725 
     !Parameters, default from from SDGVM model of senesence
 
-    temp_in_C = bc_in%t_veg24_si - tfrz
+    !temp_in_C = bc_in%t_veg24_si - tfrz
+    temp_in_C = bc_in%t_veg24_pa(1) - tfrz   
 
     !-----------------Cold Phenology--------------------!              
 
