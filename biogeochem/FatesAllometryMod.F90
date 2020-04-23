@@ -1003,7 +1003,7 @@ contains
            call endrun(msg=errMsg(sourcefile, __LINE__))
          end select   
 	 
-	 bstore = bstore + (bagw1 - bagw0)/agb_frac
+	 !bstore = bstore + (bagw1 - bagw0)/agb_frac
 	 
 	 if(present(dbstoredd)) then
 	    dbstoredd = dbstoredd + dbagwdd/agb_frac   
