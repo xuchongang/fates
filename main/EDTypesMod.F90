@@ -140,12 +140,13 @@ module EDTypesMod
 
   ! SPITFIRE     
 
-  integer,  parameter, public :: NFSC                 = NCWD+2     ! number fuel size classes  (4 cwd size classes, leaf litter, and grass)
+  integer,  parameter, public :: NFSC                 = NCWD+3     ! number fuel size classes (4 cwd classes, dead leaf,live grass, shrubs)
   integer,  parameter, public :: tw_sf                = 1          ! array index of twig pool for spitfire
   integer,  parameter, public :: lb_sf                = 3          ! array index of large branch pool for spitfire
   integer,  parameter, public :: tr_sf                = 4          ! array index of dead trunk pool for spitfire
   integer,  parameter, public :: dl_sf                = 5          ! array index of dead leaf pool for spitfire (dead grass and dead leaves)
   integer,  parameter, public :: lg_sf                = 6          ! array index of live grass pool for spitfire
+  integer,  parameter, public :: shrb_sf              = 7          ! array index of live shrub & small tree fuel pool for spitfire  
 
   real(r8), parameter, public :: fire_threshold       = 50.0_r8    ! threshold for fires that spread or go out. KWm-2 (Pyne 1986)
 
