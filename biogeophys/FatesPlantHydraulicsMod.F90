@@ -2699,7 +2699,7 @@ contains
     real(r8) :: roota                ! root profile parameter a zeng2001_crootfr
     real(r8) :: rootb                ! root profile parameter b zeng2001_crootfr
     real(r8) :: sum_l_aroot          ! sum of plant's total root length
-    real(r8),parameter :: taper_exponent = 1._r8/3._r8 ! Savage et al. (2010) xylem taper exponent [-]
+    real(r8) :: taper_exponent       ! Savage et al. (2010) xylem taper exponent [-]
     real(r8),parameter :: min_pet_stem_dz = 0.00001_r8  ! Force at least a small difference
                                                        ! in the top of stem and petiole
 
@@ -2707,6 +2707,7 @@ contains
     pft   = ccohort%pft
     roota = EDPftvarcon_inst%roota_par(pft)
     rootb = EDPftvarcon_inst%rootb_par(pft)
+    taper_exponent = EDPftvarcon_inst%hydr_p_taper(ft)
 
     ! Get the cross-section of the plant's sapwood area [m2]
     call bsap_allom(ccohort%dbh,pft,ccohort%canopy_trim,a_sapwood,c_sap_dummy)
@@ -4204,56 +4205,52 @@ contains
   ! =====================================================================================
 
   function xylemtaper(p, dz) result(chi_tapnotap)
-
-    ! !ARGUMENTS:
-    real(r8) , intent(in) :: p      ! Savage et al. (2010) taper exponent                                                                [-]
-    real(r8) , intent(in) :: dz     ! hydraulic distance from petiole to node of interest                                                [m]
-    !
-    ! !LOCAL VARIABLES:
-    real(r8) :: atap,btap           ! scaling exponents for total conductance ~ tree size (ratio of stem radius to terminal twig radius)
-    real(r8) :: anotap,bnotap       ! same as atap, btap, but not acounting for xylem taper (Savage et al. (2010) p = 0)
-    ! NOTE: these scaling exponents were digitized from Fig 2a of Savage et al. (2010)
-    ! Savage VM, Bentley LP, Enquist BJ, Sperry JS, Smith DD, Reich PB, von Allmen EI. 2010.
-    !    Hydraulic trade-offs and space filling enable better predictions of vascular structure
-    !    and function in plants. Proceedings of the National Academy of Sciences 107(52): 22722-22727.
-    real(r8) :: lN=0.04_r8          ! petiole length                                                                                     [m]
-    real(r8) :: little_n=2._r8      ! number of daughter branches per parent branch, assumed constant throughout tree (self-similarity)  [-]
-    real(r8) :: big_n               ! number of branching levels (allowed here to take on non-integer values): increases with tree size  [-]
-    real(r8) :: ktap                ! hydraulic conductance along the pathway, accounting for xylem taper                                [kg s-1 MPa-1]
-    real(r8) :: knotap              ! hydraulic conductance along the pathway, not accounting for xylem taper                            [kg s-1 MPa-1]
-    real(r8) :: num                 ! temporary
-    real(r8) :: den                 ! temporary
-    !
-    ! !RESULT
-    real(r8) :: chi_tapnotap        ! ratio of total tree conductance accounting for xylem taper to that without, over interval dz
-    !
-    !------------------------------------------------------------------------
-
-    anotap  = 7.19903e-13_r8
-    bnotap  = 1.326105578_r8
-    if (p >= 1.0_r8) then
-       btap  = 2.00586217_r8
-       atap  = 1.82513E-12_r8
-    else if (p >= (1._r8/3._r8) .AND. p < 1._r8) then
-       btap  = 1.854812819_r8
-       atap  = 6.66908E-13_r8
-    else if (p >= (1._r8/6._r8) .AND. p < (1._r8/3._r8)) then
-       btap  = 1.628179741_r8
-       atap  = 6.58345E-13_r8
-    else
-       btap  = bnotap
-       atap  = anotap
-    end if
-
-    num          = 3._r8*log(1._r8 - dz/lN * (1._r8-little_n**(1._r8/3._r8)))
-    den          = log(little_n)
-    big_n        = num/den - 1._r8
-    ktap         = atap   * (little_n**(big_N*  btap/2._r8))
-    knotap       = anotap * (little_n**(big_N*bnotap/2._r8))
-    chi_tapnotap = ktap / knotap
-
-    return
-
+   ! !ARGUMENTS:
+   real(r8) , intent(in) :: p      ! Savage et al. (2010) taper exponent                                                                [-]
+   real(r8) , intent(in) :: dz     ! hydraulic distance from petiole to node of interest                                                [m]
+   !
+   ! !LOCAL VARIABLES:
+   real(r8) :: atap,btap           ! scaling exponents for total conductance ~ tree size (ratio of stem radius to terminal twig radius)
+   real(r8) :: anotap,bnotap       ! same as atap, btap, but not acounting for xylem taper (Savage et al. (2010) p = 0)
+                                   ! NOTE: these scaling exponents were digitized from Fig 2a of Savage et al. (2010)
+               ! Savage VM, Bentley LP, Enquist BJ, Sperry JS, Smith DD, Reich PB, von Allmen EI. 2010.
+               !    Hydraulic trade-offs and space filling enable better predictions of vascular structure
+               !    and function in plants. Proceedings of the National Academy of Sciences 107(52): 22722-22727.
+   real(r8) :: lN=0.04_r8          ! petiole length                                                                                     [m]
+   real(r8) :: little_n=2._r8      ! number of daughter branches per parent branch, assumed constant throughout tree (self-similarity)  [-]
+   real(r8) :: big_n               ! number of branching levels (allowed here to take on non-integer values): increases with tree size  [-]
+   real(r8) :: ktap                ! hydraulic conductance along the pathway, accounting for xylem taper                                [kg s-1 MPa-1]
+   real(r8) :: knotap              ! hydraulic conductance along the pathway, not accounting for xylem taper                            [kg s-1 MPa-1]
+   real(r8) :: num                 ! temporary
+   real(r8) :: den                 ! temporary
+   !
+   ! !RESULT
+   real(r8) :: chi_tapnotap        ! ratio of total tree conductance accounting for xylem taper to that without, over interval dz
+   !
+   !------------------------------------------------------------------------
+   
+   anotap  = 7.19903e-13_r8
+   bnotap  = 1.326105578_r8
+   if (p >= 1.0_r8) then
+      btap  = 2.00586217_r8
+      atap  = 1.82513E-12_r8
+   else if (p >= (1._r8/3._r8) .AND. p < 1._r8) then
+      btap  = 1.854812819_r8
+      atap  = 6.66908E-13_r8
+   else if (p >= (1._r8/6._r8) .AND. p < (1._r8/3._r8)) then
+      btap  = 1.628179741_r8
+      atap  = 6.58345E-13_r8
+   else
+      btap  = bnotap
+      atap  = anotap
+   end if
+   num          = 3._r8*log(1._r8 - dz/lN * (1._r8-little_n**(1._r8/3._r8)))
+   den          = log(little_n)
+   big_n        = num/den - 1._r8
+   ktap         = atap   * (little_n**(big_N*  btap/2._r8))
+   knotap       = anotap * (little_n**(big_N*bnotap/2._r8))
+   chi_tapnotap = ktap / knotap
+   return
   end function xylemtaper
   
   ! =====================================================================================
