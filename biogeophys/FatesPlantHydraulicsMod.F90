@@ -2707,7 +2707,7 @@ contains
     pft   = ccohort%pft
     roota = EDPftvarcon_inst%roota_par(pft)
     rootb = EDPftvarcon_inst%rootb_par(pft)
-    taper_exponent = EDPftvarcon_inst%hydr_p_taper(ft)
+    taper_exponent = EDPftvarcon_inst%hydr_p_taper(pft)
 
     ! Get the cross-section of the plant's sapwood area [m2]
     call bsap_allom(ccohort%dbh,pft,ccohort%canopy_trim,a_sapwood,c_sap_dummy)
