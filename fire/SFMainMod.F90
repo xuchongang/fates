@@ -159,7 +159,7 @@ contains
   subroutine  characteristics_of_fuel ( currentSite )
   !*****************************************************************
 
-    use SFParamsMod, only  : SF_val_drying_ratio, SF_val_SAV, SF_val_FBD
+    use SFParamsMod, only  : SF_val_drying_ratio, SF_val_SAV, SF_val_FBD, SF_VAL_CWD_FRAC
 
     type(ed_site_type), intent(in), target :: currentSite
 
@@ -169,7 +169,13 @@ contains
 
     real(r8) alpha_FMC(nfsc)     ! Relative fuel moisture adjusted per drying ratio
     real(r8) fuel_moisture(nfsc) ! Scaled moisture content of small litter fuels. 
-    real(r8) MEF(nfsc)           ! Moisture extinction factor of fuels     integer n 
+    real(r8) MEF(nfsc)           ! Moisture extinction factor of fuels     integer n
+    real(r8) ::  shrub_sapw_struct_c     ! shrub & small tree sap and struct in cohort (kgC)
+    real(r8) ::  leaf_c                  ! leaf carbon (kgC)
+    real(r8) ::  sapw_c                  ! sapwood carbon (kgC)
+    real(r8) ::  struct_c                ! structure carbon (kgC)
+    real(r8) ::  twig_sapw_struct_c      ! above-ground twig sap and struct in cohort (kgC)
+    real(r8) ::  shrub_leaf_c            ! biomass of leaves in cohort (kg C)
 
     fuel_moisture(:) = 0.0_r8    
     
@@ -180,7 +186,7 @@ contains
        
        ! How much live grass or shrubs/small trees are there? 
        currentPatch%livegrass = 0.0_r8
-       currentPatch%shrubs    = 0.0_r8
+       currentPatch%shrubs_sf = 0.0_r8
        currentCohort => currentPatch%tallest
        do while(associated(currentCohort))
 
@@ -190,30 +196,28 @@ contains
           sapw_c              = 0.0_r8
           struct_c            = 0.0_r8
           twig_sapw_struct_c  = 0.0_r8
-          shrub_fuel_c        = 0.0_r8
+          shrub_leaf_c        = 0.0_r8
 
           ! shrub or small tree
           if (EDPftvarcon_inst%woody(currentCohort%pft) == 1 .and. currentCohort%hite < 2) then ! shrubs
              ! calculate 1 hr fuel biomass (leaf, twig sapwood, twig structural biomass)
 
-             leaf_c   = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
              sapw_c   = currentCohort%prt%GetState(sapw_organ, all_carbon_elements)
              struct_c = currentCohort%prt%GetState(struct_organ, all_carbon_elements)
 
-             shrub_sapw_struct_c =  currentCohort%n * & 
-                  (EDPftvarcon_inst%allom_agb_frac(currentCohort%pft)*(sapw_c + struct_c))
+             shrub_sapw_struct_c = (EDPftvarcon_inst%allom_agb_frac(currentCohort%pft)*(sapw_c + struct_c))* &
+                                    currentCohort%n/currentPatch%area          ! (kgC/m2)
              
-             twig_sapw_struct_c =  shrub_sapw_struct_c * SF_VAL_CWD_frac(1)  ! only 1hr fuel
+             twig_sapw_struct_c  =  shrub_sapw_struct_c * SF_VAL_CWD_frac(1)   ! only 1hr fuel,twig sap & struct
 
-             shrub_fuel_c       =  currentCohort%n * leaf_c                  ! shrub leaf fuel
-                !!!!should this include patch%area similar to live grass?????
-                !!!   if yes, then also update in active crown fire
+             shrub_leaf_c        = currentCohort%prt%GetState(leaf_organ, all_carbon_elements) * &
+                                   currentCohort%n/currentPatch%area           ! shrub leaf fuel (kgC/m2)
 
-             currentPatch%shrubs = currentPatch%shrubs + &
-                  shrub_fuel_c + twig_sapw_struct_c                           ! shrub fuel (kgC)
+             currentPatch%shrubs_sf = currentPatch%shrubs_sf + shrub_leaf_c + twig_sapw_struct_c
+                                   ! total shrub & small tree 1 hr fuel (kgC/m2)
              
           else  ! live grass
-             if (EDPftvarcon_inst%woody(currentCohort%pft) == 0) then  ! live grass
+             if (EDPftvarcon_inst%woody(currentCohort%pft) == 0) then          ! live grass
                 currentPatch%livegrass = currentPatch%livegrass + &
                      currentCohort%prt%GetState(leaf_organ, all_carbon_elements) * &
                      currentCohort%n/currentPatch%area
@@ -266,7 +270,7 @@ contains
           endif
 
           currentPatch%fuel_frac(lg_sf)       = currentPatch%livegrass       / currentPatch%sum_fuel   
-          currentPatch%fuel_frac(shrb_sf)     = currentPatch%shrub          / currentPatch%sum_fuel
+          currentPatch%fuel_frac(shrb_sf)     = currentPatch%shrubs_sf       / currentPatch%sum_fuel
 
 
           ! FATES-Hydro live fuel moisture linkage to MEF "moisture extinction factor"
@@ -478,11 +482,9 @@ contains
     real(r8) beta_ratio           ! ratio of beta/beta_op
     real(r8) a_beta               ! dummy variable for product of a* beta_ratio for react_v_opt equation
     real(r8) a,b,c,e              ! function of fuel sav
-
-    logical, parameter :: debug_windspeed = .false. !for debugging
     real(r8),parameter :: q_dry = 581.0_r8          !heat of pre-ignition of dry fuels (kJ/kg)
-
-    associate(  c2b => EDPftvarcon_inst%c2b(ipft))
+    
+    logical, parameter :: debug_windspeed = .false. !for debugging
 
     currentPatch=>currentSite%oldest_patch;  
 
@@ -586,7 +588,7 @@ contains
        
        ! ir = reaction intenisty in kJ/m2/min
        ! currentPatch%sum_fuel converted from kgC/m2 to kgBiomass/m2 for ir calculation
-       ir = reaction_v_opt * (currentPatch%sum_fuel/c2b) * SF_val_fuel_energy * moist_damp * SF_val_miner_damp 
+       ir = reaction_v_opt * (currentPatch%sum_fuel/0.45) * SF_val_fuel_energy * moist_damp * SF_val_miner_damp 
 
        ! write(fates_log(),*) 'ir',gamma_aptr,moist_damp,SF_val_fuel_energy,SF_val_miner_damp
 
@@ -627,8 +629,6 @@ contains
     real(r8) :: fc_ground(nfsc) !proportion of fuel consumed
 
     integer  :: c
-
-    assocaite( c2b  => EDPftvarcon_inst%c2b(ipft))
 
     currentPatch => currentSite%oldest_patch;  
 
@@ -734,8 +734,6 @@ contains
     real(r8) size_of_fire !in m2
     real(r8),parameter :: km2_to_m2 = 1000000.0_r8 !area conversion for square km to square m
 
-    associate(c2b => EDPftvarcon_inst%c2b(ipft))
-
     !  ---initialize site parameters to zero--- 
     currentSite%frac_burnt = 0.0_r8  
 
@@ -817,7 +815,7 @@ contains
           endif ! lb
 
          ROS   = currentPatch%ROS_front / sec_per_min !m/min to m/sec 
-         W     = currentPatch%TFC_ROS / c2b !kgC/m2 to kgbiomass/m2          
+         W     = currentPatch%TFC_ROS  / 0.45         !kgC/m2 to kgbiomass/m2          
 
          ! EQ 15 Thonicke et al 2010
          !units of fire intensity = (kJ/kg)*(kgBiomass/m2)*(m/sec)*unitless_fraction

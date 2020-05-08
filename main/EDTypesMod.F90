@@ -511,6 +511,8 @@ module EDTypesMod
      real(r8) ::  sum_fuel                                         ! total ground fuel related to ros (omits 1000hr fuels): KgC/m2
      real(r8) ::  fuel_frac(nfsc)                                  ! fraction of each litter class in the ros_fuel:-.  
      real(r8) ::  livegrass                                        ! total aboveground grass biomass in patch.  KgC/m2
+     real(r8) ::  shrubs_sf                                        ! shrub and small tree 1hr fuel (twig,sap,leaf) biomass in patch. KgC/m2
+                                                                   ! (incl. woody veg (shrubs and small trees) below 2m in height)
      real(r8) ::  fuel_bulkd                                       ! average fuel bulk density of the ground fuel 
                                                                    ! (incl. live grasses. omits 1000hr fuels). KgC/m3
      real(r8) ::  fuel_sav                                         ! average surface area to volume ratio of the ground fuel 
