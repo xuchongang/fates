@@ -674,7 +674,7 @@ contains
        FC_ground(tw_sf:tr_sf) = currentPatch%burnt_frac_litter(tw_sf:tr_sf) * litt_c%ag_cwd(tw_sf:tr_sf)
        FC_ground(dl_sf)       = currentPatch%burnt_frac_litter(dl_sf)   * sum(litt_c%leaf_fines(:))
        FC_ground(lg_sf)       = currentPatch%burnt_frac_litter(lg_sf)   * currentPatch%livegrass
-       FC_ground(shrb_sf)     = currentPatch%burnt_frac_litter(shrb_sf) * currentPatch%shrubs  
+       FC_ground(shrb_sf)     = currentPatch%burnt_frac_litter(shrb_sf) * currentPatch%shrubs_sf  
 
        ! Following used for determination of cambial kill follows from Peterson & Ryan (1986) scheme 
        ! less empirical cf current scheme used in SPITFIRE which attempts to mesh Rothermel 
