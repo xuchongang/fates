@@ -208,6 +208,7 @@ contains
                                    ! above the leaf layer of interest
     real(r8) :: lai_current        ! the LAI in the current leaf layer
     real(r8) :: cumulative_lai     ! the cumulative LAI, top down, to the leaf layer of interest
+    real(r8) :: vpd                ! vapor pressure deficit (MPa)
 
     real(r8), allocatable :: rootfr_ft(:,:)  ! Root fractions per depth and PFT
 
@@ -369,6 +370,8 @@ contains
                            frac)
                      call lowstorage_maintresp_reduction(frac,currentCohort%pft, &
                           maintresp_reduction_factor)
+			  
+		     vpd = max(10._r8, bc_in(s)%esat_tv_pa(ifp)-bc_in(s)%eair_pa(ifp))*1._r8e-6 !MPa
 
                      ! are there any leaves of this pft in this layer?
                      if(currentPatch%canopy_mask(cl,ft) == 1)then 
@@ -396,7 +399,7 @@ contains
                                
                                if (hlm_use_planthydro.eq.itrue ) then
                                    
-                                 bbb = max( cf/rsmax0, bbbopt(nint(c3psn(ft)))*currentCohort%co_hydr%btran ) 
+                                 bbb = max( cf/rsmax0, bbbopt(nint(c3psn(ft)))*currentCohort%co_hydr%btran*vpd ) 
                                  btran_eff = currentCohort%co_hydr%btran
                                  
                                  ! dinc_ed is the total vegetation area index of each "leaf" layer
@@ -413,7 +416,7 @@ contains
 
                               else
                                  
-                                 bbb = max( cf/rsmax0, bbbopt(nint(c3psn(ft)))*currentPatch%btran_ft(ft) ) 
+                                 bbb = max( cf/rsmax0, bbbopt(nint(c3psn(ft)))*currentPatch%btran_ft(ft)*vpd ) 
                                  btran_eff = currentPatch%btran_ft(ft)
                                  ! For consistency sake, we use total LAI here, and not exposed
                                  ! if the plant is under-snow, it will be effectively dormant for 
@@ -931,7 +934,7 @@ contains
 
    ! For plants with no leaves, a miniscule amount of conductance
    ! can happen through the stems, at a partial rate of cuticular conductance
-   real(r8),parameter :: stem_cuticle_loss_frac = 0.1_r8
+   real(r8)  :: stem_cuticle_loss_frac   != 0.1_r8
 
    ! empirical curvature parameter for electron transport rate
    real(r8),parameter :: theta_psii = 0.7_r8   
@@ -954,7 +957,8 @@ contains
    
    associate( bb_slope  => EDPftvarcon_inst%BB_slope)    ! slope of BB relationship
    
-
+     stem_cuticle_loss_frac = EDPftvarcon_inst%stem_cuticle_loss_frac(ft)
+   
      ! photosynthetic pathway: 0. = c4, 1. = c3
      c3c4_path_index = nint(EDPftvarcon_inst%c3psn(ft))
      
@@ -1179,7 +1183,7 @@ contains
            enddo !sunsha loop
 
            ! This is the stomatal resistance of the leaf layer
-           rstoma_out = 1._r8/gstoma
+           rstoma_out = 1._r8/gstoma + cf/(stem_cuticle_loss_frac*bbb)
 	   
         else
 
@@ -1190,7 +1194,7 @@ contains
 
            psn_out     = 0._r8
            anet_av_out = 0._r8
-           rstoma_out  = min(rsmax0, cf/(stem_cuticle_loss_frac*bbbopt(c3c4_path_index)))
+           rstoma_out  = cf/(stem_cuticle_loss_frac*bbb) !min(rsmax0, cf/(stem_cuticle_loss_frac*bbbopt(c3c4_path_index)))
            c13disc_z = 0.0_r8
            
        end if !is there leaf area? 
