@@ -282,7 +282,8 @@ module EDPftvarcon
      real(r8), allocatable :: hydr_rfrac_stem(:)    ! fraction of total tree resistance from troot to canopy
      real(r8), allocatable :: hydr_avuln_gs(:)      ! shape parameter for stomatal control of water vapor exiting leaf 
      real(r8), allocatable :: hydr_p50_gs(:)        ! water potential at 50% loss of stomatal conductance
-
+     real(r8), allocatable :: hydr_stem_cuticle_loss_frac(:)  ! fraction of stem cuticular water loss per leaf area cuticular conductance
+     
      ! PFT x Organ Dimension  (organs are: 1=leaf, 2=stem, 3=transporting root, 4=absorbing root)
      real(r8), allocatable :: hydr_avuln_node(:,:)  ! xylem vulernability curve shape parameter 
      real(r8), allocatable :: hydr_p50_node(:,:)    ! xylem water potential at 50% conductivity loss (MPa)
@@ -707,7 +708,11 @@ contains
     name = 'fates_hydr_p50_gs'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
           dimension_names=dim_names, lower_bounds=dim_lower_bound)
-    
+  
+     name = 'fates_hydr_stem_cuticle_loss_frac'
+     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+          dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
     name = 'fates_mort_bmort'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -1223,6 +1228,10 @@ contains
     name = 'fates_hydr_p50_gs'
     call fates_params%RetreiveParameterAllocate(name=name, &
           data=this%hydr_p50_gs)
+
+     name = 'fates_hydr_stem_cuticle_loss_frac'
+     call fates_params%RetreiveParameterAllocate(name=name, &
+          data=this%hydr_hydr_stem_cuticle_loss_frac)          
 
     name = 'fates_mort_bmort'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -2045,6 +2054,7 @@ contains
         write(fates_log(),fmt0) 'hydr_rfrac_stem = ',EDPftvarcon_inst%hydr_rfrac_stem
         write(fates_log(),fmt0) 'hydr_avuln_gs = ',EDPftvarcon_inst%hydr_avuln_gs
         write(fates_log(),fmt0) 'hydr_p50_gs = ',EDPftvarcon_inst%hydr_p50_gs
+        write(fates_log(),fmt0) 'hydr_stem_cuticle_loss_frac = ',EDPftvarcon_inst%hydr_stem_cuticle_loss_frac
         write(fates_log(),fmt0) 'hydr_avuln_node = ',EDPftvarcon_inst%hydr_avuln_node
         write(fates_log(),fmt0) 'hydr_p50_node = ',EDPftvarcon_inst%hydr_p50_node
         write(fates_log(),fmt0) 'hydr_thetas_node = ',EDPftvarcon_inst%hydr_thetas_node 
@@ -2054,7 +2064,6 @@ contains
         write(fates_log(),fmt0) 'hydr_fcap_node = ',EDPftvarcon_inst%hydr_fcap_node
         write(fates_log(),fmt0) 'hydr_pinot_node = ',EDPftvarcon_inst%hydr_pinot_node
         write(fates_log(),fmt0) 'hydr_kmax_node = ',EDPftvarcon_inst%hydr_kmax_node
-        
         
         write(fates_log(),fmt0) 'prt_nitr_stoich_p1 = ',EDPftvarcon_inst%prt_nitr_stoich_p1
         write(fates_log(),fmt0) 'prt_nitr_stoich_p2 = ',EDPftvarcon_inst%prt_nitr_stoich_p2
