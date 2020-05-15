@@ -957,7 +957,7 @@ contains
    
    associate( bb_slope  => EDPftvarcon_inst%BB_slope)    ! slope of BB relationship
    
-     stem_cuticle_loss_frac = EDPftvarcon_inst%stem_cuticle_loss_frac(ft)
+     stem_cuticle_loss_frac = EDPftvarcon_inst%hydr_stem_cuticle_loss_frac(ft)
    
      ! photosynthetic pathway: 0. = c4, 1. = c3
      c3c4_path_index = nint(EDPftvarcon_inst%c3psn(ft))
