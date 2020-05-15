@@ -233,6 +233,9 @@ variables:
 	double fates_hydr_thetas_node(fates_hydr_organs, fates_pft) ;
 		fates_hydr_thetas_node:units = "cm3/cm3" ;
 		fates_hydr_thetas_node:long_name = "saturated water content" ;
+	double fates_hydr_stem_cuticle_loss_frac(fates_pft);
+		fates_hydr_stem_cuticle_loss_frac:units = "fraction" ;
+		fates_hydr_stem_cuticle_loss_frac:long_name = "fraction of stem cuticular loss per leaf area" ;       
 	double fates_leaf_BB_slope(fates_pft) ;
 		fates_leaf_BB_slope:units = "unitless" ;
 		fates_leaf_BB_slope:long_name = "stomatal slope parameter, as per Ball-Berry" ;
@@ -529,10 +532,10 @@ variables:
 		fates_base_mr_20:units = "gC/gN/s" ;
 		fates_base_mr_20:long_name = "Base maintenance respiration rate for plant tissues, using Ryan 1991" ;
 	double fates_bbopt_c3 ;
-		fates_bbopt_c3:units = "umol H2O/m**2/s" ;
+		fates_bbopt_c3:units = "umol H2O/m**2/s/Mpa" ;
 		fates_bbopt_c3:long_name = "Ball-Berry minimum unstressed leaf conductance for C3" ;
 	double fates_bbopt_c4 ;
-		fates_bbopt_c4:units = "umol H2O/m**2/s" ;
+		fates_bbopt_c4:units = "umol H2O/m**2/s/Mpa" ;
 		fates_bbopt_c4:long_name = "Ball-Berry minimum unstressed leaf conductance for C4" ;
 	double fates_canopy_closure_thresh ;
 		fates_canopy_closure_thresh:units = "unitless" ;
@@ -922,6 +925,8 @@ data:
   0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65,
   0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65,
   0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75 ;
+  
+ fates_hydr_stem_cuticle_loss_frac =  0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 ;
 
  fates_leaf_BB_slope = 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8 ;
 
@@ -1228,9 +1233,9 @@ data:
 
  fates_base_mr_20 = 2.52e-06 ;
 
- fates_bbopt_c3 = 10000 ;
+ fates_bbopt_c3 = 10000000 ;
 
- fates_bbopt_c4 = 40000 ;
+ fates_bbopt_c4 = 40000000 ;
 
  fates_canopy_closure_thresh = 0.8 ;
 
