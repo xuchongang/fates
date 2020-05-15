@@ -1231,7 +1231,7 @@ contains
 
      name = 'fates_hydr_stem_cuticle_loss_frac'
      call fates_params%RetreiveParameterAllocate(name=name, &
-          data=this%hydr_hydr_stem_cuticle_loss_frac)          
+          data=this%hydr_stem_cuticle_loss_frac)          
 
     name = 'fates_mort_bmort'
     call fates_params%RetreiveParameterAllocate(name=name, &
