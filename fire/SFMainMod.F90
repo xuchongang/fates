@@ -174,7 +174,7 @@ contains
     real(r8) ::  leaf_c                  ! leaf carbon (kgC)
     real(r8) ::  sapw_c                  ! sapwood carbon (kgC)
     real(r8) ::  struct_c                ! structure carbon (kgC)
-    real(r8) ::  twig_sapw_struct_c      ! above-ground twig sap and struct in cohort (kgC)
+    real(r8) ::  branch_sapw_struct_c      ! above-ground twig sap and struct in cohort (kgC)
     real(r8) ::  shrub_leaf_c            ! biomass of leaves in cohort (kg C)
 
     fuel_moisture(:) = 0.0_r8    
@@ -195,7 +195,7 @@ contains
           leaf_c              = 0.0_r8
           sapw_c              = 0.0_r8
           struct_c            = 0.0_r8
-          twig_sapw_struct_c  = 0.0_r8
+          branch_sapw_struct_c  = 0.0_r8
           shrub_leaf_c        = 0.0_r8
 
           ! shrub or small tree
@@ -206,14 +206,15 @@ contains
              struct_c = currentCohort%prt%GetState(struct_organ, all_carbon_elements)
 
              shrub_sapw_struct_c = (EDPftvarcon_inst%allom_agb_frac(currentCohort%pft)*(sapw_c + struct_c))* &
-                                    currentCohort%n/currentPatch%area          ! (kgC/m2)
+                  currentCohort%n/currentPatch%area          ! (kgC/m2)
              
-             twig_sapw_struct_c  =  shrub_sapw_struct_c * SF_VAL_CWD_frac(1)   ! only 1hr fuel,twig sap & struct
+             ! use all twig & branch fuel = twig, small branch, & large branch sap & struct (no trunk)
+             branch_sapw_struct_c  =  shrub_sapw_struct_c - (shrub_sapw_struct_c* SF_VAL_CWD_frac(4))  
 
              shrub_leaf_c        = currentCohort%prt%GetState(leaf_organ, all_carbon_elements) * &
                                    currentCohort%n/currentPatch%area           ! shrub leaf fuel (kgC/m2)
 
-             currentPatch%shrubs_sf = currentPatch%shrubs_sf + shrub_leaf_c + twig_sapw_struct_c
+             currentPatch%shrubs_sf = currentPatch%shrubs_sf + shrub_leaf_c + branch_sapw_struct_c
                                    ! total shrub & small tree 1 hr fuel (kgC/m2)
              
           else  ! live grass
