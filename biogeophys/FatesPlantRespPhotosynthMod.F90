@@ -371,7 +371,7 @@ contains
                      call lowstorage_maintresp_reduction(frac,currentCohort%pft, &
                           maintresp_reduction_factor)
 			  
-		     vpd = max(10._r8, bc_in(s)%esat_tv_pa(ifp)-bc_in(s)%eair_pa(ifp))*1._r8e-6 !MPa
+		     vpd = max(10._r8, bc_in(s)%esat_tv_pa(ifp)-bc_in(s)%eair_pa(ifp))*1.e-6_r8 !MPa
 
                      ! are there any leaves of this pft in this layer?
                      if(currentPatch%canopy_mask(cl,ft) == 1)then 
