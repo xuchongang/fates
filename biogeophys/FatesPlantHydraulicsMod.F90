@@ -2659,7 +2659,7 @@ contains
     type(ed_cohort_hydr_type),intent(inout),target :: ccohort_hydr
     type(ed_cohort_type),intent(in),target         :: ccohort
     type(ed_site_hydr_type),intent(in),target      :: csite_hydr
-r
+
     ! Locals
     integer :: k                     ! Compartment (node) index
     integer :: j                     ! Soil layer index
