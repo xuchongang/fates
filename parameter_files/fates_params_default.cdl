@@ -1238,13 +1238,6 @@ data:
 
  fates_base_mr_20 = 2.52e-06 ;
 
-<<<<<<< HEAD
- fates_bbopt_c3 = 10000000 ;
-
- fates_bbopt_c4 = 40000000 ;
-
-=======
->>>>>>> 9213ca2b8d8222a8e9e1b3b0f8ac04f009f1816a
  fates_canopy_closure_thresh = 0.8 ;
 
  fates_cohort_age_fusion_tol = 0.08 ;
