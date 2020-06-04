@@ -1170,7 +1170,7 @@ contains
            enddo !sunsha loop
 
            ! This is the stomatal resistance of the leaf layer
-           rstoma_out = 1._r8/gstoma + cf/(stem_cuticle_loss_frac*bbb)
+           rstoma_out = 1._r8/gstoma + min(rsmax0, cf/(stem_cuticle_loss_frac*stomatal_intercept_btran))
 	   
         else
 
@@ -1181,7 +1181,7 @@ contains
 
            psn_out     = 0._r8
            anet_av_out = 0._r8
-           rstoma_out  = min(rsmax0, cf/(stem_cuticle_loss_frac*stomatal_intercept(ft)))
+           rstoma_out  = min(rsmax0, cf/(stem_cuticle_loss_frac*stomatal_intercept_btran))
            c13disc_z = 0.0_r8
            
        end if !is there leaf area? 
