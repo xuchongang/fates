@@ -176,6 +176,7 @@ contains
     real(r8) ::  struct_c                ! structure carbon (kgC)
     real(r8) ::  branch_sapw_struct_c      ! above-ground twig sap and struct in cohort (kgC)
     real(r8) ::  shrub_leaf_c            ! biomass of leaves in cohort (kg C)
+    real(r8) ::  shrub_leaf_w            ! water of leaves in cohort (kg water)
     integer  ::  ncohorts                ! number of cohorts within a patch
 
     fuel_moisture(:) = 0.0_r8    
@@ -273,34 +274,30 @@ contains
 
           currentPatch%fuel_frac(lg_sf)       = currentPatch%livegrass       / currentPatch%sum_fuel   
           currentPatch%fuel_frac(shrb_sf)     = currentPatch%shrubs_sf       / currentPatch%sum_fuel
-
-
+          MEF(1:nfsc)                         = 0.524_r8 - 0.066_r8 * log10(SF_val_SAV(1:nfsc))
           ! FATES-Hydro live fuel moisture linkage to MEF "moisture extinction factor"
           if (hlm_use_planthydro == itrue) then
-            MEF(shrb_sf) = 0._r8
-            ncohorts = 0
+            shrub_leaf_w = 0._r8
+            shrub_leaf_c = 0._r8
             currentCohort => currentPatch%tallest
             do while(associated(currentCohort))
-               if (EDPftvarcon_inst%woody(currentCohort%pft) == 1 .and. currentCohort%hite < 2) then ! shrub & small trees
-                  shrub_leaf_c        = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-                  MEF(shrb_sf) = MEF(shrb_sf) + currentCohort%co_hydr%th_ag(1)* &
-                                 currentCohort%co_hydr%v_ag(1) &
-                                 /(shrub_leaf_c/0.45_r8) !Plant water saturation  test daily avg and daily min
+               if (EDPftvarcon_inst%woody(currentCohort%pft) == 1 .and. currentCohort%hite < 2) then ! shrub & small trees < 2 meters
+                  shrub_leaf_w = shrub_leaf_w + currentCohort%co_hydr%th_ag(1)* &
+                                         currentCohort%co_hydr%v_ag(1) * &
+                                         currentCohort%n/currentPatch%area
+                  shrub_leaf_c = shrub_leaf_c + & 
+                                     curretCohort%prt%GetState(leaf_organ, all_carbon_elements) * &
+                                     currentCohort%n/currentPatch%area
                endif
-               ncohorts = ncohorts + 1
             !
             !    if (EDPftvarcon_inst%woody(currentCohort%pft) == 0) then ! live grass
             !       MEF(lg_sf) = FATES-Hydro current%cohort Plant water saturation  test daily avg and daily min
             !    endif
                currentCohort => currentCohort%shorter
-            enddo
-            if( ncohorts>0) then 
-               MEF(shrb_sf) = MEF(shrb_sf)/ncohorts
-            else
-               MEF(shrb_sf) = 0.524_r8 - 0.066_r8 * log10(SF_val_SAV(shrb_sf))
-            endif
-          else
-            MEF(1:nfsc)                         = 0.524_r8 - 0.066_r8 * log10(SF_val_SAV(1:nfsc))
+            enddo !patch loop
+            if(shrub_leaf_c>0) then 
+               MEF(shrb_sf) = shrub_leaf_w/(shrub_leaf_c/0.45_r8) !Plant water saturation  test daily avg and daily min
+            endif           
           endif
 
           !--- weighted average of relative moisture content---
