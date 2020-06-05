@@ -286,7 +286,7 @@ contains
                                          currentCohort%co_hydr%v_ag(1) * &
                                          currentCohort%n/currentPatch%area
                   shrub_leaf_c = shrub_leaf_c + & 
-                                     curretCohort%prt%GetState(leaf_organ, all_carbon_elements) * &
+                                     currentCohort%prt%GetState(leaf_organ, all_carbon_elements) * &
                                      currentCohort%n/currentPatch%area
                endif
             !
