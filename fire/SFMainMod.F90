@@ -41,6 +41,7 @@
   use PRTGenericMod,          only : struct_organ
   use PRTGenericMod,          only : SetState
   use FatesInterfaceTypesMod     , only : numpft
+  use FatesInterfaceTypesMod     , only : hlm_use_planthydro 
 
   implicit none
   private
