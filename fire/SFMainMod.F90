@@ -175,6 +175,7 @@ contains
     real(r8) ::  struct_c                ! structure carbon (kgC)
     real(r8) ::  branch_sapw_struct_c      ! above-ground twig sap and struct in cohort (kgC)
     real(r8) ::  shrub_leaf_c            ! biomass of leaves in cohort (kg C)
+    integer  ::  ncohorts                ! number of cohorts within a patch
 
     fuel_moisture(:) = 0.0_r8    
     
@@ -274,7 +275,7 @@ contains
 
 
           ! FATES-Hydro live fuel moisture linkage to MEF "moisture extinction factor"
-          if (hml_use_Hydro == itrue) then
+          if (hlm_use_planthydro == itrue) then
             MEF(shrb_sf) = 0._r8
             ncohorts = 0
             currentCohort => currentPatch%tallest
