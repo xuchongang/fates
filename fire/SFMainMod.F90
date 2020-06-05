@@ -274,17 +274,32 @@ contains
 
 
           ! FATES-Hydro live fuel moisture linkage to MEF "moisture extinction factor"
-          ! if (hml_use_Hydro == itrue) then
-          !    if (EDPftvarcon_inst%woody(currentCohort%pft) == 1 .and. currentCohort%hite < 2) then ! shrub & small trees
-          !       MEF(shrb_sf) = FATES-Hydro current%cohort Plant water saturation  test daily avg and daily min
-          !    endif
-          !
-          !    if (EDPftvarcon_inst%woody(currentCohort%pft) == 0) then ! live grass
-          !       MEF(lg_sf) = FATES-Hydro current%cohort Plant water saturation  test daily avg and daily min
-          !    endif
-          ! else
-             MEF(1:nfsc)                         = 0.524_r8 - 0.066_r8 * log10(SF_val_SAV(1:nfsc))
-          ! endif
+          if (hml_use_Hydro == itrue) then
+            MEF(shrb_sf) = 0._r8
+            ncohorts = 0
+            currentCohort => currentPatch%tallest
+            do while(associated(currentCohort))
+               if (EDPftvarcon_inst%woody(currentCohort%pft) == 1 .and. currentCohort%hite < 2) then ! shrub & small trees
+                  shrub_leaf_c        = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+                  MEF(shrb_sf) = MEF(shrb_sf) + currentCohort%co_hydr%th_ag(1)* &
+                                 currentCohort%co_hydr%v_ag(1) &
+                                 /(shrub_leaf_c/0.45_r8) !Plant water saturation  test daily avg and daily min
+               endif
+               ncohorts = ncohorts + 1
+            !
+            !    if (EDPftvarcon_inst%woody(currentCohort%pft) == 0) then ! live grass
+            !       MEF(lg_sf) = FATES-Hydro current%cohort Plant water saturation  test daily avg and daily min
+            !    endif
+               currentCohort => currentCohort%shorter
+            enddo
+            if( ncohorts>0) then 
+               MEF(shrb_sf) = MEF(shrb_sf)/ncohorts
+            else
+               MEF(shrb_sf) = 0.524_r8 - 0.066_r8 * log10(SF_val_SAV(shrb_sf))
+            endif
+          else
+            MEF(1:nfsc)                         = 0.524_r8 - 0.066_r8 * log10(SF_val_SAV(1:nfsc))
+          endif
 
           !--- weighted average of relative moisture content---
           ! Equation 6 in Thonicke et al. 2010. across twig, small branch, large branch, and dead leaves
