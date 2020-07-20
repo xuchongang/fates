@@ -207,7 +207,6 @@ contains
                                    ! above the leaf layer of interest
     real(r8) :: lai_current        ! the LAI in the current leaf layer
     real(r8) :: cumulative_lai     ! the cumulative LAI, top down, to the leaf layer of interest
-    real(r8) :: vpd                ! vapor pressure deficit (MPa)
 
     real(r8), allocatable :: rootfr_ft(:,:)  ! Root fractions per depth and PFT
 
@@ -362,7 +361,6 @@ contains
                      call lowstorage_maintresp_reduction(frac,currentCohort%pft, &
                           maintresp_reduction_factor)
 			  
-		     vpd = max(10._r8, bc_in(s)%esat_tv_pa(ifp)-bc_in(s)%eair_pa(ifp))*1.e-6_r8 !MPa
 
                      ! are there any leaves of this pft in this layer?
                      if(currentPatch%canopy_mask(cl,ft) == 1)then 
@@ -390,7 +388,7 @@ contains
 
                               if (hlm_use_planthydro.eq.itrue ) then
                               
-                                 stomatal_intercept_btran = max( cf/rsmax0,stomatal_intercept(ft)*currentCohort%co_hydr%btran*vpd )
+                                 stomatal_intercept_btran = max( cf/rsmax0,stomatal_intercept(ft)*currentCohort%co_hydr%btran )
                                  btran_eff = currentCohort%co_hydr%btran
                                  
                                  ! dinc_ed is the total vegetation area index of each "leaf" layer
@@ -406,7 +404,7 @@ contains
                                  cumulative_lai    = lai_canopy_above + lai_layers_above + 0.5*lai_current 
 
                               else
-                                 stomatal_intercept_btran = max( cf/rsmax0,stomatal_intercept(ft)*currentPatch%btran_ft(ft)*vpd)
+                                 stomatal_intercept_btran = max( cf/rsmax0,stomatal_intercept(ft)*currentPatch%btran_ft(ft))
                                  btran_eff = currentPatch%btran_ft(ft)
                                  ! For consistency sake, we use total LAI here, and not exposed
                                  ! if the plant is under-snow, it will be effectively dormant for 
