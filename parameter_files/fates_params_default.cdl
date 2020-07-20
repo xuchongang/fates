@@ -273,7 +273,7 @@ variables:
 		fates_leaf_slatop:units = "m^2/gC" ;
 		fates_leaf_slatop:long_name = "Specific Leaf Area (SLA) at top of canopy, projected area basis" ;
 	double fates_leaf_stomatal_intercept(fates_pft) ;
-		fates_leaf_stomatal_intercept:units = "umol H2O/m**2/s/Mpa" ;
+		fates_leaf_stomatal_intercept:units = "umol H2O/m**2/s" ;
 		fates_leaf_stomatal_intercept:long_name = "Minimum unstressed stomatal conductance for Ball-Berry model and Medlyn model" ;
 	double fates_leaf_stomatal_slope_ballberry(fates_pft) ;
 		fates_leaf_stomatal_slope_ballberry:units = "unitless" ;
