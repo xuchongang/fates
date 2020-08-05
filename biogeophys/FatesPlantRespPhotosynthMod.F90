@@ -1089,7 +1089,7 @@ contains
                  agross = min(r1,r2)
 
                  ! Net carbon assimilation. Exit iteration if an < 0
-                 anet = agross  - lmr
+                 anet = agross !  - lmr
                  if (anet < 0._r8) then
                     loop_continue = .false.
                  end if
