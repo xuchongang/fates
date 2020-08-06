@@ -1152,11 +1152,11 @@ contains
               ! weight per unit sun and sha leaves.
               if(sunsha == 1)then !sunlit       
                  psn_out     = psn_out + agross * f_sun_lsl
-                 anet_av_out = anet_av_out + anet * f_sun_lsl
+                 anet_av_out = anet_av_out + (agross-lmr) * f_sun_lsl
                  gstoma  = gstoma + 1._r8/(min(1._r8/gs, rsmax0)) * f_sun_lsl
               else
                  psn_out = psn_out + agross * (1.0_r8-f_sun_lsl)                 
-                 anet_av_out = anet_av_out + anet * (1.0_r8-f_sun_lsl) 
+                 anet_av_out = anet_av_out + (agross-lmr) * (1.0_r8-f_sun_lsl) 
                  gstoma  = gstoma + &
                        1._r8/(min(1._r8/gs, rsmax0)) * (1.0_r8-f_sun_lsl) 
               end if
