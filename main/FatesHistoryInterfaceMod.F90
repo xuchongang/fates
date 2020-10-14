@@ -419,6 +419,7 @@ module FatesHistoryInterfaceMod
   ! indices to (site x height) variables
   integer :: ih_canopy_height_dist_si_height
   integer :: ih_leaf_height_dist_si_height
+  integer :: ih_nplant_dist_si_height
 
   ! Indices to hydraulics variables
   
@@ -1790,6 +1791,7 @@ end subroutine flush_hvars
                hio_agesince_anthrodist_si_age     => this%hvars(ih_agesince_anthrodist_si_age)%r82d, &
                hio_secondaryforest_area_si_age    => this%hvars(ih_secondaryforest_area_si_age)%r82d, &
                hio_canopy_height_dist_si_height   => this%hvars(ih_canopy_height_dist_si_height)%r82d, &
+               hio_nplant_dist_si_height          => this%hvars(ih_nplant_dist_si_height)%r82d, &
                hio_leaf_height_dist_si_height     => this%hvars(ih_leaf_height_dist_si_height)%r82d, &
                hio_litter_moisture_si_fuel        => this%hvars(ih_litter_moisture_si_fuel)%r82d, &
                hio_cwd_ag_si_cwdsc                  => this%hvars(ih_cwd_ag_si_cwdsc)%r82d, &
@@ -2013,6 +2015,8 @@ end subroutine flush_hvars
                        hio_leaf_height_dist_si_height(io_si,i_heightbin) + &
                        ccohort%c_area * AREA_INV * ccohort%treelai * frac_canopy_in_bin
 
+                  hio_nplant_dist_si_height(io_si,i_heightbin) = &
+                       hio_nplant_dist_si_height(io_si,i_heightbin) + ccohort%n * AREA_INV
                   ! if ( ( ccohort%c_area * AREA_INV * ccohort%treelai * frac_canopy_in_bin) .lt. 0._r8) then
                   !    write(fates_log(),*) ' negative hio_leaf_height_dist_si_height:'
                   !    write(fates_log(),*) '   c_area, treelai, frac_canopy_in_bin:', ccohort%c_area, ccohort%treelai, frac_canopy_in_bin
@@ -2024,6 +2028,7 @@ end subroutine flush_hvars
                   hio_canopy_height_dist_si_height(io_si,height_bin_max) = &
                        hio_canopy_height_dist_si_height(io_si,height_bin_max) + ccohort%c_area * AREA_INV
                endif
+
 
                ! Update biomass components
 
@@ -3842,6 +3847,11 @@ end subroutine flush_hvars
          long='canopy height distribution', use_default='active',                     &
          avgflag='A', vtype=site_height_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
          ivar=ivar, initialize=initialize_variables, index = ih_canopy_height_dist_si_height )
+
+     call this%set_history_var(vname='NPLANT_HEIGHT_DIST', units='n/m2',                   &
+         long='density height distribution', use_default='active',                     &
+         avgflag='A', vtype=site_height_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
+         ivar=ivar, initialize=initialize_variables, index = ih_nplant_dist_si_height )        
 
     call this%set_history_var(vname='LEAF_HEIGHT_DIST', units='m2/m2',                   &
          long='leaf height distribution', use_default='active',                     &
