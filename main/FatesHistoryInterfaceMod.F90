@@ -2014,9 +2014,10 @@ end subroutine flush_hvars
                   hio_leaf_height_dist_si_height(io_si,i_heightbin) = &
                        hio_leaf_height_dist_si_height(io_si,i_heightbin) + &
                        ccohort%c_area * AREA_INV * ccohort%treelai * frac_canopy_in_bin
-
-                  hio_nplant_dist_si_height(io_si,i_heightbin) = &
-                       hio_nplant_dist_si_height(io_si,i_heightbin) + ccohort%n * AREA_INV
+                  if( .not.(ccohort%isnew) ) then
+                       hio_nplant_dist_si_height(io_si,i_heightbin) = &
+                           hio_nplant_dist_si_height(io_si,i_heightbin) + ccohort%n * AREA_INV
+                  endif
                   ! if ( ( ccohort%c_area * AREA_INV * ccohort%treelai * frac_canopy_in_bin) .lt. 0._r8) then
                   !    write(fates_log(),*) ' negative hio_leaf_height_dist_si_height:'
                   !    write(fates_log(),*) '   c_area, treelai, frac_canopy_in_bin:', ccohort%c_area, ccohort%treelai, frac_canopy_in_bin
