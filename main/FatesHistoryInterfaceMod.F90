@@ -1995,8 +1995,13 @@ end subroutine flush_hvars
                
                hio_canopy_area_si_age(io_si,cpatch%age_class) = hio_canopy_area_si_age(io_si,cpatch%age_class) &
                     + ccohort%c_area * AREA_INV
-
-               ! calculate leaf height distribution, assuming leaf area is evenly distributed thru crown depth
+               !height index
+               i_heightbin = get_height_index(ccohort%hite)
+               if( .not.(ccohort%isnew) ) then
+                  hio_nplant_dist_si_height(io_si,i_heightbin) = &
+                        hio_nplant_dist_si_height(io_si,i_heightbin) + ccohort%n 
+               endif
+               ! calculate leaf height distribution, assuming leaf area is evenly distributed thru crown depth               
                height_bin_max = get_height_index(ccohort%hite)
                height_bin_min = get_height_index(ccohort%hite * (1._r8 - EDPftvarcon_inst%crown(ft)))
                do i_heightbin = height_bin_min, height_bin_max
@@ -2014,10 +2019,6 @@ end subroutine flush_hvars
                   hio_leaf_height_dist_si_height(io_si,i_heightbin) = &
                        hio_leaf_height_dist_si_height(io_si,i_heightbin) + &
                        ccohort%c_area * AREA_INV * ccohort%treelai * frac_canopy_in_bin
-                  if( .not.(ccohort%isnew) ) then
-                       hio_nplant_dist_si_height(io_si,i_heightbin) = &
-                           hio_nplant_dist_si_height(io_si,i_heightbin) + ccohort%n * AREA_INV
-                  endif
                   ! if ( ( ccohort%c_area * AREA_INV * ccohort%treelai * frac_canopy_in_bin) .lt. 0._r8) then
                   !    write(fates_log(),*) ' negative hio_leaf_height_dist_si_height:'
                   !    write(fates_log(),*) '   c_area, treelai, frac_canopy_in_bin:', ccohort%c_area, ccohort%treelai, frac_canopy_in_bin
@@ -3849,7 +3850,7 @@ end subroutine flush_hvars
          avgflag='A', vtype=site_height_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
          ivar=ivar, initialize=initialize_variables, index = ih_canopy_height_dist_si_height )
 
-     call this%set_history_var(vname='NPLANT_HEIGHT_DIST', units='n/m2',                   &
+     call this%set_history_var(vname='NPLANT_HEIGHT_DIST', units='n/ha',                   &
          long='density height distribution', use_default='active',                     &
          avgflag='A', vtype=site_height_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1, &
          ivar=ivar, initialize=initialize_variables, index = ih_nplant_dist_si_height )        
