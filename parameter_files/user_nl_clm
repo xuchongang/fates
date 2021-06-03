@@ -1,0 +1,15 @@
+! this line changes the surface file
+fsurdat = '/usr/projects/cesm/input_data/lnd/clm2/surfdata_map/surfdata_1x1_YellowstoneNP_16pfts_simyr2000_c171221.nc'
+! fsurdat = '/usr/projects/cesm/input_data/lnd/clm2/surfdata_map/surfdata_Delaware_PT_c180619.nc'
+! user parameter files
+fates_paramfile=? /turquoise/usr/projects/veg/cxu/ACME/components/clm/src/external_models/fates/parameter_file/{parameter_file_name.nc}
+fates_paramfile = '/turquoise/usr/projects/veg/liangwei/paramfiles/fates_params.c171120_13pfts_Wei_Dec0817_2xstorage_2Mpa.nc'
+! start from observed inventory?
+use_fates_inventory_init = .true.
+fates_inventory_ctrl_filename = '/turquoise/usr/projects/veg/liangwei/restart_files/Restart_Nov2017/yellowstone_Jan18.txt'
+! user output frequency and paramters
+hist_mfilt = 12,365
+hist_nhtfrq = 0,-24
+hist_fincl1='M1_SCPF','M2_SCPF','M3_SCPF','M4_SCPF','Md13c_SCPF','Md13cRate_SCPF','C13disc_SCPF'
+hist_fincl2='M1_SCPF','M2_SCPF','M3_SCPF','M4_SCPF','Md13c_SCPF','Md13cRate_SCPF','C13disc_SCPF'
+

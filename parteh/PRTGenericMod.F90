@@ -25,13 +25,18 @@ module PRTGenericMod
   use FatesConstantsMod, only : i4 => fates_int
   use FatesConstantsMod, only : nearzero
   use FatesConstantsMod, only : calloc_abs_error
+  use FatesConstantsMod, only : years_per_day
+  use FatesConstantsMod, only : days_per_sec
   use FatesGlobals     , only : endrun => fates_endrun
   use FatesGlobals     , only : fates_log 
   use shr_log_mod      , only : errMsg => shr_log_errMsg
- 
+  use PRTParametersMod , only : prt_params
   
   implicit none
   private ! Modules are private by default
+
+  character(len=*), parameter, private :: sourcefile = &
+       __FILE__
 
   integer, parameter, public :: maxlen_varname   = 128
   integer, parameter, public :: maxlen_varsymbol = 32
@@ -100,8 +105,9 @@ module PRTGenericMod
   integer, parameter, public :: carbon13_element    = 2
   integer, parameter, public :: carbon14_element    = 3
   integer, parameter, public :: nitrogen_element    = 4
-  integer, parameter, public :: phosphorous_element = 5
+  integer, parameter, public :: phosphorus_element  = 5
   integer, parameter, public :: potassium_element   = 6
+
 
   !  The following elements are just placeholders. In the future
   !  if someone wants to develope an allocation hypothesis
@@ -135,6 +141,12 @@ module PRTGenericMod
   integer, parameter, dimension(3), public :: carbon_elements_list   = &
        [carbon12_element, carbon13_element, carbon14_element]
 
+
+
+  ! This is the maximum number of leaf age pools allowed on each plant
+  ! (used for allocating scratch space)
+  integer, parameter, public :: max_nleafage = 4
+
   
   ! -------------------------------------------------------------------------------------
   !
@@ -163,7 +175,7 @@ module PRTGenericMod
 
   type, public :: prt_vartype
      
-     real(r8),allocatable :: val(:)       ! Instantaneous state variable           [kg]
+     real(r8),pointer :: val(:)       ! Instantaneous state variable           [kg]
      real(r8),allocatable :: val0(:)      ! State variable at the beginning 
                                           ! of the control period                  [kg]
      real(r8),allocatable :: net_alloc(:)   ! Net change due to allocation/transport [kg]
@@ -229,7 +241,8 @@ module PRTGenericMod
      
      procedure :: DailyPRT            => DailyPRTBase
      procedure :: FastPRT             => FastPRTBase
-
+     procedure :: GetNutrientTarget   => GetNutrientTargetBase
+     
      ! These are generic functions that should work on all hypotheses
 
      procedure, non_overridable :: InitAllocate
@@ -249,10 +262,27 @@ module PRTGenericMod
      procedure, non_overridable :: DeallocatePRTVartypes
      procedure, non_overridable :: WeightedFusePRTVartypes
      procedure, non_overridable :: CopyPRTVartypes
+
+     procedure :: AgeLeaves  ! This routine may be used generically
+                             ! but also leaving the door open for over-rides
+     
+
+     
   end type prt_vartypes
 
+  
+  ! Global identifiers for which elements we are using (apply mostly to litter)
 
+  integer, public              :: num_elements          ! This is the number of elements in this simulation
+                                                        ! e.g. (C,N,P,K, etc)
+  integer, allocatable, public :: element_list(:)       ! This vector holds the list of global element identifiers
+                                                        ! examples are carbon12_element
+                                                        ! nitrogen_element, etc.
 
+  integer, public :: element_pos(num_organ_types)       ! This is the reverse lookup
+                                                        ! for element types. Pick an element
+                                                        ! global index, and it gives you
+                                                        ! the position in the element_list
 
   ! -------------------------------------------------------------------------------------
   ! This next section contains the objects that describe the mapping for each specific
@@ -303,7 +333,7 @@ module PRTGenericMod
   ! world.
   !   
   !              
-  !                   | carbon | nitrogen | phosphorous | .... |
+  !                   | carbon | nitrogen | phosphorus  | .... |
   !                   ------------------------------------------
   !    leaf           |        |          |             |      |
   !    fine-root      |        |          |             |      |
@@ -356,12 +386,13 @@ module PRTGenericMod
   end type prt_global_type
 
   
-  type(prt_global_type),pointer,public :: prt_global
+  class(prt_global_type),pointer,public :: prt_global
 
   ! Make necessary procedures public
   public :: GetCoordVal
   public :: SetState
-
+  public :: StorageNutrientTarget
+  
 contains
 
   ! =====================================================================================
@@ -577,8 +608,7 @@ contains
           if(this%variables(i_var)%val(i_cor) < check_initialized) then
 
              i_organ   = prt_global%state_descriptor(i_var)%organ_id
-             i_element = prt_global%state_descriptor(i_var)%element_id
-
+             i_element = prt_global%state_descriptor(i_var)%element_id 
              write(fates_log(),*)'Not all initial conditions for state variables'
              write(fates_log(),*)' in PRT hypothesis: ',trim(prt_global%hyp_name)
              write(fates_log(),*)' were written out.'
@@ -587,7 +617,7 @@ contains
              write(fates_log(),*)' organ_id:',i_organ
              write(fates_log(),*)' element_id',i_element
              write(fates_log(),*)'Exiting'
-             call endrun(msg=errMsg(__FILE__, __LINE__))
+             call endrun(msg=errMsg(sourcefile, __LINE__))
           end if
 
        end do
@@ -945,7 +975,7 @@ contains
                                                this%variables(i_var)%turnover(i_pos), &
                                                this%variables(i_var)%burned(i_pos)
               write(fates_log(),*) ' Exiting.'
-              call endrun(msg=errMsg(__FILE__, __LINE__))
+              call endrun(msg=errMsg(sourcefile, __LINE__))
            end if
 
         end do
@@ -1202,8 +1232,9 @@ contains
       integer,intent(in)                :: element_id
       real(r8)                          :: prt_val 
       
+      prt_val = 0._r8
       write(fates_log(),*)'Init must be extended by a child class.'
-      call endrun(msg=errMsg(__FILE__, __LINE__))
+      call endrun(msg=errMsg(sourcefile, __LINE__))
       
     end function GetCoordVal
 
@@ -1214,7 +1245,7 @@ contains
       class(prt_vartypes) :: this
       
       write(fates_log(),*)'Daily PRT Allocation must be extended'
-      call endrun(msg=errMsg(__FILE__, __LINE__))
+      call endrun(msg=errMsg(sourcefile, __LINE__))
    
    end subroutine DailyPRTBase
 
@@ -1225,7 +1256,7 @@ contains
       class(prt_vartypes) :: this
       
       write(fates_log(),*)'FastReactiveTransport must be extended by a child class.'
-      call endrun(msg=errMsg(__FILE__, __LINE__))
+      call endrun(msg=errMsg(sourcefile, __LINE__))
 
    end subroutine FastPRTBase
 
@@ -1252,7 +1283,7 @@ contains
      if(element_id == all_carbon_elements) then
         write(fates_log(),*) 'You cannot set the state of all isotopes simultaneously.'
         write(fates_log(),*) 'You can only set 1. Exiting.'
-        call endrun(msg=errMsg(__FILE__, __LINE__))
+        call endrun(msg=errMsg(sourcefile, __LINE__))
      end if
      
      if( present(position_id) ) then
@@ -1268,7 +1299,7 @@ contains
         write(fates_log(),*) 'greater than the allocated position space'
         write(fates_log(),*) ' i_pos: ',i_pos
         write(fates_log(),*) ' num_pos: ',prt_global%state_descriptor(i_var)%num_pos
-        call endrun(msg=errMsg(__FILE__, __LINE__))
+        call endrun(msg=errMsg(sourcefile, __LINE__))
      end if
 
 
@@ -1281,7 +1312,7 @@ contains
         write(fates_log(),*) ' organ_id:',organ_id
         write(fates_log(),*) ' element_id:',element_id
         write(fates_log(),*) 'Exiting'
-        call endrun(msg=errMsg(__FILE__, __LINE__))
+        call endrun(msg=errMsg(sourcefile, __LINE__))
      end if
         
 
@@ -1290,5 +1321,157 @@ contains
 
    ! ====================================================================================
 
+   subroutine AgeLeaves(this,ipft,period_sec)
+
+     ! -----------------------------------------------------------------------------------
+     ! If we have more than one leaf age classification, allow
+     ! some leaf biomass to transition to the older classes.
+     ! It is assumed this routine is called once per day.
+     ! Note that there is NO turnover or loss of mass on the plant in this routine.
+     ! We are simply moving portions of leaves from a young bin to the next older, but
+     ! we are not moving any mass out of the last (oldest) bin.
+     ! -----------------------------------------------------------------------------------
+
+     class(prt_vartypes)              :: this
+     integer,intent(in)               :: ipft
+     real(r8),intent(in)              :: period_sec  ! Time period over which this routine
+                                                     ! is called [seconds] daily=86400
+     integer                          :: nleafage
+     integer                          :: i_age
+     integer                          :: i_var
+     integer                          :: el
+     integer                          :: element_id
+     real(r8)                         :: leaf_age_flux_frac
+     real(r8),dimension(max_nleafage) :: leaf_m0
+
+
+     do el = 1, num_elements
+
+        element_id = element_list(el)
+
+        ! Global position of leaf variable
+        i_var = prt_global%sp_organ_map(leaf_organ,element_id)
+
+        ! Size of the leaf carbon variable (number of age bins)
+        nleafage = prt_global%state_descriptor(i_var)%num_pos ! Number of leaf age class
+
+        associate(leaf_m => this%variables(i_var)%val(:))
+          
+          leaf_m0(1:nleafage) = leaf_m(1:nleafage)
+          
+          if(nleafage>1) then
+             do i_age = 1,nleafage-1
+                if (prt_params%leaf_long(ipft,i_age)>nearzero) then
+
+                   ! Units: [-] = [sec] * [day/sec] * [years/day] * [1/years]
+                   leaf_age_flux_frac = period_sec * days_per_sec * years_per_day / prt_params%leaf_long(ipft,i_age)
+                   
+                   leaf_m(i_age)    = leaf_m(i_age)   - leaf_m0(i_age) * leaf_age_flux_frac
+                   leaf_m(i_age+1)  = leaf_m(i_age+1) + leaf_m0(i_age) * leaf_age_flux_frac
+                   
+                end if
+             end do
+          end if
+
+          
+          ! Update the diagnostic on daily rate of change
+          do i_age = 1,nleafage
+             this%variables(i_var)%net_alloc(i_age) = &
+                  this%variables(i_var)%net_alloc(i_age) + &
+                  (leaf_m(i_age) - leaf_m0(i_age))
+          end do
+
+
+        end associate
+     end do
+     
+ end subroutine AgeLeaves
+
+
+ function GetNutrientTargetBase(this,element_id,organ_id,stoich_mode) result(target_m)
+    
+    class(prt_vartypes) :: this
+    integer, intent(in)           :: element_id
+    integer, intent(in)           :: organ_id
+    integer, intent(in),optional  :: stoich_mode
+    real(r8)                      :: target_m    ! Target amount of nutrient for this organ [kg]
+
+    write(fates_log(),*)'GetNutrientTargetBase must be extended by a child class.'
+    call endrun(msg=errMsg(sourcefile, __LINE__))
+
+    return
+  end function GetNutrientTargetBase
+
+
+  ! ====================================================================================
+   
+  function StorageNutrientTarget(pft, element_id, leaf_target, fnrt_target, sapw_target, struct_target) result(store_target)
+
+     integer :: pft
+     integer :: element_id
+     real(r8) :: leaf_target    ! Target leaf nutrient mass [kg]
+     real(r8) :: fnrt_target    ! Target fineroot nutrient mass [kg]
+     real(r8) :: sapw_target    ! Target sapwood nutrient mass [kg]
+     real(r8) :: struct_target  ! Target structural nutrient mass [kg]
+
+     real(r8) :: store_target   ! Output: Target storage nutrient mass [kg]
+     
+     
+     ! -------------------------------------------------------------------------------------
+     ! Choice of how nutrient storage target is proportioned to
+     !   Each choice makes the nutrient storage proportional the the "in-tissue"
+     !   total nitrogen content of 1 or more sets of organs
+     ! -------------------------------------------------------------------------------------
+     
+     integer, parameter :: lfs_store_prop = 1  ! leaf-fnrt-sapw proportional storage
+     integer, parameter :: lfss_store_prop = 2 ! leaf-fnrt-sapw-struct proportional storage
+     integer, parameter :: fnrt_store_prop = 3 ! fineroot proportional storage
+     integer, parameter :: store_prop = fnrt_store_prop
+
+     
+     select case(element_id)
+     case(carbon12_element)
+        write(fates_log(),*) 'Cannot call StorageNutrientTarget() for carbon'
+        write(fates_log(),*) 'exiting'
+        call endrun(msg=errMsg(sourcefile, __LINE__))
+        
+     case(nitrogen_element)
+        
+        if (store_prop == lfs_store_prop) then
+
+           store_target  = prt_params%nitr_store_ratio(pft) * (leaf_target + fnrt_target + sapw_target)
+
+        elseif(store_prop==lfss_store_prop) then
+           
+           store_target  = prt_params%nitr_store_ratio(pft) * (leaf_target + fnrt_target + sapw_target + struct_target)
+           
+        elseif(store_prop==fnrt_store_prop) then
+
+           store_target  = prt_params%nitr_store_ratio(pft) * fnrt_target
+
+        end if
+        
+             
+     case(phosphorus_element)
+
+        if (store_prop == lfs_store_prop) then
+           
+           store_target  = prt_params%phos_store_ratio(pft) * (leaf_target + fnrt_target + sapw_target)
+
+        elseif(store_prop==lfss_store_prop) then
+           
+           store_target  = prt_params%nitr_store_ratio(pft) * (leaf_target + fnrt_target + sapw_target + struct_target)
+    
+        elseif(store_prop==fnrt_store_prop) then
+           
+           store_target  = prt_params%phos_store_ratio(pft) * fnrt_target
+           
+        end if
+     end select
+     
+     
+   end function StorageNutrientTarget
+
+  
 
 end module PRTGenericMod

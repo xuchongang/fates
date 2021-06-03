@@ -10,12 +10,14 @@
 # =======================================================================================
 
 import numpy as np
+from numpy import *
 import sys
 import getopt
 import code  # For development: code.interact(local=locals())
 from datetime import datetime
 from scipy.io import netcdf
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+
 
 # =======================================================================================
 # Parameters
@@ -144,7 +146,7 @@ def main(argv):
 
     fp_in  = netcdf.netcdf_file(input_fname, 'r')
 
-    for key, value in sorted(fp_in.dimensions.iteritems()):
+    for key, value in sorted(fp_in.dimensions.items()):
         if(key==pft_dim_name):
             fp_out.createDimension(key,int(num_pft_out))
             print('Creating Dimension: {}={}'.format(key,num_pft_out))
@@ -152,7 +154,7 @@ def main(argv):
             fp_out.createDimension(key,int(value))
             print('Creating Dimension: {}={}'.format(key,value))
 
-    for key, value in sorted(fp_in.variables.iteritems()):
+    for key, value in sorted(fp_in.variables.items()):
         print('Creating Variable: ',key)
         #   code.interact(local=locals())
 
@@ -205,13 +207,15 @@ def main(argv):
             out_var[:] = np.empty([num_pft_out,dim2_len], dtype="S{}".format(dim2_len))
             for id,ipft in enumerate(donor_pft_indices):
                 out_var[id] = fp_in.variables.get(key).data[ipft-1]
-
-
+                
         elif( (prt_dim_found==0) & (pft_dim_len==2) ):          # fates_prt_organs - string_length
             out_var = fp_out.createVariable(key,'c',(fp_in.variables.get(key).dimensions))
             out_var[:] = in_var[:]
 
-
+        elif( prt_dim_found==0 ):
+            out_var = fp_out.createVariable(key,'d',(fp_in.variables.get(key).dimensions))
+            out_var[:] = in_var[:]
+            
         else:
             print('This variable has a dimensioning that we have not considered yet.')
             print('Please add this condition to the logic above this statement.')
