@@ -74,37 +74,22 @@ contains
     type(ed_site_insect_type), pointer :: si_insect
     integer :: iofp                         		! index fates patch age
 
+    ! Temperature variables that drive the mountain pine beetle demography model. These are averages over all of the patches.
+    ! at the specific site.
+    real(r8) :: max_airTC                   	! maximum daily air temperature (degrees C) in the site at reference height
+    real(r8) :: min_airTC                   	! minimum daily air temperature (degrees C) in the site at reference height
 
     !! Below are state variables that we track at the site level.
 	select case(insectType)
-    case(1) !!!!!!!!!MPB Model
-	     subroutine MPB_Wrapper(currentsite,bc_in) 
-	case(2)
-	     subroutine WPB_Wrapper(currentsite,bc_in) 
-			!! In case of no case 
-	case default
-		fates_endrun("Missing InsectType Parameter")		
+    		case(1) !!!!!!!!!MPB Model
+	
 	
 	contains 
-!!!!!!!!--------------------------------------------------------------------------------------
-	subroutine MPB_Wrapper(currentsite,bc_in) 
-    	   
-   		    ! !ARGUMENTS:
-	        type(ed_site_type)       , intent(inout), target  :: currentSite
-            type(bc_in_type)         , intent(in)		:: bc_in
-			
-			! POINTERS TO GENERIC TYPES	
-			type (ed_patch_type), pointer :: currentPatch
-			type (ed_cohort_type), pointer :: currentCohort
-            !
-			
-            ! Temperature variables that drive the mountain pine beetle demography model. These are averages over all of the patches.
-            ! at the specific site.
-             real(r8) :: max_airTC                   	! maximum daily air temperature (degrees C) in the site at reference height
-             real(r8) :: min_airTC                   	! minimum daily air temperature (degrees C) in the site at reference height
-			
+		
+	subroutine MPB_Wrapper(currentsite,bc_in ) 
+    	
 			use FatesInsectMemMod    , only : an, ab, alpha3, Beta3,EndPopn,&
-			FecMax ,FecMortR,Mort_Fec,Mort_EPT,Mort_Ads,FFTL,FFTH,&
+			Ofmax,ONetp,Otm2,ETPT,ADSRT,FFTL,FFTH,&
 			FF1,FF2,FF3,FF4,FF5,FF6
 			! Containers for the distributions of physiological age for each life stage. In the
 			! InitInsectSite subroutine these will be allocated with size equal to the domain size.
@@ -292,8 +277,7 @@ contains
 					NewL2tm1, NewL3tm1, NewL4tm1, NewPtm1, NewTtm1, &
 					Fec, E, L1, L2, L3, L4, P, Te, A, ColdestT, &
 					NtGEQ20, Bt, an, ab, FebInPopn, EndPopn, &
-				alpha3, Beta3,FecMax ,FecMortR,Mort_Fec,Mort_EPT,Mort_Ads,&
-				FFTL,FFTH,FF1,FF2,FF3,FF4,FF5)
+				alpha3, Beta3,Ofmax,ONetp,Otm2,ETPT,ADSRT,FFTL,FFTH,FF1,FF2,FF3,FF4,FF5)
 
 			!----------------------------------------------------------------------------------------------------
 			! update the vegetation mortality.
@@ -373,29 +357,12 @@ contains
 			! Daily maximum and minimum temperatures for diagnostic purposes
 			currentSite%si_insect%MaxDailyT = max_airTC
 			currentSite%si_insect%MinDailyT = min_airTC
-	end subroutine MPB_Wrapper
 !!!=====================================================================================
 !=====   Start WPB Processor===================
 !!!=====================================================================================
-		subroutine WPB_Wrapper(currentsite,bc_in) 
-		    ! !ARGUMENTS:
-	        type(ed_site_type)       , intent(inout), target  :: currentSite
-            type(bc_in_type)         , intent(in)		:: bc_in
-			
-			! POINTERS TO GENERIC TYPES	
-			type (ed_patch_type), pointer :: currentPatch
-			type (ed_cohort_type), pointer :: currentCohort
-            !
-			
-            ! Temperature variables that drive the mountain pine beetle demography model. These are averages over all of the patches.
-            ! at the specific site.
-             real(r8) :: max_airTC                   	! maximum daily air temperature (degrees C) in the site at reference height
-             real(r8) :: min_airTC                   	! minimum daily air temperature (degrees C) in the site at reference height
-		
-		
-!!!UPDATE
-			use FatesInsectMemMod, only r1,x0,x1,CWDvec,x2,SizeFactor,EndPopn,&
-			FecMax ,FecMortR,Mort_Fec,Mort_EPT,Mort_Ads,FFTL,FFTH,FF1,FF2,FF3,FF4,FF5,FF6
+		case(2)
+			use FatesInsectMemMod, only r1,x0,x1,CWDvec,x2,SizeFactor,EndPopn,Ofmax,ONetp,&
+			Otm2,ETPT,ADSRT,FFTL,FFTH,FF1,FF2,FF3,FF4,FF5,FF6
 			
 			! InitInsectSite subroutine these will be allocated with size equal to the domain size.
 			real(r8) :: OE(2**8)           	! vector to hold physiological age distribution for eggs
@@ -420,8 +387,7 @@ contains
 			real(r8) :: A                           	! the expected number of flying adults at each time step ha
 			real(r8) :: FA                          	! density of adults that initiated flight in the current time step per ha
 			real(r8) :: Bt                		! beetles that remain in flight from the previous step per ha
-			real(r8) :: Parents                     	! density of parent beetles in the current time step per h
-			real(r8) :: ActiveParents                    	! density of parent beetles in the current time step per ha
+			real(r8) :: Parents                     	! density of parent beetles in the current time step per ha
 			! related to the winter mortality model for mountain pine beetle:
 			real(r8) :: ColdestT                       	! Coldest yearly temperature experienced to date.
 
@@ -469,8 +435,7 @@ contains
 			A = currentSite%si_insect%indensity(1,7)
 			FA = currentSite%si_insect%indensity(1,8)
 			Bt = currentSite%si_insect%indensity(1,9)
-			Pare = CurrentSite%si_insect%indensity(1,10)
-
+			ActiveParents = CurrentSite%si_insect%indensity(1,10)
 			
 			ColdestT = currentSite%si_insect%ColdestT
 			FebInPopn = currentSite%si_insect%FebInPopn
@@ -548,7 +513,7 @@ contains
 			NewL2tm1,  NewPtm1, NewTtm1, &
 			Fec, E, L1, L2,  P, Te, A,Pare,ActiveParents, ColdestT, &
 			NtGEQ317, NtGEQ00, Bt,r1,x0,x1,CWDvec,x2,SizeFactor,FebInPopn, EndPopn,&
-			FecMax ,FecMortR,Mort_Fec,Mort_EPT,Mort_Ads,FFTL,FFTH,FF1,FF2,FF3,FF4,FF5,FF6)
+			Ofmax,ONetp,Otm2,ETPT,ADSRT,FFTL,FFTH,FF1,FF2,FF3,FF4,FF5,FF6)
 			! update the vegetation mortality.
 			
 			! We cycle through the patches from oldest to youngest  
@@ -597,8 +562,8 @@ contains
 			currentSite%si_insect%indensity(1,7) = A
 			currentSite%si_insect%indensity(1,8) = FA
 			currentSite%si_insect%indensity(1,9) = Bt
-			currentSite%si_insect%indensity(1,10) = Pare
-			
+			CurrentSite%si_insect%indensity(1,10) = Pare
+
 			! densities of individuals transitioning from one stage to another
 			currentSite%si_insect%Transit(1) = NewEggstm1
 			currentSite%si_insect%Transit(2) = NewL1tm1
@@ -620,7 +585,12 @@ contains
 			! Daily maximum and minimum temperatures for diagnostic purposes
 			currentSite%si_insect%MaxDailyT = max_airTC
 			currentSite%si_insect%MinDailyT = min_airTC
-		end subroutine WPB_Wrapper
+		!! In case of no case 
+		case default
+			fates_endrun("Missing InsectType Parameter")
+		end select
+		contains
+
 ! Western Pine Beetle only functions 
 !==================================================================================================
 Subroutine WPBSim(Tmax, Tmin, Parents, FA, OE, OL1, OL2, &
@@ -1183,15 +1153,15 @@ End Subroutine WPBSim
 				! when populations are in the endemic phase, they only attack weakened
 				! trees that are already functionally dead from other causes.
 				if(FebInPopn > EndPopn)then
-					Parents = Ptp1GEQ20 ! Parents update
-					Bt = 0_r8 ! No more fliers
-					NtGEQ317 = Ntp1GEQ317 ! Trees are killed in both classees
+					Parents = Ptp1GEQ20
+					Bt = 0_r8
+					NtGEQ317 = Ntp1GEQ317
 					NtGEQ00 = Ntp1GEQ00
 					else
 					! Under the endemic scenario beetles do not kill trees.
 						Parents = Ptp1GEQ20
 						Bt = 0_r8
-						NtGEQ317 = NtGEQ317 ! Trees are not killed in any class. 
+						NtGEQ317 = NtGEQ317
 						NtGEQ00 = NtGEQ00
 				end if
 			end if 

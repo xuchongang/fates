@@ -32,22 +32,14 @@ module FatesHistoryInterfaceMod
   use FatesIODimensionsMod     , only : fates_io_dimension_type
   use FatesIOVariableKindMod   , only : fates_io_variable_kind_type
   use FatesHistoryVariableType , only : fates_history_variable_type
-<<<<<<< HEAD
-  use FatesInterfaceMod        , only : hlm_hio_ignore_val
-  use FatesInterfaceMod        , only : hlm_use_planthydro
-  use FatesInterfaceMod        , only : hlm_use_ed_st3
-  use FatesInterfaceMod        , only : hlm_use_insect
-  use FatesInterfaceMod        , only : numpft
-  use FatesInterfaceMod        , only : hlm_freq_day
-=======
   use FatesInterfaceTypesMod        , only : hlm_hio_ignore_val
   use FatesInterfaceTypesMod        , only : hlm_use_planthydro
   use FatesInterfaceTypesMod        , only : hlm_use_ed_st3
+  use FatesInterfaceMod        , only : hlm_use_insect
   use FatesInterfaceTypesMod        , only : hlm_use_cohort_age_tracking
   use FatesInterfaceTypesMod        , only : numpft
   use FatesInterfaceTypesMod        , only : hlm_freq_day
   use FatesInterfaceTypesMod        , only : hlm_parteh_mode
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
   use EDParamsMod              , only : ED_val_comp_excln
   use EDParamsMod              , only : ED_val_phen_coldtemp
   use FatesInterfaceTypesMod        , only : nlevsclass, nlevage
@@ -386,18 +378,16 @@ module FatesHistoryInterfaceMod
   integer :: ih_npp_agsw_si_scpf
   integer :: ih_npp_agdw_si_scpf
   integer :: ih_npp_stor_si_scpf
-  
-<<<<<<< HEAD
-  integer :: ih_MPB_Eggs_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_L1_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_L2_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_L3_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_L4_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_P_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_T_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_A_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_FA_si			! insect (mountain pine beetle variables)
-  integer :: ih_MPB_Bt_si 			! insect (mountain pine beetle variables)
+  integer :: ih_BB_Eggs_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_L1_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_L2_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_L3_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_L4_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_P_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_T_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_A_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_FA_si			! insect (mountain pine beetle variables)
+  integer :: ih_BB_Bt_si 			! insect (mountain pine beetle variables)
   integer :: ih_max_t_si			! insect (mountain pine beetle variables)
   integer :: ih_min_t_si 			! insect (mountain pine beetle variables)  
   
@@ -405,9 +395,7 @@ module FatesHistoryInterfaceMod
   integer :: ih_bstor_understory_si_scpf
   integer :: ih_bleaf_canopy_si_scpf
   integer :: ih_bleaf_understory_si_scpf
-=======
- 
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
   integer :: ih_mortality_canopy_si_scpf
   integer :: ih_mortality_understory_si_scpf
   integer :: ih_nplant_canopy_si_scpf
@@ -432,12 +420,9 @@ module FatesHistoryInterfaceMod
   integer :: ih_m6_si_scpf
   integer :: ih_m7_si_scpf  
   integer :: ih_m8_si_scpf
-<<<<<<< HEAD
-  integer :: ih_m9_si_scpf  
-=======
   integer :: ih_m9_si_scpf
   integer :: ih_m10_si_scpf
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+  integer :: ih_m11_si_scpf
   integer :: ih_crownfiremort_si_scpf
   integer :: ih_cambialfiremort_si_scpf
 
@@ -1734,16 +1719,11 @@ end subroutine flush_hvars
     use FatesSizeAgeTypeIndicesMod, only : get_agefuel_class_index
     use FatesSizeAgeTypeIndicesMod, only : get_age_class_index
     use FatesSizeAgeTypeIndicesMod, only : get_height_index
-    use FatesSizeAgeTypeIndicesMod, only : sizetype_class_index
-<<<<<<< HEAD
-    use EDTypesMod        , only : nlevleaf
-    use FatesInsectMemMod   , only : ed_site_insect_type
-    use EDParamsMod,           only : ED_val_history_height_bin_edges
-=======
+    use FatesSizeAgeTypeIndicesMod, only : sizetype_class_inde
+	use FatesInsectMemMod   , only : ed_site_insect_type,insectType
     use FatesSizeAgeTypeIndicesMod, only : coagetype_class_index
     use EDTypesMod                , only : nlevleaf
     use EDParamsMod               , only : ED_val_history_height_bin_edges
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
 
     ! Arguments
     class(fates_history_interface_type)             :: this
@@ -1934,31 +1914,26 @@ end subroutine flush_hvars
                hio_m4_si_scpf          => this%hvars(ih_m4_si_scpf)%r82d, &
                hio_m5_si_scpf          => this%hvars(ih_m5_si_scpf)%r82d, &
                hio_m6_si_scpf          => this%hvars(ih_m6_si_scpf)%r82d, &
-	       hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &                  
+	           hio_m7_si_scpf          => this%hvars(ih_m7_si_scpf)%r82d, &                  
                hio_m8_si_scpf          => this%hvars(ih_m8_si_scpf)%r82d, &
-<<<<<<< HEAD
-	       
-	       ! Insect specific-variables  
-	       hio_m9_si_scpf          => this%hvars(ih_m9_si_scpf)%r82d, &
-	       hio_MPB_Eggs_si	       => this%hvars(ih_MPB_Eggs_si)%r81d, & 
-	       hio_MPB_L1_si	       => this%hvars(ih_MPB_L1_si)%r81d, & 
-	       hio_MPB_L2_si	       => this%hvars(ih_MPB_L2_si)%r81d, &
-	       hio_MPB_L3_si	       => this%hvars(ih_MPB_L3_si)%r81d, &  
-	       hio_MPB_L4_si	       => this%hvars(ih_MPB_L4_si)%r81d, &  
-	       hio_MPB_P_si	       => this%hvars(ih_MPB_P_si)%r81d, &
-	       hio_MPB_T_si	       => this%hvars(ih_MPB_T_si)%r81d, &
-	       hio_MPB_A_si	       => this%hvars(ih_MPB_A_si)%r81d, &
-	       hio_MPB_FA_si	       => this%hvars(ih_MPB_FA_si)%r81d, &
-	       hio_MPB_Bt_si	       => this%hvars(ih_MPB_Bt_si)%r81d, &  
-	       hio_max_t_si	       => this%hvars(ih_max_t_si)%r81d, &
-	       hio_min_t_si	       => this%hvars(ih_min_t_si)%r81d, & 
-	       
-=======
+	           ! Insect specific-variables  
+	           hio_m11_si_capf         => this%hvars(ih_m11_si_capf)%r82d,  & !!! ZR:6/8 chnaged bin to 11 to reflect new 9 +10 in fates
+	           hio_BB_Eggs_si	       => this%hvars(ih_BB_Eggs_si)%r81d, & 
+	           hio_BB_L1_si	       => this%hvars(ih_BB_L1_si)%r81d, & 
+	           hio_BB_L2_si	       => this%hvars(ih_BB_L2_si)%r81d, &
+	           hio_BB_L3_si	       => this%hvars(ih_BB_L3_si)%r81d, &  
+	           hio_BB_L4_si	       => this%hvars(ih_BB_L4_si)%r81d, &  
+	           hio_BB_P_si	           => this%hvars(ih_BB_P_si)%r81d, &
+	           hio_BB_T_si	        => this%hvars(ih_BB_T_si)%r81d, &
+	           hio_BB_A_si	       => this%hvars(ih_BB_A_si)%r81d, &
+	           hio_BB_FA_si	       => this%hvars(ih_BB_FA_si)%r81d, &
+	           hio_BB_Bt_si	       => this%hvars(ih_BB_Bt_si)%r81d, &  
+	           hio_max_t_si	       => this%hvars(ih_max_t_si)%r81d, &
+	           hio_min_t_si	       => this%hvars(ih_min_t_si)%r81d, & 
+			   ! Fire 
                hio_m9_si_scpf          => this%hvars(ih_m9_si_scpf)%r82d, &
                hio_m10_si_scpf         => this%hvars(ih_m10_si_scpf)%r82d, &
                hio_m10_si_capf         => this%hvars(ih_m10_si_capf)%r82d, &
-      
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
                hio_crownfiremort_si_scpf     => this%hvars(ih_crownfiremort_si_scpf)%r82d, &
                hio_cambialfiremort_si_scpf   => this%hvars(ih_cambialfiremort_si_scpf)%r82d, &
 
@@ -2114,25 +2089,38 @@ end subroutine flush_hvars
          hio_fire_c_to_atm_si(io_si) = &
               sites(s)%mass_balance(element_pos(carbon12_element))%burn_flux_to_atm * &
               g_per_kg * ha_per_m2 * days_per_sec
-
-<<<<<<< HEAD
          ! The seed bank is a site level variable
          hio_seed_bank_si(io_si) = sum(sites(s)%seed_bank) * g_per_kg
-	 
-	 ! Update the insect state variables (currently only mountain pine beetle)
-	 hio_MPB_Eggs_si(io_si)	       = sites(s)%si_insect%indensity(1,2)
-	 hio_MPB_L1_si(io_si)	       = sites(s)%si_insect%indensity(1,3)
-	 hio_MPB_L2_si(io_si)	       = sites(s)%si_insect%indensity(1,4)
-	 hio_MPB_L3_si(io_si)	       = sites(s)%si_insect%indensity(1,5)
-	 hio_MPB_L4_si(io_si)	       = sites(s)%si_insect%indensity(1,6)
-	 hio_MPB_P_si(io_si)	       = sites(s)%si_insect%indensity(1,7)
-	 hio_MPB_T_si(io_si)	       = sites(s)%si_insect%indensity(1,8)
-	 hio_MPB_A_si(io_si)	       = sites(s)%si_insect%indensity(1,9)
-	 hio_MPB_FA_si(io_si)	       = sites(s)%si_insect%indensity(1,10)
-	 hio_MPB_Bt_si(io_si)	       = sites(s)%si_insect%indensity(1,11)
-	 hio_max_t_si(io_si)	       = sites(s)%si_insect%MaxDailyT
-	 hio_min_t_si(io_si)	       = sites(s)%si_insect%MinDailyT
-=======
+	 select case 
+	    case (1) 
+	     ! Update the insect state variables (currently only mountain pine beetle)
+	     hio_BB_Eggs_si(io_si)	       = sites(s)%si_insect%indensity(1,2)
+	     hio_BB_L1_si(io_si)	       = sites(s)%si_insect%indensity(1,3)
+	     hio_BB_L2_si(io_si)	       = sites(s)%si_insect%indensity(1,4)
+	     hio_BB_L3_si(io_si)	       = sites(s)%si_insect%indensity(1,5)
+	     hio_BB_L4_si(io_si)	       = sites(s)%si_insect%indensity(1,6)
+	     hio_BB_P_si(io_si)	       = sites(s)%si_insect%indensity(1,7)
+	     hio_BB_T_si(io_si)	       = sites(s)%si_insect%indensity(1,8)
+	     hio_BB_A_si(io_si)	       = sites(s)%si_insect%indensity(1,9)
+	     hio_BB_FA_si(io_si)	       = sites(s)%si_insect%indensity(1,10)
+	     hio_BB_Bt_si(io_si)	       = sites(s)%si_insect%indensity(1,11)
+	     hio_max_t_si(io_si)	       = sites(s)%si_insect%MaxDailyT
+	     hio_min_t_si(io_si)	       = sites(s)%si_insect%MinDailyT
+	 case(2)
+	! Update the insect state variables (currently only mountain pine beetle)
+	     hio_BB_Eggs_si(io_si)	       = sites(s)%si_insect%indensity(1,2)
+	     hio_BB_L1_si(io_si)	       = sites(s)%si_insect%indensity(1,3)
+	     hio_BB_L2_si(io_si)	       = sites(s)%si_insect%indensity(1,4)
+	     hio_BB_L3_si(io_si)	       = 0
+	     hio_BB_L4_si(io_si)	       = 0
+	     hio_BB_P_si(io_si)	       = sites(s)%si_insect%indensity(1,5)
+	     hio_BB_T_si(io_si)	       = sites(s)%si_insect%indensity(1,6)
+	     hio_BB_A_si(io_si)	       = sites(s)%si_insect%indensity(1,7)
+	     hio_BB_FA_si(io_si)	       = sites(s)%si_insect%indensity(1,8)
+	     hio_BB_Bt_si(io_si)	       = sites(s)%si_insect%indensity(1,9)
+	     hio_max_t_si(io_si)	       = sites(s)%si_insect%MaxDailyT
+	     hio_min_t_si(io_si)	       = sites(s)%si_insect%MinDailyT
+	 end select 
          ! Total model error [kg/day -> mg/day]  (all elements)
          do el = 1, num_elements
 
@@ -2144,7 +2132,7 @@ end subroutine flush_hvars
                   g_per_kg * ha_per_m2 * days_per_sec
 
          end do
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
 
          hio_canopy_spread_si(io_si)        = sites(s)%spread
 
@@ -2530,12 +2518,10 @@ end subroutine flush_hvars
                                                        store_m_net_alloc*n_perm2
 
                     ! Woody State Variables (basal area growth increment)
-<<<<<<< HEAD
-                    if (EDPftvarcon_inst%woody(ft) == 1) then
-=======
+
                     if ( int(prt_params%woody(ft)) == itrue) then
 
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
                        ! basal area  [m2/ha]
                        hio_ba_si_scpf(io_si,scpf) = hio_ba_si_scpf(io_si,scpf) + &
                             0.25_r8*3.14159_r8*((dbh/100.0_r8)**2.0_r8)*ccohort%n
@@ -2557,7 +2543,9 @@ end subroutine flush_hvars
                          (ccohort%lmort_direct+ccohort%lmort_collateral+ccohort%lmort_infra) * ccohort%n
                     hio_m8_si_scpf(io_si,scpf) = hio_m8_si_scpf(io_si,scpf) + ccohort%frmort*ccohort%n
                     hio_m9_si_scpf(io_si,scpf) = hio_m9_si_scpf(io_si,scpf) + ccohort%smort*ccohort%n
-                    
+                    hio_m11_si_scpf(io_si,scpf) = hio_m11_si_scpf(io_si,scpf) + ccohort%inmortmort*ccohort%n !!!! Added ZR 6/8/2021 seems like it belongs here. 
+					
+					
                     if (hlm_use_cohort_age_tracking .eq.itrue) then
                        hio_m10_si_scpf(io_si,scpf) = hio_m10_si_scpf(io_si,scpf) + ccohort%asmort*ccohort%n
                        hio_m10_si_capf(io_si,capf) = hio_m10_si_capf(io_si,capf) + ccohort%asmort*ccohort%n
@@ -2573,17 +2561,14 @@ end subroutine flush_hvars
                          (ccohort%lmort_direct+ccohort%lmort_collateral+ccohort%lmort_infra) * ccohort%n
                     hio_m8_si_scls(io_si,scls) = hio_m8_si_scls(io_si,scls) + &
                          ccohort%frmort*ccohort%n
-<<<<<<< HEAD
-	            ! Computing mortality due to insects per size class per pft.
-		    hio_m9_si_scpf(io_si,scpf) = hio_m9_si_scpf(io_si,scpf) + & 
-		       		ccohort%inmort/365.0_r8*ccohort%n			 
 
-=======
+	           
                     hio_m9_si_scls(io_si,scls) = hio_m9_si_scls(io_si,scls) + ccohort%smort*ccohort%n
                   
-                  
-                   
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+                   !  Computing mortality due to insects per size class per pft.
+		            hio_m11_si_scpf(io_si,scpf) = hio_m11_si_scpf(io_si,scpf) + & 
+		       		ccohort%inmort/365.0_r8*ccohort%n			 
+
                     !C13 discrimination
                     if(gpp_cached + ccohort%gpp_acc_hold > 0.0_r8)then
                        hio_c13disc_si_scpf(io_si,scpf) = ((hio_c13disc_si_scpf(io_si,scpf) * gpp_cached) + &
@@ -2665,23 +2650,13 @@ end subroutine flush_hvars
                        hio_canopy_biomass_si(io_si) = hio_canopy_biomass_si(io_si) + n_perm2 * total_m * g_per_kg
 
                        !hio_mortality_canopy_si_scpf(io_si,scpf) = hio_mortality_canopy_si_scpf(io_si,scpf)+ &
-<<<<<<< HEAD
 
-                       !    (ccohort%bmort + ccohort%hmort + ccohort%cmort + ccohort%frmort) * ccohort%n
-
-                       hio_mortality_canopy_si_scpf(io_si,scpf) = hio_mortality_canopy_si_scpf(io_si,scpf)+ &
-                            (ccohort%bmort + ccohort%hmort + ccohort%cmort + ccohort%frmort + ccohort%inmort) * ccohort%n + &
-			    (ccohort%lmort_direct + ccohort%lmort_collateral + ccohort%lmort_infra) * &
-=======
-                       !    (ccohort%bmort + ccohort%hmort + ccohort%cmort + &
-                       ! ccohort%frmort + ccohort%smort + ccohort%asmort) * ccohort%n
 
                        hio_mortality_canopy_si_scpf(io_si,scpf) = hio_mortality_canopy_si_scpf(io_si,scpf)+ &
 
-                            (ccohort%bmort + ccohort%hmort + ccohort%cmort + ccohort%frmort + & 
+                            (ccohort%bmort + ccohort%hmort + ccohort%cmort + ccohort%frmort + ccohort%inmort & 
                             ccohort%smort + ccohort%asmort) * ccohort%n + &
                             (ccohort%lmort_direct + ccohort%lmort_collateral + ccohort%lmort_infra) * &
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
                             ccohort%n * sec_per_day * days_per_year
 
                        hio_nplant_canopy_si_scpf(io_si,scpf) = hio_nplant_canopy_si_scpf(io_si,scpf) + ccohort%n
@@ -2800,27 +2775,20 @@ end subroutine flush_hvars
 
                        ! sum of all mortality
                        hio_mortality_understory_si_scls(io_si,scls) = hio_mortality_understory_si_scls(io_si,scls) + &
-<<<<<<< HEAD
-                             (ccohort%bmort + ccohort%hmort + ccohort%cmort + ccohort%frmort + ccohort%inmort) * ccohort%n + &
-=======
+
 
                              (ccohort%bmort + ccohort%hmort + ccohort%cmort + & 
-                             ccohort%frmort + ccohort%smort + ccohort%asmort) * ccohort%n + &
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+                             ccohort%frmort + ccohort%inmort + ccohort%smort + ccohort%asmort) * ccohort%n + &
+
                              (ccohort%lmort_direct + ccohort%lmort_collateral + ccohort%lmort_infra) * &
                              ccohort%n * sec_per_day * days_per_year
                        
                        hio_understory_mortality_carbonflux_si(io_si) = hio_understory_mortality_carbonflux_si(io_si) + &
-<<<<<<< HEAD
-                             (ccohort%bmort + ccohort%hmort + ccohort%cmort + ccohort%frmort + ccohort%inmort) * &
-                             total_c * ccohort%n * g_per_kg * days_per_sec * years_per_day * ha_per_m2 + &
-                             (ccohort%lmort_direct + ccohort%lmort_collateral + ccohort%lmort_infra) * total_c * &
-=======
+
                              (ccohort%bmort + ccohort%hmort + ccohort%cmort + & 
-                             ccohort%frmort + ccohort%smort + ccohort%asmort) * &
+                             ccohort%frmort + ccohort%inmort + ccohort%smort + ccohort%asmort) * &
                              total_m * ccohort%n * g_per_kg * days_per_sec * years_per_day * ha_per_m2 + &
                              (ccohort%lmort_direct + ccohort%lmort_collateral + ccohort%lmort_infra) * total_m * &
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
                              ccohort%n * g_per_kg * ha_per_m2
 
                        hio_carbon_balance_understory_si_scls(io_si,scls) = hio_carbon_balance_understory_si_scls(io_si,scls) + &
@@ -2936,11 +2904,6 @@ end subroutine flush_hvars
                hio_burnt_frac_litter_si_fuel(io_si, i_fuel) = hio_burnt_frac_litter_si_fuel(io_si, i_fuel) + &
                     cpatch%burnt_frac_litter(i_fuel) * cpatch%frac_burnt * cpatch%area * AREA_INV
             end do
-<<<<<<< HEAD
-	    
-            ! Update Litter Flux Variables
-=======
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
 
 
             hio_fire_intensity_area_product_si(io_si) = hio_fire_intensity_area_product_si(io_si) + &
@@ -3119,13 +3082,11 @@ end subroutine flush_hvars
                     hio_m4_si_scpf(io_si,i_scpf) + &
                     hio_m5_si_scpf(io_si,i_scpf) + &
                     hio_m6_si_scpf(io_si,i_scpf) + &
-		    hio_m7_si_scpf(io_si,i_scpf) + &
+		            hio_m7_si_scpf(io_si,i_scpf) + &
                     hio_m8_si_scpf(io_si,i_scpf) + &
-<<<<<<< HEAD
-		    hio_m9_si_scpf(io_si,i_scpf)
-=======
                     hio_m9_si_scpf(io_si,i_scpf) + &
-                    hio_m10_si_scpf(io_si,i_scpf) 
+                    hio_m10_si_scpf(io_si,i_scpf)+ &
+					hio_m11_si_scpf(io_si,i_scpf)  !Insect mortality
 
             end do
          end do
@@ -3266,8 +3227,6 @@ end subroutine flush_hvars
                     sum(sites(s)%flux_diags(el)%nutrient_efflux_scpf(:),dim=1)
                
             end if
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
-
 
             cpatch => sites(s)%oldest_patch
             do while(associated(cpatch))
@@ -4331,15 +4290,10 @@ end subroutine update_history_hifrq
     use FatesIOVariableKindMod, only : patch_r8, patch_ground_r8, patch_size_pft_r8
     use FatesIOVariableKindMod, only : site_r8, site_ground_r8, site_size_pft_r8    
     use FatesIOVariableKindMod, only : site_size_r8, site_pft_r8, site_age_r8
-<<<<<<< HEAD
-    use FatesIOVariableKindMod, only : site_height_r8
-    use FatesInterfaceMod     , only : hlm_use_planthydro, hlm_use_insect
-=======
+    use FatesInterfaceMod     , only : hlm_use_insect
     use FatesIOVariableKindMod, only : site_coage_pft_r8, site_coage_r8
     use FatesIOVariableKindMod, only : site_height_r8, site_agefuel_r8
-    use FatesInterfaceTypesMod     , only : hlm_use_planthydro
-    
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+    use FatesInterfaceTypesMod, only : hlm_use_planthydro
     use FatesIOVariableKindMod, only : site_fuel_r8, site_cwdsc_r8, site_scag_r8
     use FatesIOVariableKindMod, only : site_can_r8, site_cnlf_r8, site_cnlfpft_r8
     use FatesIOVariableKindMod, only : site_scagpft_r8, site_agepft_r8
@@ -4506,55 +4460,55 @@ end subroutine update_history_hifrq
     
     if(hlm_use_insect.eq.itrue) then
     
-    call this%set_history_var(vname='MPB_EGG_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_EGG_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Eggs_si)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_Eggs_si)
 
-    call this%set_history_var(vname='MPB_L1_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_L1_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L1_si)		
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_L1_si)		
 
-    call this%set_history_var(vname='MPB_L2_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_L2_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L2_si)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_L2_si)	
 
-    call this%set_history_var(vname='MPB_L3_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_L3_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L3_si)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_L3_si)	
 	    			
-    call this%set_history_var(vname='MPB_L4_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_L4_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_L4_si)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_L4_si)	
 
-    call this%set_history_var(vname='MPB_P_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_P_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_P_si)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_P_si)
 
-    call this%set_history_var(vname='MPB_T_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_T_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_T_si)	
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_T_si)	
 
-    call this%set_history_var(vname='MPB_A_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_A_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_A_si)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_A_si)
 
-    call this%set_history_var(vname='MPB_FA_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_FA_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_FA_si)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_FA_si)
 
-    call this%set_history_var(vname='MPB_Bt_DENSITY',  units='indivs/ha', &
+    call this%set_history_var(vname='BB_Bt_DENSITY',  units='indivs/ha', &
             long='insect density by life stage', use_default='active',       &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val, &
-	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_MPB_Bt_si)
+	    upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_BB_Bt_si)
 	    
     call this%set_history_var(vname='Max_Daily_T',  units='C', &
             long='maximum daily temp', use_default='active',       &
@@ -5615,17 +5569,7 @@ end subroutine update_history_hifrq
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
           upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m8_si_scpf )
 
-<<<<<<< HEAD
-    ! Insect induced mortality of plants per size class per pft
-    if(hlm_use_insect.eq.itrue) then
-    
-    call this%set_history_var(vname='M9_SCPF', units = 'N/ha/day',                  &
-          long='insect mortality by pft/size',use_default='active',              &
-          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
-          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m9_si_scpf )  
-	  
-    end if ! insect related if statement	  
-=======
+
     call this%set_history_var(vname='M9_SCPF', units = 'N/ha/yr',          &
           long='senescence mortality by pft/size',use_default='inactive', &
           avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
@@ -5640,7 +5584,17 @@ end subroutine update_history_hifrq
          long='age senescence mortality by pft/cohort age',use_default='inactive', &
          avgflag='A', vtype =site_coage_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,         &
          upfreq=1, ivar=ivar, initialize=initialize_variables, index =ih_m10_si_capf )
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+		 
+    ! Insect induced mortality of plants per size class per pft
+    if(hlm_use_insect.eq.itrue) then
+    
+    call this%set_history_var(vname='M11_SCPF', units = 'N/ha/day',                  &
+          long='insect mortality by pft/size',use_default='active',              &
+          avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_m11_si_scpf )  
+	  
+    end if ! insect related if statement	  
+
 
     call this%set_history_var(vname='MORTALITY_CANOPY_SCPF', units = 'N/ha/yr',          &
           long='total mortality of canopy plants by pft/size', use_default='inactive', &

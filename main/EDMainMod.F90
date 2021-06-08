@@ -8,22 +8,6 @@ module EDMainMod
   use shr_kind_mod             , only : r8 => shr_kind_r8
   
   use FatesGlobals             , only : fates_log
-<<<<<<< HEAD
-  use FatesInterfaceMod        , only : hlm_freq_day
-  use FatesInterfaceMod        , only : hlm_day_of_year
-  use FatesInterfaceMod        , only : hlm_days_per_year
-  use FatesInterfaceMod        , only : hlm_current_year
-  use FatesInterfaceMod        , only : hlm_current_month
-  use FatesInterfaceMod        , only : hlm_current_day 
-  use FatesInterfaceMod        , only : hlm_use_planthydro
-  use FatesInterfaceMod        , only : hlm_use_insect  
-  use FatesInterfaceMod        , only : hlm_reference_date
-  use FatesInterfaceMod        , only : hlm_use_ed_prescribed_phys
-  use FatesInterfaceMod        , only : hlm_use_ed_st3 
-  use FatesInterfaceMod        , only : bc_in_type
-  use FatesInterfaceMod        , only : hlm_masterproc
-  use FatesInterfaceMod        , only : numpft
-=======
   use FatesInterfaceTypesMod        , only : hlm_freq_day
   use FatesInterfaceTypesMod        , only : hlm_day_of_year
   use FatesInterfaceTypesMod        , only : hlm_days_per_year
@@ -31,6 +15,7 @@ module EDMainMod
   use FatesInterfaceTypesMod        , only : hlm_current_month
   use FatesInterfaceTypesMod        , only : hlm_current_day 
   use FatesInterfaceTypesMod        , only : hlm_use_planthydro
+  use FatesInterfaceMod             , only : hlm_use_insect  
   use FatesInterfaceTypesMod        , only : hlm_parteh_mode
   use FatesInterfaceTypesMod        , only : hlm_use_cohort_age_tracking
   use FatesInterfaceTypesMod        , only : hlm_reference_date
@@ -44,7 +29,6 @@ module EDMainMod
   use PRTGenericMod            , only : prt_cnp_flex_allom_hyp
   use PRTGenericMod            , only : nitrogen_element
   use PRTGenericMod            , only : phosphorus_element
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
   use EDCohortDynamicsMod      , only : terminate_cohorts
   use EDCohortDynamicsMod      , only : fuse_cohorts
   use EDCohortDynamicsMod      , only : sort_cohorts
@@ -93,11 +77,8 @@ module EDMainMod
   use FatesAllometryMod        , only : h_allom,tree_sai,tree_lai
   use FatesPlantHydraulicsMod  , only : UpdateSizeDepRhizHydStates
   use EDLoggingMortalityMod    , only : IsItLoggingTime
-<<<<<<< HEAD
   use FatesInsectMod	       , only : insect_model 
-=======
   use EDPatchDynamicsMod       , only : get_frac_site_primary
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
   use FatesGlobals             , only : endrun => fates_endrun
   use ChecksBalancesMod        , only : SiteMassStock
   use EDMortalityFunctionsMod  , only : Mortality_Derivative
@@ -446,15 +427,11 @@ contains
           hite_old = currentCohort%hite
           dbh_old  = currentCohort%dbh
 
-<<<<<<< HEAD
 
-          ! Conduct Growth (parteh)
-=======
           ! -----------------------------------------------------------------------------
           ! Growth and Allocation (PARTEH)
           ! -----------------------------------------------------------------------------
-          
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
           call currentCohort%prt%DailyPRT()
 
           
