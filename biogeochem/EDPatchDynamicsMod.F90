@@ -961,8 +961,8 @@ contains
                    call PRTBurnLosses(nc%prt, leaf_organ, leaf_burn_frac)
                    currentCohort%fraction_crown_burned = 0.0_r8
                    nc%fraction_crown_burned            = 0.0_r8
-<<<<<<< HEAD    ! Insect disturbance page
-				elseif (currentPatch%disturbance_mode .eq. dtype_inmort ) then
+   ! Insect disturbance 
+	       elseif (currentPatch%disturbance_mode .eq. dtype_inmort ) then
                 
                    
                    if(currentCohort%canopy_layer == 1)then
