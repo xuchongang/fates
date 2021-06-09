@@ -1287,9 +1287,9 @@ subroutine WPBAttack(NtGEQ317, NtGEQ00,Bt, FA, Parents, &
       
       
       ! The resulting number of parents that attacked each tree
-      Ptp1GEQ20 = phi1*(NtGEQ317-Ntp1GEQ20)+phi2*(NtGEQ00-Ntp1GEQ00_a)
+      Ptp1GEQ20 = phi1*(NtGEQ317-NtGEQ317_a)+phi2*(NtGEQ00-Ntp1GEQ00_a)
       !! If trees did not die, remove attempted flight (Beetles die in attempted attacks)
-      if (Ntp1GEQ20< NtGEQ317) then
+      if (NtGEQ317_a< NtGEQ317) then
          Btp2=0
       end if    
       if(NtGEQ00< NtGEQ00) then
@@ -1306,10 +1306,10 @@ subroutine WPBAttack(NtGEQ317, NtGEQ00,Bt, FA, Parents, &
       if(Ntp1GEQ00_a<0)then
          Ntp1GEQ00_a=0
       end if 
-      if(Ntp1GEQ20<0)then
+      if(NtGEQ317_a<0)then
         NtGEQ317_a=0
       end if
-      if(isnan(Ntp1GEQ20))then
+      if(isnan(NtGEQ317_a))then
         NtGEQ317_a=0
       end if 
       if(isnan(Ntp1GEQ00_a))then
@@ -1317,11 +1317,11 @@ subroutine WPBAttack(NtGEQ317, NtGEQ00,Bt, FA, Parents, &
       end if 
       
       !! Ensure that we don't end up with NA parents 
-      if (isnan(phi1*(NtGEQ317-Ntp1GEQ20))) then
+      if (isnan(phi1*(NtGEQ317-NtGEQ317_a))) then
          Ptp1GEQ20=phi2*(NtGEQ00-Ntp1GEQ00_a)
       end if 
       if (isnan(phi2*(NtGEQ00-Ntp1GEQ00_a))) then
-         Ptp1GEQ20=phi1*(NtGEQ317-Ntp1GEQ20)
+         Ptp1GEQ20=phi1*(NtGEQ317-NtGEQ317_a)
       end if 
       if (isnan(Ptp1GEQ20)) then
          Ptp1GEQ20=0

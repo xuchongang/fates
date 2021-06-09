@@ -658,28 +658,6 @@ contains
 
           ! This is the amount of patch area that is disturbed, and donated by the donor
           patch_site_areadis = currentPatch%area * currentPatch%disturbance_rate
-<<<<<<< HEAD
-          
-          if (patch_site_areadis > nearzero ) then
-
-             ! figure out whether the receiver patch for disturbance from this patch 
-             ! will be primary or secondary land receiver patch is primary forest 
-             ! only if both the donor patch is primary forest and the dominant 
-             ! disturbance type is not logging
-             if (currentPatch%anthro_disturbance_label .eq. primaryforest .and. &
-                  ((currentPatch%disturbance_rates(dtype_ilog) .lt. &
-                    currentPatch%disturbance_rates(dtype_ifall)) .or. &
-                   (currentPatch%disturbance_rates(dtype_ilog) .lt. &
-                    currentPatch%disturbance_rates(dtype_inmort)) .or. &		    
-                   (currentPatch%disturbance_rates(dtype_ilog) .lt.  &
-                    currentPatch%disturbance_rates(dtype_ifire)))) then
-                new_patch => new_patch_primary
-             else
-                new_patch => new_patch_secondary
-             endif
-=======
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
-
           
           if ( patch_site_areadis > nearzero ) then
 
@@ -705,46 +683,12 @@ contains
              ! we need to average in the time-since-anthropogenic-disturbance 
              ! from the donor patch into that of the receiver patch
              if ( currentPatch%anthro_disturbance_label .eq. secondaryforest .and. &
-<<<<<<< HEAD
-                  ((currentPatch%disturbance_rates(dtype_ilog) .lt. &
-                    currentPatch%disturbance_rates(dtype_ifall)) .or. &
-                   (currentPatch%disturbance_rates(dtype_ilog) .lt. &
-                    currentPatch%disturbance_rates(dtype_inmort)) .or. &		    
-                   (currentPatch%disturbance_rates(dtype_ilog) .lt. &
-                    currentPatch%disturbance_rates(dtype_ifire)))) then
-=======
                    (currentPatch%disturbance_mode .ne. dtype_ilog) ) then
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
 
                 new_patch%age_since_anthro_disturbance = new_patch%age_since_anthro_disturbance + &
                      currentPatch%age_since_anthro_disturbance * (patch_site_areadis / site_areadis_secondary)
 
              endif
-          
-<<<<<<< HEAD
-             call average_patch_properties(currentPatch, new_patch, patch_site_areadis)
-          
-             if ((currentPatch%disturbance_rates(dtype_ilog) > &
-                  currentPatch%disturbance_rates(dtype_ifall)) .and. &
-                 (currentPatch%disturbance_rates(dtype_ilog) > &
-                  currentPatch%disturbance_rates(dtype_inmort)) .and. &		  
-                  (currentPatch%disturbance_rates(dtype_ilog) > &
-                   currentPatch%disturbance_rates(dtype_ifire)) ) then 
-                
-                call logging_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)
-                
-                if(debug) write(fates_log(),*) "Logging disturbance generated:",patch_site_areadis
-
-             elseif ((currentPatch%disturbance_rates(dtype_ifire) > &
-                      currentPatch%disturbance_rates(dtype_ifall)) .and. &
-                     (currentPatch%disturbance_rates(dtype_ifire) > &
-                      currentPatch%disturbance_rates(dtype_inmort)) .and. &		      
-                     (currentPatch%disturbance_rates(dtype_ifire) > &
-                      currentPatch%disturbance_rates(dtype_ilog)) ) then
-                
-                call fire_litter_fluxes(currentSite, currentPatch, new_patch, patch_site_areadis)  
-                
-=======
              
              ! Transfer the litter existing already in the donor patch to the new patch
              ! This call will only transfer non-burned litter to new patch
@@ -765,7 +709,7 @@ contains
              elseif(currentPatch%disturbance_mode .eq. dtype_ifire) then
                 call fire_litter_fluxes(currentSite, currentPatch, &
                      new_patch, patch_site_areadis,bc_in)  
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
              else
                 call mortality_litter_fluxes(currentSite, currentPatch, &
                      new_patch, patch_site_areadis,bc_in)
@@ -780,41 +724,7 @@ contains
              ! -------------------------------------------------------------------------
 
              currentCohort => currentPatch%shortest
-             do while(associated(currentCohort))       
-<<<<<<< HEAD
-                
-                allocate(nc)             
-                if(hlm_use_planthydro.eq.itrue) call InitHydrCohort(CurrentSite,nc)
-                call InitPRTCohort(nc)
-                call zero_cohort(nc)
-                
-                ! nc is the new cohort that goes in the disturbed patch (new_patch)... currentCohort
-                ! is the curent cohort that stays in the donor patch (currentPatch) 
-                call copy_cohort(currentCohort, nc)
-                
-                !this is the case as the new patch probably doesn't have a closed canopy, and
-                ! even if it does, that will be sorted out in canopy_structure. 
-                nc%canopy_layer = 1 
-                nc%canopy_layer_yesterday = 1._r8 
-                
-                sapw_c   = currentCohort%prt%GetState(sapw_organ, all_carbon_elements)
-                struct_c = currentCohort%prt%GetState(struct_organ, all_carbon_elements)
-                leaf_c   = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-                fnrt_c   = currentCohort%prt%GetState(fnrt_organ, all_carbon_elements)
-                store_c  = currentCohort%prt%GetState(store_organ, all_carbon_elements)
-                
-                total_c  = sapw_c + struct_c + leaf_c + fnrt_c + store_c
-                
-                
-                ! treefall mortality is the dominant disturbance
-                if((currentPatch%disturbance_rates(dtype_ifall) > &
-                    currentPatch%disturbance_rates(dtype_ifire)) .and. &
-                    (currentPatch%disturbance_rates(dtype_ifall) > &
-                    currentPatch%disturbance_rates(dtype_inmort)) .and. &		    
-                    (currentPatch%disturbance_rates(dtype_ifall) > &
-                     currentPatch%disturbance_rates(dtype_ilog)))then 
-=======
-                 
+             do while(associated(currentCohort))                        
                  allocate(nc)
                  if(hlm_use_planthydro.eq.itrue) call InitHydrCohort(CurrentSite,nc)
                  
@@ -844,7 +754,6 @@ contains
 
                  ! treefall mortality is the dominant disturbance
                  if(currentPatch%disturbance_mode .eq. dtype_ifall) then
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
                    
                      if(currentCohort%canopy_layer == 1)then
 
@@ -863,7 +772,7 @@ contains
                       nc%hmort = nan
                       nc%bmort = nan
                       nc%frmort = nan
-		      nc%inmort = nan
+		              nc%inmort = nan
                       nc%smort = nan
                       nc%asmort = nan
                       nc%lmort_direct     = nan
@@ -921,7 +830,7 @@ contains
                          nc%smort            = currentCohort%smort
                          nc%asmort           = currentCohort%asmort
                          nc%dmort            = currentCohort%dmort
-			 nc%inmort           = currentCohort%inmort
+			             nc%inmort           = currentCohort%inmort
                          nc%lmort_direct     = currentCohort%lmort_direct
                          nc%lmort_collateral = currentCohort%lmort_collateral
                          nc%lmort_infra      = currentCohort%lmort_infra
@@ -948,7 +857,7 @@ contains
                          nc%smort            = currentCohort%smort
                          nc%asmort           = currentCohort%asmort
                          nc%dmort            = currentCohort%dmort
-			 nc%inmort           = currentCohort%inmort
+			             nc%inmort           = currentCohort%inmort
                          nc%lmort_direct    = currentCohort%lmort_direct
                          nc%lmort_collateral = currentCohort%lmort_collateral
                          nc%lmort_infra      = currentCohort%lmort_infra
@@ -956,16 +865,7 @@ contains
                       endif
                    endif
                    ! Fire is the dominant disturbance 
-<<<<<<< HEAD
-                elseif ((currentPatch%disturbance_rates(dtype_ifire) > &
-                        currentPatch%disturbance_rates(dtype_ifall)) .and. &
-                        (currentPatch%disturbance_rates(dtype_ifire) > &
-                        currentPatch%disturbance_rates(dtype_inmort)) .and. & 			
-                        (currentPatch%disturbance_rates(dtype_ifire) > &
-                         currentPatch%disturbance_rates(dtype_ilog))) then !fire
-=======
                 elseif (currentPatch%disturbance_mode .eq. dtype_ifire ) then
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
                    
                    ! Number of members in the new patch, before we impose fire survivorship
                    nc%n = currentCohort%n * patch_site_areadis/currentPatch%area
@@ -1014,7 +914,7 @@ contains
                    nc%smort            = currentCohort%smort
                    nc%asmort           = currentCohort%asmort
                    nc%dmort            = currentCohort%dmort
-		   nc%inmort           = currentCohort%inmort
+		           nc%inmort           = currentCohort%inmort
                    nc%lmort_direct     = currentCohort%lmort_direct
                    nc%lmort_collateral = currentCohort%lmort_collateral
                    nc%lmort_infra      = currentCohort%lmort_infra
@@ -1061,14 +961,9 @@ contains
                    call PRTBurnLosses(nc%prt, leaf_organ, leaf_burn_frac)
                    currentCohort%fraction_crown_burned = 0.0_r8
                    nc%fraction_crown_burned            = 0.0_r8
-<<<<<<< HEAD
-                   ! Insect is the dominant disturbance 
-                elseif ((currentPatch%disturbance_rates(dtype_inmort) > &
-                        currentPatch%disturbance_rates(dtype_ifall)) .and. &
-                        (currentPatch%disturbance_rates(dtype_inmort) > &
-                        currentPatch%disturbance_rates(dtype_ifire)) .and. & 			
-                        (currentPatch%disturbance_rates(dtype_inmort) > &
-                         currentPatch%disturbance_rates(dtype_ilog))) then !insect
+<<<<<<< HEAD    ! Insect disturbance page
+				elseif (currentPatch%disturbance_mode .eq. dtype_inmort ) then
+                
                    
                    if(currentCohort%canopy_layer == 1)then
                       
@@ -1137,7 +1032,7 @@ contains
                          nc%bmort            = currentCohort%bmort
                          nc%frmort           = currentCohort%frmort			 
                          nc%dmort            = currentCohort%dmort
-			 nc%inmort           = currentCohort%inmort
+			             nc%inmort           = currentCohort%inmort
                          nc%lmort_direct     = currentCohort%lmort_direct
                          nc%lmort_collateral = currentCohort%lmort_collateral
                          nc%lmort_infra      = currentCohort%lmort_infra
@@ -1162,28 +1057,16 @@ contains
                          nc%bmort            = currentCohort%bmort
                          nc%frmort           = currentCohort%frmort
                          nc%dmort            = currentCohort%dmort
-			 nc%inmort           = currentCohort%inmort
+			             nc%inmort           = currentCohort%inmort
                          nc%lmort_direct    = currentCohort%lmort_direct
                          nc%lmort_collateral = currentCohort%lmort_collateral
                          nc%lmort_infra      = currentCohort%lmort_infra
                          
                       endif
                    endif             
-                   
-                ! Logging is the dominant disturbance  
-                elseif ((currentPatch%disturbance_rates(dtype_ilog) > &
-                         currentPatch%disturbance_rates(dtype_ifall)) .and. &
-                        (currentPatch%disturbance_rates(dtype_ilog) > &
-                         currentPatch%disturbance_rates(dtype_inmort)) .and. &			 
-                        (currentPatch%disturbance_rates(dtype_ilog) > &
-                         currentPatch%disturbance_rates(dtype_ifire))) then  ! Logging 
-=======
-
-
-
                ! Logging is the dominant disturbance  
                elseif (currentPatch%disturbance_mode .eq. dtype_ilog ) then
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
                    
                    ! If this cohort is in the upper canopy. It generated 
                    if(currentCohort%canopy_layer == 1)then
@@ -1270,7 +1153,7 @@ contains
                          nc%smort            = currentCohort%smort
                          nc%asmort           = currentCohort%asmort
                          nc%dmort            = currentCohort%dmort
-			 nc%inmort           = currentCohort%inmort
+			             nc%inmort           = currentCohort%inmort
                          nc%lmort_direct     = currentCohort%lmort_direct
                          nc%lmort_collateral = currentCohort%lmort_collateral
                          nc%lmort_infra      = currentCohort%lmort_infra
