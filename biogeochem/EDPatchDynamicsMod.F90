@@ -1979,21 +1979,8 @@ contains
        curr_litt  => currentPatch%litter(el)   ! Litter pool of "current" patch
        new_litt   => newPatch%litter(el)       ! Litter pool of "new" patch
 
-<<<<<<< HEAD
-          if(currentCohort%canopy_layer == 1)then         
-             !currentCohort%dmort = mortality_rates(currentCohort) 
-             !the disturbance calculations are done with the previous n, c_area and d_mort. So it's probably &
-             !not right to recalcualte dmort here.
-             canopy_dead = currentCohort%n * min(1.0_r8,currentCohort%dmort * hlm_freq_day * fates_mortality_disturbance_fraction)
-	     ! If the insect model is turned on, we need to account for insect-killed trees going to litter.
-	     if(hlm_use_insect.eq.itrue)then
-	     	canopy_dead = currentCohort%n * &
-			min(1.0_r8,(currentCohort%dmort + currentCohort%inmort) * hlm_freq_day * fates_mortality_disturbance_fraction)
-	     end if	     
-=======
        currentCohort => currentPatch%shortest
        do while(associated(currentCohort))       
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
 
           pft = currentCohort%pft
    
@@ -2011,7 +1998,11 @@ contains
              
              num_dead = currentCohort%n * min(1.0_r8,currentCohort%dmort * &
                    hlm_freq_day * fates_mortality_disturbance_fraction)
-             
+             if(hlm_use_insect.eq.itrue)then
+                num_dead = currentCohort%n * &
+                        min(1.0_r8,(currentCohort%dmort + currentCohort%inmort)
+                         * hlm_freq_day * fates_mortality_disturbance_fraction)
+             end if             
           elseif(int(prt_params%woody(pft)) == itrue) then
              
              ! Understorey trees. The total dead is based on their survivorship
