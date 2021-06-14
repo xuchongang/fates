@@ -112,13 +112,7 @@ module FatesRestartInterfaceMod
   integer :: ir_hmort_co
   integer :: ir_cmort_co
   integer :: ir_frmort_co
-<<<<<<< HEAD
-  integer :: ir_inmort_co		! index for insect mortality
-
-   !Logging
-=======
-  integer :: ir_smort_co
-  integer :: ir_asmort_co
+  integer :: ir_inmort_co               ! index for insect mortality
 
   integer :: ir_daily_nh4_uptake_co
   integer :: ir_daily_no3_uptake_co
@@ -132,7 +126,6 @@ module FatesRestartInterfaceMod
   integer :: ir_daily_p_need_co
   
   !Logging
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
   integer :: ir_lmort_direct_co
   integer :: ir_lmort_collateral_co
   integer :: ir_lmort_infra_co
