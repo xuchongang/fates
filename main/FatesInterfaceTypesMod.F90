@@ -146,7 +146,10 @@ module FatesInterfaceTypesMod
                                                        ! plant hydraulics (bchristo/xu methods)
                                                        ! 1 = TRUE, 0 = FALSE
                                                        ! THIS IS CURRENTLY NOT SUPPORTED 
-
+	integer, public, protected :: hlm_use_insect        ! This flag signals whether or not to use
+                                                       ! insect dynamics (currently mostly MPB)
+                                                       ! 1 = TRUE, 0 = FALSE
+                                                       ! THIS IS CURRENTLY NOT SUPPORTED 													   												
    integer, public :: hlm_use_cohort_age_tracking ! This flag signals whether or not to use
                                                              ! cohort age tracking. 1 = TRUE, 0 = FALSE
 

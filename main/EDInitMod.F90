@@ -36,26 +36,17 @@ module EDInitMod
   use EDTypesMod                , only : phen_dstat_moistoff
   use EDTypesMod                , only : phen_cstat_notcold
   use EDTypesMod                , only : phen_dstat_moiston
-<<<<<<< HEAD
-  use FatesInterfaceMod         , only : bc_in_type
-  use FatesInterfaceMod         , only : hlm_use_planthydro
-  use FatesInterfaceMod         , only : hlm_use_inventory_init
-  use FatesInterfaceMod         , only : numpft
   use FatesInterfaceMod         , only : hlm_use_insect
-  use FatesInterfaceMod         , only : nleafage
-  use ChecksBalancesMod         , only : SiteCarbonStock
-  use FatesInterfaceMod         , only : nlevsclass
-=======
   use FatesInterfaceTypesMod         , only : bc_in_type,bc_out_type
   use FatesInterfaceTypesMod         , only : hlm_use_planthydro
   use FatesInterfaceTypesMod         , only : hlm_use_inventory_init
   use FatesInterfaceTypesMod         , only : hlm_use_fixed_biogeog
+  use FatesInterfaceMod              , only : hlm_use_insect
   use FatesInterfaceTypesMod         , only : numpft
   use FatesInterfaceTypesMod         , only : nleafage
   use FatesInterfaceTypesMod         , only : nlevsclass
   use FatesInterfaceTypesMod         , only : nlevcoage
   use FatesInterfaceTypesMod         , only : nlevage
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
   use FatesAllometryMod         , only : h2d_allom
   use FatesAllometryMod         , only : bagw_allom
   use FatesAllometryMod         , only : bbgw_allom
@@ -64,10 +55,8 @@ module EDInitMod
   use FatesAllometryMod         , only : bsap_allom
   use FatesAllometryMod         , only : bdead_allom
   use FatesAllometryMod         , only : bstore_allom
-<<<<<<< HEAD
   use FatesInsectMemMod         , only : ed_site_insect_type
   use FatesInsectMemMod         , only : InitInsectSite, ZeroInsectSite
-=======
   use PRTGenericMod             , only : StorageNutrientTarget
   use FatesInterfaceTypesMod,      only : hlm_parteh_mode
   use PRTGenericMod,          only : prt_carbon_allom_hyp
@@ -83,7 +72,6 @@ module EDInitMod
   use PRTGenericMod,          only : nitrogen_element
   use PRTGenericMod,          only : phosphorus_element
   use PRTGenericMod,          only : SetState
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
 
   ! CIME GLOBALS
   use shr_log_mod               , only : errMsg => shr_log_errMsg
@@ -423,11 +411,7 @@ contains
         ! For carbon balance checks, we need to initialize the 
         ! total carbon stock
         do s = 1, nsites
-<<<<<<< HEAD
 
-           ! For carbon balance checks, we need to initialize the 
-           ! total carbon stock
-           call SiteCarbonStock(sites(s),sites(s)%old_stock,biomass_stock,litter_stock,seed_stock)
 	   
 	 ! Allocating and initializing insects at the site level.
       	 if(hlm_use_insect.eq.itrue) then
@@ -435,12 +419,12 @@ contains
         	call InitInsectSite(sites(s)%si_insect)
          endif
            
-=======
+
             do el=1,num_elements
                 call SiteMassStock(sites(s),el,sites(s)%mass_balance(el)%old_stock, &
                       biomass_stock,litter_stock,seed_stock)
             end do
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
         enddo
 
      else

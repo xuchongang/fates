@@ -351,14 +351,9 @@ module EDTypesMod
      real(r8) ::  cmort                                  ! carbon starvation mortality rate n/year
      real(r8) ::  hmort                                  ! hydraulic failure mortality rate n/year
      real(r8) ::  frmort                                 ! freezing mortality               n/year
-<<<<<<< HEAD
      real(r8) ::  inmort			         ! insect mortality		    (year)^(-1) 
-
-=======
      real(r8) ::  smort                                  ! senesence mortality              n/year
      real(r8) ::  asmort                                 ! age senescence mortality         n/year
-     
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
       ! Logging Mortality Rate 
       ! Yi Xu & M. Huang
      real(r8) ::  lmort_direct                           ! directly logging rate            fraction /per logging activity
@@ -525,13 +520,14 @@ module EDTypesMod
      real(r8) ::  disturbance_rates(n_dist_types)                  ! disturbance rate from 1) mortality 
                                                                    !                       2) fire: fraction/day 
                                                                    !                       3) logging mortatliy
+																					!  4) insect mortality
      real(r8) ::  disturbance_rate                                 ! larger effective disturbance rate: fraction/day
-<<<<<<< HEAD
-     								   !                       4) insect mortality
-=======
+
+     								   !                                               
+
      integer  ::  disturbance_mode                                 ! index identifying which disturbance was applied
                                                                    ! can be one of: dtype_ifall, dtype_ilog or dtype_ifire
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
      real(r8) ::  fract_ldist_not_harvested                        ! fraction of logged area that is canopy trees that weren't harvested
 
 
@@ -803,13 +799,11 @@ module EDTypesMod
      real(r8), allocatable :: promotion_rate(:)                  ! rate of individuals promoted from understory to canopy per FATES timestep
      
      real(r8), allocatable :: imort_rate(:,:)                    ! rate of individuals killed due to impact mortality per year.  on size x pft array
-<<<<<<< HEAD
+
      real(r8), allocatable :: inmort_rate(:,:)                   ! rate of individuals killed due to insect mortality per year.  on size x pft array
      real(r8) :: imort_carbonflux                                ! biomass of individuals killed due to impact mortality per year. [kgC/ha/day]
      real(r8) :: inmort_carbonflux                               ! biomass of individuals killed due to insect mortality per year. [kgC/ha/day]
-=======
-     
->>>>>>> 1723d1443a2bc84f15f9b4e6e637592b49790971
+
 
      real(r8), allocatable :: fmort_rate_canopy(:,:)             ! rate of canopy individuals killed due to fire mortality per year.  
                                                                  ! on size x pft array  (1:nlevsclass,1:numpft)
