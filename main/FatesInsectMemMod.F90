@@ -1,5 +1,5 @@
 module FatesInsectMemMod
-
+        use FatesConstantsMod, only : r8 => fates_r8
 	!use EDParamsMod             , only : insect_an
 
 	implicit none
