@@ -289,6 +289,13 @@ contains
 
        ! kill patches that are too small
        call terminate_patches(currentSite)
+    else 
+     if(hlm_use_nocomp.eq.itrue) then
+        if( (hlm_use_planthydro.eq.itrue) .and. do_growthrecruiteffects)then
+          call UpdateSizeDepRhizHydProps(currentSite, bc_in)
+          call UpdateSizeDepRhizHydStates(currentSite, bc_in)
+        endif
+      end if
     end if
 
     call TotalBalanceCheck(currentSite,5)
